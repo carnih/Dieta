@@ -90,6 +90,9 @@
     .sched-sel{width:100%;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13.5px;font-weight:600;color:#1F2937;padding:9px 30px 9px 12px;border:1.5px solid #E5E7EB;border-radius:10px;background:#FAFAFA;outline:none}
     .sched-sel:focus{border-color:var(--n)}
     .sched-selwrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:11px;pointer-events:none}
+    .sched-sub{margin-top:-2px;margin-bottom:2px}
+    .sched-sub .sched-day{color:#C9D0D9;text-align:center}
+    .sched-sub .sched-sel{font-size:12.5px;font-weight:600;color:#64748B;background:#fff;border-style:dashed}
 
     /* ── PIANIFICATORE NOEMI ── */
     .pl-meal{padding:11px 0;border-bottom:1px solid var(--border)}
@@ -560,7 +563,7 @@ const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa';
+let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, nicSport={}, noemiPlan={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa';
 
 onValue(ref(db,'noemiPlan'), snap => {
   noemiPlan = snap.val() || {};
@@ -581,6 +584,11 @@ onValue(ref(db,'nicBase'), snap => {
 
 onValue(ref(db,'schedule'), snap => {
   schedule = snap.val() || {};
+  if(!editBase && (tab==='oggi' || tab==='nicholas')) renderContent();
+});
+
+onValue(ref(db,'nicSport'), snap => {
+  nicSport = snap.val() || {};
   if(!editBase && (tab==='oggi' || tab==='nicholas')) renderContent();
 });
 
@@ -719,6 +727,13 @@ function integCompact(integ){
   return h || dash();
 }
 const NIC_SHORT = {corsa:'🏃 Corsa', bici:'🚴 Bici', palestra:'🏊 Palestra · Nuoto · Padel', combinato:'🔥 Combinato', riposo:'😴 Riposo'};
+const SPORTS = {padel:'🏓 Padel', nuoto:'🏊 Nuoto', palestra:'🏋️ Palestra'};
+function getSport(wd){ return (nicSport && nicSport[wd]) || ''; }
+function trainLabel(wd){
+  const t = getTrain(wd);
+  if(t==='palestra'){ const s=getSport(wd); return s ? SPORTS[s] : NIC_SHORT.palestra; }
+  return NIC_SHORT[t] || t;
+}
 function weekDates(){
   const now=new Date();
   const dow=(now.getDay()+6)%7;            // 0 = lunedì
@@ -772,7 +787,7 @@ function renderOggi(){
     ${calendarHTML()}
     <div class="cmp-top">
       <div class="cmp-top-col e">🍓 Noemi</div>
-      <div class="cmp-top-col n"><span>💪 Nicholas</span><span class="train-tag">${esc(NIC_SHORT[nd.id]||nd.label)}</span></div>
+      <div class="cmp-top-col n"><span>💪 Nicholas</span><span class="train-tag">${esc(trainLabel(wd))}</span></div>
     </div>
     ${cards}
   `;
@@ -781,7 +796,21 @@ function renderOggi(){
 // ── NICHOLAS (piano settimana + consultazione) ──
 function renderNicholasTab(){
   const sched = `<div class="sched">${
-    NOEMI_DAYS.map(wd=>`
+    NOEMI_DAYS.map(wd=>{
+      const sp = getSport(wd);
+      const sportRow = getTrain(wd)==='palestra' ? `
+        <div class="sched-row sched-sub">
+          <span class="sched-day">↳</span>
+          <div class="sched-selwrap">
+            <select class="sched-sel" onchange="setSport('${wd}',this.value)">
+              <option value="" ${!sp?'selected':''}>Non specificato</option>
+              <option value="padel" ${sp==='padel'?'selected':''}>🏓 Padel</option>
+              <option value="nuoto" ${sp==='nuoto'?'selected':''}>🏊 Nuoto</option>
+              <option value="palestra" ${sp==='palestra'?'selected':''}>🏋️ Palestra</option>
+            </select>
+          </div>
+        </div>` : '';
+      return `
       <div class="sched-row">
         <span class="sched-day">${NOEMI_LABELS[wd]}${wd===todayId()?' •':''}</span>
         <div class="sched-selwrap">
@@ -789,7 +818,8 @@ function renderNicholasTab(){
             ${NICHOLAS.days.map(d=>`<option value="${d.id}" ${getTrain(wd)===d.id?'selected':''}>${esc(d.label)}</option>`).join('')}
           </select>
         </div>
-      </div>`).join('')
+      </div>${sportRow}`;
+    }).join('')
   }</div>`;
   const d = NICHOLAS.days.find(x=>x.id===nicType) || NICHOLAS.days[0];
   return `
@@ -927,7 +957,8 @@ window.setTab     = t => { tab=t; editMode=false; editBase=null; updateTabbar();
 window.setNicType = id => { nicType=id; renderContent(); };
 window.setOggiDay = id => { oggiDay=id; renderContent(); };
 window.setNoemiDay= id => { noemiDay=id; renderContent(); };
-window.setSchedule= (wd,type) => { schedule[wd]=type; try{ set(ref(db,'schedule/'+wd), type); }catch(e){} if(tab==='oggi') renderContent(); };
+window.setSchedule= (wd,type) => { schedule[wd]=type; try{ set(ref(db,'schedule/'+wd), type); }catch(e){} renderContent(); };
+window.setSport   = (wd,sport) => { nicSport[wd]=sport; try{ set(ref(db,'nicSport/'+wd), sport||null); }catch(e){} if(tab==='oggi') renderContent(); };
 window.setPlan    = (wd,key,val) => { if(!noemiPlan[wd]) noemiPlan[wd]={}; noemiPlan[wd][key]=val; try{ set(ref(db,'noemiPlan/'+wd+'/'+key), val); }catch(e){} toast('✓ Salvato'); };
 window.toggleMealFree = (wd,mk) => { const nv=!isMealFree(wd,mk); if(!noemiPlan[wd]) noemiPlan[wd]={}; noemiPlan[wd][mk+'_free']=nv; try{ set(ref(db,'noemiPlan/'+wd+'/'+mk+'_free'), nv); }catch(e){} renderContent(); };
 
