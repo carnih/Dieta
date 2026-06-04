@@ -120,6 +120,11 @@
     .meal-free.on{background:var(--e-g);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(219,39,119,.3)}
     .pl-free{font-size:13.5px;font-weight:700;color:var(--e);background:#FDF2F8;border-radius:10px;padding:10px 13px}
     .free-chip{display:inline-block;background:#FDF2F8;color:var(--e);font-size:12.5px;font-weight:800;padding:5px 12px;border-radius:20px}
+
+    /* ── RESET ── */
+    .reset-row{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 2px}
+    .reset-btn{border:1.5px solid #EBE3E7;background:#fff;color:#B6BCC6;font-size:12px;font-weight:700;padding:6px 13px;border-radius:50px;cursor:pointer}
+    .reset-btn:active{background:#F8F4F6;color:#9D5577}
     .pl-hello{font-size:13.5px;color:var(--e);font-weight:600;line-height:1.45;padding:2px 2px 8px;font-style:italic}
     .cmp-items .food-row{gap:6px}
     .cmp-items .cat-pill{padding:2px 7px 2px 6px;font-size:9px}
@@ -792,7 +797,8 @@ function renderNicholasTab(){
     <div class="page-sub">I tuoi allenamenti della settimana</div>
     <button class="be-open" onclick="openBase('nicholas')">⚙︎ Modifica dieta base</button>
     ${sched}
-    <div class="sec-title n" style="margin-top:12px">Consulta una giornata</div>
+    <div class="reset-row"><button class="reset-btn" onclick="resetNicWeek()">↺ Reset settimana</button></div>
+    <div class="sec-title n" style="margin-top:6px">Consulta una giornata</div>
     ${nicChips(nicType,'setNicType')}
     <div class="day-block">${renderNicholasDay(d)}</div>
   `;
@@ -830,6 +836,10 @@ function renderNoemiTab(){
     <div class="pl-hello">😅 Spoiler: la risposta NON è «non lo so»</div>
     <button class="be-open" onclick="openBase('noemi')">⚙︎ Modifica dieta base</button>
     ${noemiChips(noemiDay,'setNoemiDay')}
+    <div class="reset-row">
+      <button class="reset-btn" onclick="resetNoemiDay('${noemiDay}')">↺ Reset ${NOEMI_FULL[noemiDay]}</button>
+      <button class="reset-btn" onclick="resetNoemiWeek()">↺ Reset settimana</button>
+    </div>
     <div class="day-card" style="padding:14px 14px 6px">${meals}</div>
     <div class="sec-title e" style="margin-top:6px">📋 Promemoria settimana</div>
     <div class="pl-notes">${notes}</div>
@@ -920,6 +930,10 @@ window.setNoemiDay= id => { noemiDay=id; renderContent(); };
 window.setSchedule= (wd,type) => { schedule[wd]=type; try{ set(ref(db,'schedule/'+wd), type); }catch(e){} if(tab==='oggi') renderContent(); };
 window.setPlan    = (wd,key,val) => { if(!noemiPlan[wd]) noemiPlan[wd]={}; noemiPlan[wd][key]=val; try{ set(ref(db,'noemiPlan/'+wd+'/'+key), val); }catch(e){} toast('✓ Salvato'); };
 window.toggleMealFree = (wd,mk) => { const nv=!isMealFree(wd,mk); if(!noemiPlan[wd]) noemiPlan[wd]={}; noemiPlan[wd][mk+'_free']=nv; try{ set(ref(db,'noemiPlan/'+wd+'/'+mk+'_free'), nv); }catch(e){} renderContent(); };
+
+window.resetNicWeek   = () => { if(!confirm('Azzerare il piano allenamenti della settimana?')) return; schedule={}; try{ set(ref(db,'schedule'), null); }catch(e){} renderContent(); toast('Settimana azzerata'); };
+window.resetNoemiWeek = () => { if(!confirm('Azzerare tutte le scelte della settimana di Noemi?')) return; noemiPlan={}; try{ set(ref(db,'noemiPlan'), null); }catch(e){} renderContent(); toast('Settimana azzerata'); };
+window.resetNoemiDay  = wd => { if(!confirm('Azzerare le scelte di '+NOEMI_FULL[wd]+'?')) return; if(noemiPlan) delete noemiPlan[wd]; try{ set(ref(db,'noemiPlan/'+wd), null); }catch(e){} renderContent(); toast(NOEMI_FULL[wd]+' azzerato'); };
 
 function updateTabbar(){
   document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('act', b.dataset.tab===tab));
