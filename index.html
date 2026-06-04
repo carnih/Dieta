@@ -19,7 +19,9 @@
     }
     body{
       font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
-      background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px;
+      background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;
+      padding-bottom:calc(86px + env(safe-area-inset-bottom,0px));
+      overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;
     }
 
     /* ── TAB BAR ── */
@@ -63,7 +65,7 @@
 
     /* ── OGGI: header colonne (una volta) ── */
     .cmp-top{
-      position:sticky;top:0;z-index:10;display:grid;grid-template-columns:1fr 1fr;
+      position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:grid;grid-template-columns:1fr 1fr;
       background:var(--bg);padding:8px 2px 9px;margin-bottom:-2px;
     }
     .cmp-top-col{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;display:flex;flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap}
@@ -155,7 +157,7 @@
     .chip.sel-e{border-color:var(--e);background:var(--e-l);color:var(--e);font-weight:700}
 
     /* ── CONTENT ── */
-    .content{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+    .content{display:flex;flex-direction:column;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) 14px calc(16px + env(safe-area-inset-left,0px))}
     .day-block{display:flex;flex-direction:column;gap:11px;scroll-margin-top:80px}
     .day-head{display:flex;align-items:center;gap:8px;padding:0 2px}
     .day-name{font-size:19px;font-weight:800;letter-spacing:-.4px;color:#1F2937}
