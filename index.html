@@ -630,8 +630,8 @@ function renderInteg(integ){
 // ── Nicholas ──
 function renderNicholasDay(day){
   let html = renderInteg(day.integ);
-  const sections = day.pasti.map(p=>`
-    <div class="meal-sec">
+  html += day.pasti.map(p=>`
+    <div class="day-card">
       <div class="meal-sec-head">
         <span class="meal-sec-icon">${p.icon}</span>
         <span class="meal-sec-title">${esc(p.nome)}</span>
@@ -639,7 +639,6 @@ function renderNicholasDay(day){
       </div>
       <div class="meal-sec-body">${p.items.map(renderItem).join('')}</div>
     </div>`).join('');
-  html += `<div class="day-card">${sections}</div>`;
   if(day.pastoLibero) html += `<div class="banner yellow">${esc(day.pastoLibero)}</div>`;
   return html;
 }
@@ -832,8 +831,8 @@ function renderNoemiTab(){
     const note = noteFor(noemiDay, mk);
     const recipe = `<input class="pl-recipe" value="${esc(note)}" placeholder="📝 Ricetta / note (facoltativo)" onchange="setPlan('${noemiDay}','${mk}_note',this.value)">`;
     const body = mfree ? `<div class="pl-free">🎉 Pasto libero</div>` : `${slots}${fixed}${recipe}`;
-    return `<div class="pl-meal">
-      <div class="meal-sec-head" style="padding:0 0 9px">
+    return `<div class="day-card" style="padding:13px 14px 12px">
+      <div class="meal-sec-head" style="padding:0 0 10px">
         <span class="meal-sec-icon">${m.icon}</span><span class="meal-sec-title">${m.nome}</span>
         <button class="meal-free ${mfree?'on':''}" onclick="toggleMealFree('${noemiDay}','${mk}')">🎉 libero</button>
       </div>
@@ -851,7 +850,7 @@ function renderNoemiTab(){
       <button class="reset-btn" onclick="resetNoemiDay('${noemiDay}')">↺ Reset ${NOEMI_FULL[noemiDay]}</button>
       <button class="reset-btn" onclick="resetNoemiWeek()">↺ Reset settimana</button>
     </div>
-    <div class="day-card" style="padding:14px 14px 6px">${meals}</div>
+    ${meals}
     <div class="sec-title e" style="margin-top:6px">📋 Promemoria settimana</div>
     <div class="pl-notes">${notes}</div>
     <div class="sec-title e" style="margin-top:6px">🔎 Alimenti ammessi</div>
