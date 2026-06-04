@@ -21,28 +21,37 @@
     body{
       font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
       background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;
-      padding-bottom:calc(86px + env(safe-area-inset-bottom,0px));
+      padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));
       overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;
     }
 
     /* ── TAB BAR ── */
-    #tabbar{
-      position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
-      background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
-      border-top:1px solid rgba(0,0,0,.07);
-      padding:7px 6px calc(7px + env(safe-area-inset-bottom,0px));
+    /* ── BARRA LATERALE ── */
+    #rail{
+      position:fixed;left:0;top:0;bottom:0;z-index:41;width:62px;overflow:hidden;
+      background:#fff;border-right:1px solid rgba(0,0,0,.07);
+      display:flex;flex-direction:column;gap:5px;
+      padding:calc(12px + env(safe-area-inset-top,0px)) 9px calc(12px + env(safe-area-inset-bottom,0px));
+      transition:width .22s cubic-bezier(.4,0,.2,1);
     }
-    #tabbar button{
-      flex:1;border:none;background:transparent;cursor:pointer;
-      display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;
-      font-size:11px;font-weight:700;color:#A3ABB6;transition:color .15s;
+    #rail.exp{width:206px;box-shadow:8px 0 30px rgba(0,0,0,.14)}
+    .rail-exp{flex-shrink:0;border:none;background:transparent;color:#9CA3AF;font-size:19px;height:42px;border-radius:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:44px}
+    .rail-exp:active{background:#F1F5F9}
+    #rail button[data-tab]{
+      flex-shrink:0;border:none;background:transparent;cursor:pointer;color:#9CA3AF;
+      display:flex;align-items:center;gap:13px;height:50px;border-radius:14px;padding:0 10px;
+      white-space:nowrap;font-weight:700;font-size:15px;letter-spacing:-.2px;transition:background .15s,color .15s;
     }
-    #tabbar button .ic{font-size:21px;line-height:1;filter:grayscale(.4);opacity:.7;transition:all .15s}
-    #tabbar button.act{color:#1F2937}
-    #tabbar button.act .ic{filter:none;opacity:1}
-    #tabbar button.act[data-tab="nicholas"]{color:var(--n)}
-    #tabbar button.act[data-tab="noemi"]{color:var(--e)}
-    #tabbar button.act[data-tab="spesa"]{color:#16A34A}
+    #rail button[data-tab] .ic{font-size:23px;flex-shrink:0;width:24px;text-align:center;filter:grayscale(.3);transition:filter .15s}
+    #rail button[data-tab] .lbl{opacity:0;transition:opacity .18s}
+    #rail.exp button[data-tab] .lbl{opacity:1}
+    #rail button.act{background:#F1F5F9;color:#1F2937}
+    #rail button.act .ic{filter:none}
+    #rail button.act[data-tab="nicholas"]{background:var(--n-l);color:var(--n)}
+    #rail button.act[data-tab="noemi"]{background:var(--e-l);color:var(--e)}
+    #rail button.act[data-tab="spesa"]{background:#E9F9EE;color:var(--grn)}
+    #scrim{position:fixed;inset:0;z-index:40;background:rgba(15,23,42,.28);opacity:0;pointer-events:none;transition:opacity .2s}
+    body.nav-open #scrim{opacity:1;pointer-events:auto}
 
     /* ── PAGE TITLES ── */
     .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;padding:8px 2px 0;color:#111827}
@@ -140,36 +149,36 @@
     .sp-circle.big{width:30px;height:30px}
     .sp-circle.big.on::after{left:9px;top:5px;width:7px;height:13px}
 
-    /* master block */
-    .sp-master{
-      display:flex;align-items:center;gap:12px;
-      background:#fff;border-radius:var(--r);padding:14px 16px;
-      box-shadow:0 1px 6px rgba(0,0,0,.07);
-    }
-    .sp-master-txt{flex:1;min-width:0}
-    .sp-master-title{font-size:16px;font-weight:800;color:#1F2937;letter-spacing:-.3px}
-    .sp-master-sub{font-size:12.5px;color:#9CA3AF;font-weight:600;margin-top:1px}
-    .sp-gen{flex-shrink:0;border:none;background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;font-size:13.5px;font-weight:800;padding:10px 16px;border-radius:50px;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,.35)}
-    .sp-gen:active{transform:scale(.96)}
+    /* toolbar */
+    .shop-bar{display:flex;align-items:center;gap:10px}
+    .shop-prog{flex:1;min-width:0}
+    .shop-prog-txt{font-size:12.5px;font-weight:700;color:#9CA3AF;margin-bottom:5px}
+    .shop-prog-track{height:6px;background:#E7EAEF;border-radius:50px;overflow:hidden}
+    .shop-prog-fill{height:100%;background:linear-gradient(90deg,#16A34A,#4ADE80);border-radius:50px;transition:width .3s}
+    .shop-tool{flex-shrink:0;border:none;background:#fff;color:#6B7280;font-size:14px;font-weight:700;padding:10px 14px;border-radius:50px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+    .shop-tool.gen{background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;box-shadow:0 4px 14px rgba(22,163,74,.35)}
+    .shop-tool:active{transform:scale(.95)}
 
-    /* card categoria */
-    .sp-card{background:#fff;border-radius:var(--r);box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
-    .sp-cat-head{display:flex;align-items:center;gap:10px;padding:12px 15px;border-bottom:1px solid var(--border)}
-    .sp-cat-label{font-size:13px;font-weight:800;color:#374151;letter-spacing:.01em}
-    .sp-cat-count{margin-left:auto;font-size:11px;font-weight:800;color:var(--grn);background:#E9F9EE;border-radius:20px;padding:2px 9px}
-    .sp-list{padding:4px 15px}
-    .sp-item{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid #F5F6F8}
-    .sp-item:last-child{border-bottom:none}
-    .sp-text{flex:1;font-size:14.5px;color:#374151;line-height:1.35}
-    .sp-item.done .sp-text{text-decoration:line-through;color:#C5CAD2}
-    .sp-del{flex-shrink:0;border:none;background:transparent;color:#D7DCE2;font-size:13px;cursor:pointer;padding:4px 2px}
-    .sp-del:active{color:#9CA3AF}
-    .sp-empty{font-size:13px;color:#C9D0D9;padding:8px 0}
-    .sp-add{display:flex;gap:8px;padding:10px 15px 13px}
-    .sp-in{flex:1;min-width:0;font-family:inherit;font-size:14px;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:11px;outline:none;background:#FAFBFC}
-    .sp-in:focus{border-color:var(--grn);background:#fff}
-    .sp-addbtn{flex-shrink:0;width:40px;border:none;background:var(--grn);color:#fff;font-size:20px;font-weight:700;border-radius:11px;cursor:pointer}
-    .sp-addbtn:active{transform:scale(.94)}
+    /* lista (stile Listonic): un'unica superficie, sezioni leggere */
+    .shop{background:#fff;border-radius:var(--r);box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;padding:4px 0}
+    .shop-sec{padding:0}
+    .shop-sec-h{display:flex;align-items:center;gap:11px;padding:14px 16px 7px}
+    .shop-sec-name{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#AEB4BE}
+    .shop-sec-n{margin-left:auto;font-size:11px;font-weight:800;color:var(--grn);background:#E9F9EE;border-radius:20px;padding:2px 9px}
+    .shop-row{display:flex;align-items:center;gap:13px;padding:11px 16px;border-top:1px solid #F4F5F7}
+    .shop-name{flex:1;font-size:15.5px;color:#1F2937;line-height:1.3}
+    .shop-row.done .shop-name{text-decoration:line-through;color:#C5CAD2}
+    .shop-x{flex-shrink:0;border:none;background:transparent;color:#DDE1E6;font-size:14px;cursor:pointer;padding:4px;opacity:0;transition:opacity .15s}
+    .shop-row:hover .shop-x,.shop-row.done .shop-x{opacity:1}
+    .shop-addrow{display:flex;align-items:center;gap:11px;padding:8px 16px 12px}
+    .shop-plus{width:25px;text-align:center;color:#C5CAD2;font-size:20px;font-weight:300;flex-shrink:0}
+    .shop-in{flex:1;min-width:0;border:none;outline:none;font-family:inherit;font-size:14.5px;color:#374151;background:transparent;padding:4px 0}
+    .shop-in::placeholder{color:#C5CAD2}
+    .shop-empty{text-align:center;color:#AEB4BE;padding:38px 16px;font-size:18px;font-weight:700}
+    .shop-empty div{margin-top:8px}
+    .shop-empty span{display:block;font-size:13px;font-weight:500;color:#C5CAD2;margin-top:4px}
+    .sp-circle.sm{width:21px;height:21px;border-width:2px}
+    .sp-circle.sm.on::after{left:5.5px;top:2.5px;width:5px;height:9px}
     .pl-hello{font-size:13.5px;color:var(--e);font-weight:600;line-height:1.45;padding:2px 2px 8px;font-style:italic}
     .cmp-items .food-row{gap:6px}
     .cmp-items .cat-pill{padding:2px 7px 2px 6px;font-size:9px}
@@ -207,7 +216,7 @@
     .chip.sel-e{border-color:var(--e);background:var(--e-l);color:var(--e);font-weight:700}
 
     /* ── CONTENT ── */
-    .content{display:flex;flex-direction:column;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) 14px calc(16px + env(safe-area-inset-left,0px))}
+    .content{display:flex;flex-direction:column;gap:12px;margin-left:62px;padding:calc(14px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) 14px calc(14px + env(safe-area-inset-left,0px))}
     .day-block{display:flex;flex-direction:column;gap:11px;scroll-margin-top:80px}
     .day-head{display:flex;align-items:center;gap:8px;padding:0 2px}
     .day-name{font-size:19px;font-weight:800;letter-spacing:-.4px;color:#1F2937}
@@ -335,11 +344,13 @@
 
 <div class="content" id="content"></div>
 
-<nav id="tabbar">
-  <button data-tab="oggi"     onclick="setTab('oggi')"><span class="ic">🍽️</span>Dieta</button>
-  <button data-tab="nicholas" onclick="setTab('nicholas')"><span class="ic">🏃</span>Nicholas</button>
-  <button data-tab="noemi"    onclick="setTab('noemi')"><span class="ic">🍓</span>Noemi</button>
-  <button data-tab="spesa"    onclick="setTab('spesa')"><span class="ic">🛒</span>Spesa</button>
+<div id="scrim" onclick="closeNav()"></div>
+<nav id="rail">
+  <button class="rail-exp" onclick="toggleNav()" aria-label="menu">☰</button>
+  <button data-tab="oggi"     onclick="setTab('oggi')"><span class="ic">🍽️</span><span class="lbl">Dieta</span></button>
+  <button data-tab="nicholas" onclick="setTab('nicholas')"><span class="ic">🏃</span><span class="lbl">Nicholas</span></button>
+  <button data-tab="noemi"    onclick="setTab('noemi')"><span class="ic">🍓</span><span class="lbl">Noemi</span></button>
+  <button data-tab="spesa"    onclick="setTab('spesa')"><span class="ic">🛒</span><span class="lbl">Spesa</span></button>
 </nav>
 <div id="toast"></div>
 
@@ -1079,46 +1090,44 @@ function spesaCounts(){ let total=0,done=0; SPESA_CATS.forEach(c=>(spesa[c.key]|
 
 function renderSpesaTab(){
   const {total,done} = spesaCounts();
-  const allDone = total>0 && done===total;
-  const master = `
-    <div class="sp-master">
-      <button class="sp-circle big ${allDone?'on':''}" onclick="toggleAllSpesa()" aria-label="seleziona tutto"></button>
-      <div class="sp-master-txt">
-        <div class="sp-master-title">La lista</div>
-        <div class="sp-master-sub">${total ? done+' / '+total+' presi' : 'ancora vuota'}</div>
-      </div>
-      <button class="sp-gen" onclick="generaSpesa()">✨ Genera</button>
-    </div>`;
+  const pct = total ? Math.round(done/total*100) : 0;
 
-  const cards = SPESA_CATS.map(c=>{
-    const items = (spesa[c.key]||[]);
-    const allc = items.length>0 && items.every(i=>i.d);
+  const sections = SPESA_CATS.map(c=>{
+    let items = (spesa[c.key]||[]).map((it,idx)=>({...it, idx}));
+    items.sort((a,b)=>(a.d?1:0)-(b.d?1:0));   // i presi vanno in fondo
+    const allc  = items.length>0 && items.every(i=>i.d);
     const toBuy = items.filter(i=>!i.d).length;
-    const rows = items.length ? items.map((it,i)=>`
-      <div class="sp-item ${it.d?'done':''}">
-        <button class="sp-circle ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${i})"></button>
-        <span class="sp-text">${esc(it.t)}</span>
-        <button class="sp-del" onclick="delSpesa('${c.key}',${i})">✕</button>
-      </div>`).join('') : `<div class="sp-empty">vuoto</div>`;
-    return `<div class="sp-card">
-      <div class="sp-cat-head">
-        <button class="sp-circle ${allc?'on':''}" onclick="toggleCatAll('${c.key}')" aria-label="tutto"></button>
-        <span class="sp-cat-label">${esc(c.label)}</span>
-        ${toBuy ? `<span class="sp-cat-count">${toBuy}</span>` : ''}
+    const rows = items.map(it=>`
+      <div class="shop-row ${it.d?'done':''}">
+        <button class="sp-circle ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${it.idx})"></button>
+        <span class="shop-name">${esc(it.t)}</span>
+        <button class="shop-x" onclick="delSpesa('${c.key}',${it.idx})">✕</button>
+      </div>`).join('');
+    return `<div class="shop-sec">
+      <div class="shop-sec-h">
+        <button class="sp-circle sm ${allc?'on':''}" onclick="toggleCatAll('${c.key}')" aria-label="tutto"></button>
+        <span class="shop-sec-name">${esc(c.label)}</span>
+        ${toBuy ? `<span class="shop-sec-n">${toBuy}</span>` : ''}
       </div>
-      <div class="sp-list">${rows}</div>
-      <div class="sp-add">
-        <input class="sp-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
-        <button class="sp-addbtn" onclick="addSpesa('${c.key}')">+</button>
+      ${rows}
+      <div class="shop-addrow">
+        <span class="shop-plus">+</span>
+        <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
       </div>
     </div>`;
   }).join('');
 
   return `
     <div class="page-title">Spesa</div>
-    <div class="page-sub">Lista condivisa · spunta ciò che hai già</div>
-    ${master}
-    ${cards}
+    <div class="shop-bar">
+      <div class="shop-prog">
+        <div class="shop-prog-txt">${total ? done+' / '+total+' presi' : 'lista vuota'}</div>
+        <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
+      </div>
+      <button class="shop-tool gen" onclick="generaSpesa()">✨ Genera</button>
+      <button class="shop-tool" onclick="svuotaSpesa()" aria-label="svuota">🗑</button>
+    </div>
+    <div class="shop">${sections}</div>
   `;
 }
 
@@ -1127,7 +1136,7 @@ window.addSpesa = (cat)=>{ const el=document.getElementById('spin-'+cat); const 
 window.toggleSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); if(!list[i])return; list[i]={...list[i],d:!list[i].d}; spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.delSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); list.splice(i,1); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.toggleCatAll = (cat)=>{ const list=(spesa[cat]||[]).slice(); if(!list.length)return; const all=list.every(i=>i.d); list.forEach(i=>i.d=!all); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
-window.toggleAllSpesa = ()=>{ const {total,done}=spesaCounts(); const target=!(total>0&&done===total); SPESA_CATS.forEach(c=>{ const list=(spesa[c.key]||[]); if(!list.length)return; list.forEach(i=>i.d=target); spesa[c.key]=list; saveSpesaCat(c.key); }); renderContent(); };
+window.svuotaSpesa = ()=>{ if(!confirm('Svuotare tutta la lista della spesa?')) return; SPESA_CATS.forEach(c=>{ spesa[c.key]=[]; try{ set(ref(db,'spesa/'+c.key), null); }catch(e){} }); renderContent(); toast('Lista svuotata'); };
 
 window.generaSpesa = ()=>{
   if(!confirm('Genera la lista dalla dieta della settimana (Noemi + tuo piano)?\nAggiunge agli elenchi, non cancella nulla.')) return;
@@ -1164,7 +1173,9 @@ window.generaSpesa = ()=>{
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editMode=false; editBase=null; updateTabbar(); renderContent(); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editMode=false; editBase=null; closeNav(); updateTabbar(); renderContent(); window.scrollTo(0,0); };
+window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
+window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
 window.setOggiDay = id => { oggiDay=id; renderContent(); };
 window.setNoemiDay= id => { noemiDay=id; renderContent(); };
@@ -1177,7 +1188,7 @@ window.resetNoemiWeek = () => { if(!confirm('Azzerare tutte le scelte della sett
 window.resetNoemiDay  = wd => { if(!confirm('Azzerare le scelte di '+NOEMI_FULL[wd]+'?')) return; if(noemiPlan) delete noemiPlan[wd]; try{ set(ref(db,'noemiPlan/'+wd), null); }catch(e){} renderContent(); toast(NOEMI_FULL[wd]+' azzerato'); };
 
 function updateTabbar(){
-  document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('act', b.dataset.tab===tab));
+  document.querySelectorAll('#rail button[data-tab]').forEach(b=>b.classList.toggle('act', b.dataset.tab===tab));
 }
 
 function renderContent(){
