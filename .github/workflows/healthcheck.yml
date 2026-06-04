@@ -1,0 +1,56 @@
+name: Health check sito Dieta
+
+# Gira nel cloud di GitHub: il PC puo' essere spento.
+# Email automatica SOLO se il job fallisce (= problema trovato).
+on:
+  schedule:
+    - cron: '0 5 * * *'      # ~07:00 Europe/Rome in estate (06:00 in inverno)
+  workflow_dispatch: {}        # permette l'avvio manuale dalla tab "Actions" per testare
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Controlla il sito live
+        run: |
+          python3 - <<'PY'
+          import urllib.request, re, sys
+          URL = "https://dietacarstr.netlify.app/"
+          problems = []
+          try:
+              req = urllib.request.Request(URL, headers={'User-Agent': 'dieta-healthcheck'})
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  code = r.status
+                  html = r.read().decode('utf-8', 'ignore')
+          except Exception as e:
+              print("Sito irraggiungibile:", e)
+              sys.exit(1)
+
+          if code != 200:
+              problems.append(f"HTTP {code} invece di 200")
+          if len(html) < 500:
+              problems.append("HTML troppo corto o vuoto")
+
+          for k in ["Nicholas", "Noemi", "firebasejs", "databaseURL"]:
+              if k not in html:
+                  problems.append(f"manca '{k}' nella pagina")
+
+          m = re.search(r'<script type="module">(.*?)</script>', html, re.S)
+          if not m:
+              problems.append("blocco <script type=module> assente")
+          else:
+              js = m.group(1)
+              for a, b in [('{', '}'), ('(', ')'), ('[', ']')]:
+                  if js.count(a) != js.count(b):
+                      problems.append(f"parentesi {a}{b} sbilanciate")
+              if js.count('`') % 2:
+                  problems.append("backtick dispari (template literal rotto)")
+
+          if problems:
+              print("⚠️  PROBLEMI sul sito Dieta:")
+              for p in problems:
+                  print("  -", p)
+              sys.exit(1)   # fallisce -> GitHub invia email
+
+          print("✅ Sito Dieta: tutto ok")
+          PY
