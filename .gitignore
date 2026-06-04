@@ -1,0 +1,10 @@
+# Dati privati (scan/PDF del nutrizionista) — NON pubblicare
+file origine/
+
+# Config locale dev
+.claude/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

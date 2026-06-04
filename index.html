@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Dieta">
+  <meta name="theme-color" content="#F1F5F9">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%BD%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <title>Dieta</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    :root{
+      --n:#3B82F6;--n-l:#EFF6FF;--n-g:linear-gradient(135deg,#2563EB,#60A5FA);
+      --e:#E879A0;--e-l:#FDF2F8;--e-g:linear-gradient(135deg,#DB2777,#F472B6);
+      --bg:#F1F5F9;--card:#fff;--text:#111827;--muted:#9CA3AF;--border:#F0F0F0;--r:18px;
+    }
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
+      background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px;
+    }
+
+    /* ── TAB BAR ── */
+    #tabbar{
+      position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
+      background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+      border-top:1px solid rgba(0,0,0,.07);
+      padding:7px 6px calc(7px + env(safe-area-inset-bottom,0px));
+    }
+    #tabbar button{
+      flex:1;border:none;background:transparent;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;
+      font-size:11px;font-weight:700;color:#A3ABB6;transition:color .15s;
+    }
+    #tabbar button .ic{font-size:21px;line-height:1;filter:grayscale(.4);opacity:.7;transition:all .15s}
+    #tabbar button.act{color:#1F2937}
+    #tabbar button.act .ic{filter:none;opacity:1}
+    #tabbar button.act[data-tab="nicholas"]{color:var(--n)}
+    #tabbar button.act[data-tab="noemi"]{color:var(--e)}
+
+    /* ── PAGE TITLES ── */
+    .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;padding:8px 2px 0;color:#111827}
+    .page-sub{font-size:14px;color:#9CA3AF;font-weight:600;padding:2px 2px 6px}
+    .sec-title{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:8px 2px 2px}
+    .sec-title.n{color:var(--n)}
+    .sec-title.e{color:var(--e)}
+
+    /* ── MINI CALENDARIO (stile iOS) ── */
+    .cal{display:flex;gap:4px;padding:4px 0 2px;justify-content:flex-start}
+    .cal-day{flex:0 0 auto;width:40px;border:none;background:transparent;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+    .cal-wd{font-size:11px;font-weight:600;color:#B6BCC6;letter-spacing:.01em}
+    .cal-dt{
+      font-size:16px;font-weight:700;color:#374151;
+      width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;
+      transition:all .18s;
+    }
+    .cal-day.today .cal-dt{color:var(--e)}
+    .cal-day.today .cal-wd{color:var(--e)}
+    .cal-day.sel .cal-dt{background:var(--e-g);color:#fff;font-weight:800;box-shadow:0 5px 14px rgba(219,39,119,.4)}
+    .cal-day.sel .cal-wd{color:var(--e);font-weight:800}
+
+    /* ── OGGI: header colonne (una volta) ── */
+    .cmp-top{
+      position:sticky;top:0;z-index:10;display:grid;grid-template-columns:1fr 1fr;
+      background:var(--bg);padding:8px 2px 9px;margin-bottom:-2px;
+    }
+    .cmp-top-col{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;display:flex;flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap}
+    .cmp-top-col.e{color:var(--e)}
+    .cmp-top-col.n{color:var(--n);padding-left:13px}
+    .train-tag{display:inline-block;width:fit-content;font-size:10px;font-weight:800;background:var(--n-l);color:var(--n);padding:2px 9px;border-radius:20px;text-transform:none;letter-spacing:0}
+
+    /* ── OGGI: card di confronto a 2 colonne ── */
+    .cmp-card{background:#fff;border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
+    .cmp-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#9CA3AF}
+    .cmp-head .em{font-size:15px}
+    .cmp-cols{display:grid;grid-template-columns:1fr 1fr}
+    .cmp-col{padding:11px 11px;min-width:0}
+    .cmp-col + .cmp-col{border-left:1px solid var(--border)}
+    .cmp-items{display:flex;flex-direction:column;gap:8px}
+
+    /* ── PIANIFICATORE SETTIMANA (Nicholas) ── */
+    .sched{display:flex;flex-direction:column;gap:7px;background:#fff;border-radius:16px;padding:11px 12px;box-shadow:0 1px 6px rgba(0,0,0,.07)}
+    .sched-row{display:flex;align-items:center;gap:10px}
+    .sched-day{width:38px;font-size:13px;font-weight:800;color:#374151;flex-shrink:0}
+    .sched-selwrap{flex:1;position:relative;min-width:0}
+    .sched-sel{width:100%;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13.5px;font-weight:600;color:#1F2937;padding:9px 30px 9px 12px;border:1.5px solid #E5E7EB;border-radius:10px;background:#FAFAFA;outline:none}
+    .sched-sel:focus{border-color:var(--n)}
+    .sched-selwrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:11px;pointer-events:none}
+
+    /* ── PIANIFICATORE NOEMI ── */
+    .pl-meal{padding:11px 0;border-bottom:1px solid var(--border)}
+    .pl-meal:last-child{border-bottom:none}
+    .pl-slot{display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+    .pl-fixed{font-size:12px;color:#9CA3AF;padding:1px 0 3px 2px}
+    .pl-notes{background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 1px 6px rgba(0,0,0,.07);display:flex;flex-direction:column;gap:7px}
+    .pl-note{font-size:12.5px;color:#4B5563;line-height:1.45}
+    .pl-ref{font-size:12px;color:#6B7280;line-height:1.5}
+    .pl-ref b{color:#374151}
+    .pl-recipe{width:100%;margin-top:6px;font-family:inherit;font-size:13px;padding:9px 11px;border:1.5px dashed #E5C5D5;border-radius:10px;background:#FFF9FC;color:#374151;outline:none}
+    .pl-recipe:focus{border-style:solid;border-color:var(--e);background:#fff}
+    .pl-recipe::placeholder{color:#C9A6BA}
+    .recipe-note{margin-top:2px;font-size:12px;color:#9D5577;background:#FDF2F8;border-radius:8px;padding:6px 9px;line-height:1.4;font-style:italic}
+
+    /* ── EDITOR DIETA BASE ── */
+    .be-open{border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;cursor:pointer;padding:0 2px 8px;text-decoration:underline}
+    .be-done{border:1.5px solid #E5E7EB;background:#fff;border-radius:50px;padding:8px 18px;font-size:13px;font-weight:700;color:#374151;cursor:pointer;margin-bottom:4px;align-self:flex-start}
+    .be-done:active{background:#F3F4F6}
+    .be-slot{margin-bottom:13px}
+    .be-slot-h{font-size:11px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+    .be-opt{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+    .be-in{flex:1;min-width:0;font-family:inherit;font-size:13px;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:9px;background:#fff;outline:none}
+    .be-in:focus{border-color:var(--n)}
+
+    /* ── PASTO LIBERO ── */
+    .meal-free{margin-left:auto;border:1.5px solid #F0D9E4;background:#fff;color:var(--e);border-radius:50px;padding:4px 11px;font-size:11px;font-weight:800;cursor:pointer}
+    .meal-free.on{background:var(--e-g);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(219,39,119,.3)}
+    .pl-free{font-size:13.5px;font-weight:700;color:var(--e);background:#FDF2F8;border-radius:10px;padding:10px 13px}
+    .free-chip{display:inline-block;background:#FDF2F8;color:var(--e);font-size:12.5px;font-weight:800;padding:5px 12px;border-radius:20px}
+    .pl-hello{font-size:13.5px;color:var(--e);font-weight:600;line-height:1.45;padding:2px 2px 8px;font-style:italic}
+    .cmp-items .food-row{gap:6px}
+    .cmp-items .cat-pill{padding:2px 7px 2px 6px;font-size:9px}
+    .cmp-items .food-text{font-size:13px;line-height:1.45}
+    .cmp-items .choice-head{flex-wrap:wrap;gap:6px;padding:8px 9px}
+    .cmp-items .choice-count{margin-left:0;font-size:10.5px}
+    .cmp-items .choice-opt{font-size:12.5px;padding:6px 9px}
+    .cmp-items .extra-item{font-size:12px;padding:7px 10px}
+
+    /* ── HEADER ── */
+    .header{
+      position:sticky;top:0;z-index:20;
+      background:rgba(241,245,249,.94);
+      backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+      padding:14px 16px 12px;border-bottom:1px solid rgba(0,0,0,.05);
+    }
+    .toggle{display:flex;background:#E2E8F0;border-radius:50px;padding:3px;gap:3px}
+    .toggle button{
+      flex:1;padding:10px 12px;border:none;border-radius:50px;
+      font-size:15px;font-weight:600;cursor:pointer;color:var(--muted);
+      transition:all .22s cubic-bezier(.4,0,.2,1);background:transparent;
+    }
+    .toggle button.on-n{background:var(--n);color:#fff;box-shadow:0 2px 10px rgba(59,130,246,.35)}
+    .toggle button.on-e{background:var(--e);color:#fff;box-shadow:0 2px 10px rgba(219,39,119,.3)}
+
+    /* ── CHIPS ── */
+    .chips-wrap{padding:14px 16px 2px;overflow-x:auto;scrollbar-width:none}
+    .chips-wrap::-webkit-scrollbar{display:none}
+    .chips{display:flex;gap:7px;white-space:nowrap}
+    .chip{
+      padding:7px 15px;border-radius:50px;border:1.5px solid #E2E8F0;background:#fff;
+      font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--muted);user-select:none;
+    }
+    .chip.sel-n{border-color:var(--n);background:var(--n-l);color:var(--n);font-weight:700}
+    .chip.sel-e{border-color:var(--e);background:var(--e-l);color:var(--e);font-weight:700}
+
+    /* ── CONTENT ── */
+    .content{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+    .day-block{display:flex;flex-direction:column;gap:11px;scroll-margin-top:80px}
+    .day-head{display:flex;align-items:center;gap:8px;padding:0 2px}
+    .day-name{font-size:19px;font-weight:800;letter-spacing:-.4px;color:#1F2937}
+    .day-edit{
+      margin-left:auto;border:1.5px solid #F0D9E4;background:#fff;color:var(--e);
+      font-size:13px;font-weight:700;padding:7px 15px;border-radius:50px;cursor:pointer;
+      display:flex;align-items:center;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,.05);
+    }
+    .day-edit:active{background:#FDF2F8}
+    .day-edit svg{width:14px;height:14px;stroke:var(--e);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .edit-title{font-size:19px;font-weight:800;letter-spacing:-.4px;color:var(--e);padding:0 2px 4px}
+
+    /* ── INTEGRATION BANNER ── */
+    .integ-banner{border-radius:var(--r);padding:16px;color:#fff;display:flex;flex-direction:column;gap:8px}
+    .integ-head{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-bottom:2px}
+    .integ-row{display:flex;align-items:center;gap:8px}
+    .integ-pill{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.2);border-radius:20px;padding:3px 8px;flex-shrink:0}
+    .integ-val{font-size:13px;line-height:1.5;opacity:.95}
+
+    /* ── DAY CARD ── */
+    .day-card{background:var(--card);border-radius:var(--r);box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
+    .meal-sec{border-bottom:1px solid var(--border)}
+    .meal-sec:last-child{border-bottom:none}
+    .meal-sec-head{display:flex;align-items:center;gap:9px;padding:13px 16px 0}
+    .meal-sec-icon{font-size:17px;line-height:1}
+    .meal-sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#9CA3AF}
+    .meal-sec-note{font-size:10px;color:#C9D0D9;margin-left:auto;font-style:italic}
+    .meal-sec-body{padding:11px 16px 14px;display:flex;flex-direction:column;gap:9px}
+
+    /* ── CATEGORY PILL ── */
+    .cat-pill{
+      display:inline-flex;align-items:center;gap:3px;flex-shrink:0;
+      padding:3px 9px 3px 7px;border-radius:20px;
+      font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;
+    }
+    .cat-pill.carbo  {background:#FEF3C7;color:#92400E}
+    .cat-pill.prot   {background:#EDE9FE;color:#5B21B6}
+    .cat-pill.frutta {background:#FCE7F3;color:#BE185D}
+    .cat-pill.latte  {background:#DBEAFE;color:#1E40AF}
+    .cat-pill.grasso {background:#FFEDD5;color:#9A3412}
+    .cat-pill.verdura{background:#D1FAE5;color:#065F46}
+    .cat-pill.bevanda{background:#F1F5F9;color:#64748B}
+    .cat-pill.olio   {background:#ECFCCB;color:#4D7C0F}
+    .cat-pill.integra{background:#CCFBF1;color:#0F766E}
+    .cat-pill.scegli {background:#F3F4F6;color:#6B7280}
+    .cat-pill.altro  {background:#F3F4F6;color:#6B7280}
+
+    /* ── SINGLE FOOD ROW ── */
+    .food-row{display:flex;gap:9px;align-items:flex-start}
+    .food-row .cat-pill{margin-top:2px}
+    .food-text{font-size:14px;line-height:1.5;color:#374151}
+
+    /* ── CHOICE (box a discesa) ── */
+    .choice{border:1.5px solid #EEF0F3;border-radius:13px;overflow:hidden}
+    .choice-head{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;user-select:none;transition:background .15s}
+    .choice-head:active{background:#FAFAFA}
+    .choice-count{font-size:11.5px;color:#B6BCC6;margin-left:auto;font-weight:500}
+    .choice-arrow{font-size:9px;color:#C2C8D0;transition:transform .24s;flex-shrink:0}
+    .choice.open .choice-arrow{transform:rotate(180deg)}
+    .choice-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .26s ease}
+    .choice.open .choice-body{grid-template-rows:1fr}
+    .choice-inner{overflow:hidden;display:flex;flex-direction:column;gap:3px;padding:0 9px}
+    .choice.open .choice-inner{padding:0 9px 10px}
+    .choice-opt{font-size:13.5px;color:#374151;padding:7px 11px;background:#FAFBFC;border-radius:9px;line-height:1.4;display:flex;gap:8px;align-items:baseline}
+    .choice-opt::before{content:'';width:5px;height:5px;border-radius:50%;background:#D5DAE2;flex-shrink:0;transform:translateY(-1px)}
+    .choice-shared{font-size:12.5px;color:#6B7280;padding:6px 11px 0}
+
+    /* ── EXTRA / BANNERS ── */
+    .extra-item{margin-top:2px;padding:8px 12px;background:#FFF7ED;border-radius:10px;border:1px solid #FED7AA;font-size:13px;color:#92400E;line-height:1.4}
+    .banner{border-radius:var(--r);padding:13px 16px;font-size:13.5px;font-weight:500}
+    .banner.yellow{background:#FEFCE8;border:1.5px solid #FDE047;color:#854D0E}
+
+    /* ── NOEMI EDIT ── */
+    .edit-section{border-bottom:1px solid var(--border)}
+    .edit-section:last-of-type{border-bottom:none}
+    .edit-section-head{display:flex;align-items:center;gap:9px;padding:13px 16px 8px}
+    .edit-section-body{padding:0 16px 14px}
+    .edit-hint{font-size:11px;color:#B6BCC6;padding:0 16px 12px;line-height:1.4}
+    textarea{
+      width:100%;border:1.5px solid #E5E7EB;border-radius:12px;padding:10px 12px;
+      font-size:14px;font-family:inherit;line-height:1.55;resize:vertical;min-height:54px;
+      color:var(--text);background:#FAFAFA;outline:none;transition:border-color .15s,background .15s;
+    }
+    textarea:focus{border-color:var(--e);background:#fff}
+    .save-bar{display:flex;gap:10px;padding:14px 16px}
+    .btn-save{flex:1;padding:14px;border:none;border-radius:50px;background:var(--e-g);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(219,39,119,.35)}
+    .btn-save:active{opacity:.85}
+    .btn-cancel{padding:14px 22px;border:1.5px solid #E5E7EB;border-radius:50px;background:#fff;color:var(--muted);font-size:15px;font-weight:600;cursor:pointer}
+    .content.saving{opacity:.5;pointer-events:none}
+    /* structured editor */
+    .ed-comp{border:1.5px solid #EEF0F3;border-radius:12px;padding:9px;margin-bottom:9px;display:flex;flex-direction:column;gap:6px;background:#FCFCFD}
+    .ed-comp-top{display:flex;gap:8px}
+    .ed-cat{flex:1;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13px;font-weight:600;color:#374151;padding:9px 10px;border:1.5px solid #E5E7EB;border-radius:9px;background:#fff;outline:none}
+    .ed-opt-row{display:flex;gap:6px;align-items:center}
+    .ed-opt{flex:1;font-family:inherit;font-size:13.5px;padding:9px 11px;border:1.5px solid #E5E7EB;border-radius:9px;background:#fff;outline:none;transition:border-color .15s}
+    .ed-opt:focus{border-color:var(--e)}
+    .ed-x{border:none;background:#F3F4F6;color:#9CA3AF;width:34px;height:34px;border-radius:9px;font-size:13px;cursor:pointer;flex-shrink:0}
+    .ed-x:active{background:#E5E7EB}
+    .ed-add-opt{align-self:flex-start;border:none;background:transparent;color:var(--e);font-size:12.5px;font-weight:700;cursor:pointer;padding:3px 0}
+    .ed-add{width:100%;border:1.5px dashed #E5C5D5;background:#FFF5F9;color:#DB2777;font-size:13.5px;font-weight:700;padding:11px;border-radius:11px;cursor:pointer;margin-top:2px}
+    .ed-add:active{background:#FDE7F1}
+
+    /* ── FAB (modifica) ── */
+    #fab{
+      position:fixed;right:18px;bottom:24px;z-index:50;display:none;
+      align-items:center;gap:8px;padding:14px 22px 14px 18px;border:none;border-radius:50px;
+      background:var(--e-g);color:#fff;font-size:15px;font-weight:700;letter-spacing:-.2px;
+      box-shadow:0 8px 24px rgba(219,39,119,.45);cursor:pointer;
+      transition:transform .15s,box-shadow .15s;
+    }
+    #fab:active{transform:scale(.95)}
+    #fab svg{width:18px;height:18px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+    /* ── TOAST ── */
+    #toast{
+      position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(16px);
+      background:#1F2937;color:#fff;padding:10px 22px;border-radius:50px;font-size:14px;font-weight:500;
+      opacity:0;transition:all .28s;pointer-events:none;white-space:nowrap;z-index:100;
+    }
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+
+<div class="content" id="content"></div>
+
+<nav id="tabbar">
+  <button data-tab="oggi"     onclick="setTab('oggi')"><span class="ic">🍽️</span>Dieta</button>
+  <button data-tab="nicholas" onclick="setTab('nicholas')"><span class="ic">🏃</span>Nicholas</button>
+  <button data-tab="noemi"    onclick="setTab('noemi')"><span class="ic">🍓</span>Noemi</button>
+</nav>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js';
+import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js';
+
+const app = initializeApp({
+  apiKey:"AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4",
+  authDomain:"dieta-b7804.firebaseapp.com",
+  databaseURL:"https://dieta-b7804-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"dieta-b7804",
+  storageBucket:"dieta-b7804.firebasestorage.app",
+  messagingSenderId:"1079631832344",
+  appId:"1:1079631832344:web:bc10f2b24f49d55c26aa6d"
+});
+const db = getDatabase(app);
+
+// ══════════════════════════════════════════
+//  CATEGORIE
+// ══════════════════════════════════════════
+const CAT = {
+  carbo:  {pill:'🌾 Carboidrati'},
+  prot:   {pill:'🥩 Proteine'},
+  frutta: {pill:'🍓 Frutta'},
+  latte:  {pill:'🥛 Latticini'},
+  grasso: {pill:'🥜 Grassi'},
+  verdura:{pill:'🥦 Verdura'},
+  bevanda:{pill:'☕ Bevanda'},
+  olio:   {pill:'🫒 Condimento'},
+  integra:{pill:'💊 Integratore'},
+  scegli: {pill:'🍽️ Scegli tra'},
+  altro:  {pill:'• Altro'},
+};
+
+// ══════════════════════════════════════════
+//  NICHOLAS
+// ══════════════════════════════════════════
+let NICHOLAS = { days:[
+  { id:'corsa', label:'🏃 Corsa',
+    integ:{ pre:'1 g carnitina', post:'6 g BCAA + Sali minerali + 3 g creatina' },
+    pasti:[
+      { icon:'☀️', nome:'Colazione', items:[
+        {cat:'bevanda', v:'Tè'},
+        {cat:'carbo', alts:['2 fette pane integrale (1 marmellata Rigoni + 1 burro arachidi)','4 fette biscottate integrali (2 marmellata Rigoni + 2 burro arachidi)']},
+        {cat:'frutta', v:'150 ml succo di frutta senza zuccheri aggiunti'},
+        {cat:'latte', v:'150 g yogurt greco magro + 30 g fiocchi di mais/avena'},
+      ]},
+      { icon:'🍎', nome:'Spuntino mattina', items:[
+        {cat:'latte', v:'30 g grana'},
+        {cat:'carbo', v:'1 galletta'},
+      ]},
+      { icon:'🍽️', nome:'Pranzo', items:[
+        {cat:'carbo', alts:['130 g riso / riso basmati / riso venere','150 g pasta','160 g pasta integrale','90 g pane di segale']},
+        {cat:'prot', alts:['150 g carne bianca','150 g tonno al naturale','150 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','100 g salmone','120 g pesce spada','80 g gamberetti','200 g polipo / 150 g seppie o moscardini','200 g legumi (peso a cotto)']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+      { icon:'⚡', nome:'Spuntino pre-allenamento', note:'2h prima', items:[
+        {cat:'carbo', v:'3 gallette di riso con velo di miele'},
+      ]},
+      { icon:'🌙', nome:'Cena', items:[
+        {cat:'carbo', alts:['80 g riso basmati + olio EVO','90 g pasta integrale + sugo al pomodoro','300 g patate lessate / al forno','330 g patate dolci lessate / al forno','70 g pane']},
+        {cat:'prot', alts:['250 g carne bianca','180 g tonno (filetto)','250 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','150 g salmone','160 g pesce spada','250 g polipo / 200 g seppie o moscardini','200 g carne rossa/vitello/lonza (max 1×sett.)','150 g tofu','240 g legumi']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+    ]
+  },
+  { id:'bici', label:'🚴 Bici',
+    integ:{ pre:'1 g carnitina + 3 g BCAA', post:'3 g BCAA + 3 g creatina' },
+    pasti:[
+      { icon:'⚡', nome:'Pre-allenamento', items:[
+        {cat:'frutta', v:'1 banana'},
+        {cat:'carbo', v:'4 biscotti senza zuccheri aggiunti'},
+      ]},
+      { icon:'☀️', nome:'Colazione', note:"dopo l'allenamento", items:[
+        {cat:'bevanda', v:'Caffè'},
+        {cat:'scegli', alts:["120 g yogurt bianco intero + fiocchi avena/crusca + fetta biscottata con burro arachidi","200 ml latte parz. scremato senza lattosio + 2 fette biscottate int. (marmellata Rigoni + burro arachidi)","2 fette pane integrale con yogurt greco/ricotta + cucchiaino miele/marmellata Rigoni"]},
+      ]},
+      { icon:'🍎', nome:'Spuntino mattina', items:[
+        {cat:'grasso', v:'20 g frutta secca'},
+        {cat:'frutta', v:'150 g frutta'},
+      ]},
+      { icon:'🍽️', nome:'Pranzo', items:[
+        {cat:'carbo', alts:['130 g riso / riso basmati / riso venere','150 g pasta','160 g pasta integrale','90 g pane di segale']},
+        {cat:'prot', alts:['150 g carne bianca','150 g tonno al naturale','150 g formaggio fresco (max 1×sett.)','50–60 g formaggio stagionato (max 1×sett.)','2 uova (max 1×sett.)','150 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','100 g salmone','120 g pesce spada','80 g gamberetti','200 g polipo / 150 g seppie o moscardini']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+      { icon:'🍊', nome:'Spuntino pomeriggio', items:[
+        {cat:'carbo', v:'3 gallette di riso con velo di burro arachidi'},
+      ]},
+      { icon:'🌙', nome:'Cena', items:[
+        {cat:'carbo', alts:['80 g riso basmati + olio EVO','90 g pasta integrale + sugo al pomodoro','300 g patate lessate / al forno','330 g patate dolci lessate / al forno','70 g pane']},
+        {cat:'prot', alts:['250 g carne bianca','180 g tonno (filetto)','250 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','150 g salmone','160 g pesce spada','250 g polipo / 200 g seppie o moscardini','200 g carne rossa/vitello/lonza (max 1×sett.)','2 uova','240 g legumi']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+        {cat:'latte', v:'150 g yogurt greco bianco magro'},
+      ]},
+    ]
+  },
+  { id:'palestra', label:'🏊 Palestra · Nuoto · Padel',
+    integ:{ pre:'1 g carnitina', post:'3 g creatina' },
+    pasti:[
+      { icon:'⚡', nome:'Pre-allenamento', items:[
+        {cat:'frutta', v:'1 banana'},
+        {cat:'carbo', v:'4 biscotti senza zuccheri aggiunti'},
+      ]},
+      { icon:'☀️', nome:'Colazione', note:"dopo l'allenamento", items:[
+        {cat:'bevanda', v:'Tè'},
+        {cat:'scegli', alts:['2 fette pane integrale (marmellata Rigoni + burro arachidi)','4 fette biscottate integrali (2 marmellata Rigoni + 2 burro arachidi)','150 g yogurt greco magro + 30 g fiocchi mais/avena + 200 ml spremuta arancia']},
+      ]},
+      { icon:'🍎', nome:'Spuntino mattina', items:[
+        {cat:'carbo', v:'2 fette di pane'},
+        {cat:'prot', v:'50 g prosciutto cotto sgrassato'},
+      ]},
+      { icon:'🍽️', nome:'Pranzo', items:[
+        {cat:'carbo', alts:['100 g riso / riso basmati / riso venere','110 g pasta','120 g pasta integrale','70 g pane di segale']},
+        {cat:'prot', alts:['150 g carne bianca','150 g tonno al naturale','150 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','100 g salmone','120 g pesce spada','80 g gamberetti','200 g polipo / 150 g seppie o moscardini','80 g bresaola / 120 g arrosto tacchino / 100 g prosciutto cotto']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+      { icon:'🍊', nome:'Spuntino pomeriggio', items:[
+        {cat:'prot', alts:['200 g yogurt greco bianco magro + cucchiaino miele','200 g budino proteico']},
+        {cat:'frutta', v:'Un frutto a scelta'},
+      ]},
+      { icon:'🌙', nome:'Cena', items:[
+        {cat:'carbo', alts:['80 g riso basmati + olio EVO','90 g pasta integrale + sugo al pomodoro','300 g patate lessate / al forno','330 g patate dolci lessate / al forno','70 g pane']},
+        {cat:'prot', alts:['250 g carne bianca','180 g tonno (filetto)','250 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','150 g salmone','160 g pesce spada','250 g polipo / 200 g seppie o moscardini']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+    ]
+  },
+  { id:'combinato', label:'🔥 Combinato',
+    integ:{ multi:[
+      {tag:'Pre 1°',v:'1 g carnitina'},
+      {tag:'Post 1°',v:'3 g creatina'},
+      {tag:'Pre bici',v:'1 gel maltodestrine'},
+      {tag:'Pre corsa',v:'1 gel maltodestrine'},
+      {tag:'Post tutto',v:'6 g BCAA'},
+    ]},
+    pasti:[
+      { icon:'⚡', nome:'Pre-allenamento', items:[
+        {cat:'frutta', v:'1 banana'},
+        {cat:'carbo', v:'6 biscotti senza zuccheri aggiunti'},
+      ]},
+      { icon:'☀️', nome:'Colazione', note:"dopo l'allenamento", items:[
+        {cat:'carbo', v:'2 fette pane tostato'},
+        {cat:'prot', alts:['80 g arrosto di tacchino','2 uova']},
+        {cat:'frutta', v:"150 ml spremuta d'arancia"},
+      ]},
+      { icon:'🍎', nome:'Spuntino mattina', items:[
+        {cat:'grasso', v:'20 g frutta secca'},
+        {cat:'frutta', v:'150 g frutta'},
+      ]},
+      { icon:'🍽️', nome:'Pranzo', items:[
+        {cat:'carbo', alts:['100 g riso / riso basmati / riso venere','120 g pasta','130 g pasta integrale','90 g pane']},
+        {cat:'prot', alts:['150 g carne bianca','150 g tonno al naturale','150 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','100 g salmone','120 g pesce spada','80 g gamberetti','200 g polipo / 150 g seppie o moscardini','150 g hummus di ceci','200 g legumi (peso a cotto)']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+      { icon:'🍊', nome:'Spuntino pomeriggio', items:[
+        {cat:'carbo', v:'3 gallette di riso con velo di burro arachidi'},
+        {cat:'latte', v:'150 g yogurt greco bianco magro'},
+      ]},
+      { icon:'🌙', nome:'Cena', items:[
+        {cat:'carbo', alts:['80 g riso basmati + olio EVO','90 g pasta integrale + sugo al pomodoro','300 g patate lessate / al forno','330 g patate dolci lessate / al forno','70 g pane']},
+        {cat:'prot', alts:['250 g carne bianca','180 g tonno (filetto)','250 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','150 g salmone','160 g pesce spada','250 g polipo / 200 g seppie o moscardini','200 g carne rossa/vitello/lonza (max 1×sett.)','2 uova']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+    ]
+  },
+  { id:'riposo', label:'😴 Riposo',
+    integ:{ multi:[{tag:'Colazione', v:'3 g creatina'}] },
+    pastoLibero:'🍕 Concediti un pasto libero a settimana — meglio oggi!',
+    pasti:[
+      { icon:'☀️', nome:'Colazione', items:[
+        {cat:'bevanda', v:'Caffè'},
+        {cat:'scegli', alts:["120 g yogurt bianco intero + fiocchi avena/crusca d'avena + fetta biscottata con burro arachidi","200 ml latte parz. scremato senza lattosio + 2 fette biscottate int. (marmellata Rigoni + burro arachidi)","2 fette pane integrale con yogurt greco/ricotta + cucchiaino miele/marmellata Rigoni"]},
+      ]},
+      { icon:'🍎', nome:'Spuntino mattina', items:[
+        {cat:'frutta', v:'Un frutto a scelta'},
+      ]},
+      { icon:'🍽️', nome:'Pranzo', items:[
+        {cat:'carbo', alts:['100 g riso / riso basmati / riso venere','120 g pasta','130 g pasta integrale','70 g pane di segale']},
+        {cat:'prot', alts:['150 g carne bianca','150 g tonno al naturale','150 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','100 g salmone','120 g pesce spada','80 g gamberetti','200 g polipo / 150 g seppie o moscardini']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+      { icon:'🍊', nome:'Spuntino pomeriggio', items:[
+        {cat:'latte', v:'200 g yogurt greco bianco magro'},
+      ]},
+      { icon:'🌙', nome:'Cena', items:[
+        {cat:'carbo', alts:['80 g riso basmati + olio EVO','90 g pasta integrale + sugo al pomodoro','300 g patate lessate / al forno','330 g patate dolci lessate / al forno','70 g pane']},
+        {cat:'prot', alts:['250 g carne bianca','180 g tonno (filetto)','250 g pesce bianco (merluzzo/nasello/platessa/orata/branzino/triglia)','150 g salmone','160 g pesce spada','250 g polipo / 200 g seppie o moscardini','200 g carne rossa/vitello/lonza (max 1×sett.)','150 g tofu','240 g legumi']},
+        {cat:'verdura', v:'A scelta'},
+        {cat:'olio', v:'1 cucchiaio olio EVO'},
+      ]},
+    ]
+  },
+]};
+
+// ══════════════════════════════════════════
+//  NOEMI — dieta base (nutrizionista, vegetariana)
+// ══════════════════════════════════════════
+let NOEMI_BASE = {
+  colazione:{ icon:'☀️', nome:'Colazione', slots:[
+    {key:'cz_base', cat:'latte', label:'Base', opts:['125 g yogurt magro 0,1%','200 ml latte parz. scremato / soia / avena']},
+    {key:'cz_carb', cat:'carbo', label:'Cereali/pane', opts:['6–8 biscotti secchi o integrali','4 fette biscottate integrali','2 fette pane integrale + marmellata s.z.','40 g cereali integrali']},
+  ], fixed:[{cat:'frutta', v:'200 g frutta di stagione'},{cat:'bevanda', v:'Caffè / the / tisane'}]},
+
+  spuntino:{ icon:'🍎', nome:'Spuntino', slots:[
+    {key:'sp', cat:'frutta', label:'Spuntino', opts:['Un frutto (o un succo)','200 g budino proteico','Barretta ai cereali proteica','Yogurt con cereali o frutta secca']},
+  ], fixed:[]},
+
+  pranzo:{ icon:'🍽️', nome:'Pranzo', slots:[
+    {key:'pr', cat:'carbo', label:'Piatto', opts:[
+      'Primo: 80 g pasta + sugo verdure/pomodoro/bianco + 30 g parmigiano',
+      'Primo: 90 g riso + sugo + 30 g parmigiano',
+      'Primo: 125 g gnocchi + sugo + 30 g parmigiano',
+      'Primo: 90 g cereali + sugo + 30 g parmigiano',
+      'Secondo a scelta + 50 g pane (o crackers/gallette/2 patate)',
+      'Pizza (pasto libero)',
+    ]},
+    {key:'pr_veg', cat:'verdura', label:'Verdura', opts:['Verdure cotte','Verdure crude / insalata','Verdure miste','— niente']},
+  ], fixed:[]},
+
+  merenda:{ icon:'🍊', nome:'Merenda', slots:[
+    {key:'me', cat:'frutta', label:'Merenda', opts:['Un frutto (o un succo)','150 g yogurt greco','200 g budino proteico','Barretta proteica','Yogurt con cereali o frutta secca']},
+  ], fixed:[{cat:'grasso', v:'(eventuale) 2 gallette di mais con cioccolato fondente'}]},
+
+  cena:{ icon:'🌙', nome:'Cena', slots:[
+    {key:'cn_sec', cat:'prot',   label:'Secondo', opts:['Pesce 150 g','Crostacei / molluschi 150 g','Uova (albumi liberi · max 2 tuorli/sett)','Formaggio 150 g','Legumi 200 g']},
+    {key:'cn_carb',cat:'carbo',  label:'Contorno', opts:['50 g pane integrale','40 g crackers / grissini int.','40 g gallette mais / riso','— niente']},
+    {key:'cn_veg', cat:'verdura', label:'Verdura', opts:['Verdure cotte','Verdure crude / insalata','Verdure miste','Minestrone / passato (senza legumi)','— niente']},
+    {key:'cn_dol', cat:'grasso', label:'Dolce', opts:['125 g yogurt magro 0,1%','Budino di soia / cioccolato / vaniglia','10 g cioccolato fondente 75%','— niente']},
+  ], fixed:[]},
+};
+const NOEMI_MEALS = ['colazione','spuntino','pranzo','merenda','cena'];
+
+const NOEMI_NOTES = [
+  '🍝 5 pranzi “primo piatto” + 1–2 “secondo + contorno” a settimana',
+  '🍕 1 pizza al posto di un pasto + 1 pasto libero a settimana',
+  '☕ 1–2 colazioni libere a settimana',
+  '🐟 Pesce 2×/sett · 🥚 max 2 tuorli/sett (albumi liberi)',
+  '🍎 Frutta “da controllare” (banane, uva, avocado…) 1×/giorno · 🥦 verdure “da controllare” (mais, patate, zucca…) 1×/sett',
+  '🫒 Max 2–3 cucchiai olio EVO/giorno · 🥗 vegetariana (no carne/salumi)',
+];
+const NOEMI_REF = [
+  ['🐟 Pesce', 'baccalà, orata, sogliola, branzino, merluzzo, nasello, triglia, trota, platessa, rombo, persico (150 g). Da controllare 2×: spada, salmone, tonno, sgombro (100 g)'],
+  ['🦐 Crostacei/molluschi', 'calamari, polpi, gamberi, seppie, cozze, vongole, moscardini, totani, astice… (150 g)'],
+  ['🧀 Formaggi', 'ricotta, fiocchi di latte, primosale, mozzarella, stracchino, robiola, crescenza, feta, philadelphia (150/100 g)'],
+  ['🫘 Legumi', 'fagioli, lenticchie, piselli, soia, fave, ceci (200 g cotti)'],
+  ['🥦 Verdure', 'finocchi, pomodori, carciofi, funghi, peperoni, cetrioli, lattuga, spinaci, zucchine, melanzane, broccoli… (libere)'],
+  ['🍓 Frutta', 'albicocche, fragole, ciliegie, pesca, mela, melone, anguria, ananas, arancia, pera, kiwi… (1 porzione)'],
+];
+
+const NOEMI_DAYS  = ['lun','mar','mer','gio','ven','sab','dom'];
+const NOEMI_LABELS= {lun:'Lun',mar:'Mar',mer:'Mer',gio:'Gio',ven:'Ven',sab:'Sab',dom:'Dom'};
+const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì',ven:'Venerdì',sab:'Sabato',dom:'Domenica'};
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa';
+
+onValue(ref(db,'noemiPlan'), snap => {
+  noemiPlan = snap.val() || {};
+  if(!editBase && tab==='oggi') renderContent();   // non rirendero il pianificatore mentre lo compila
+});
+
+onValue(ref(db,'noemiBase'), snap => {
+  const v = snap.val();
+  if(v) NOEMI_BASE = v; else { try{ set(ref(db,'noemiBase'), NOEMI_BASE); }catch(e){} }
+  if(!editBase && (tab==='oggi' || tab==='noemi')) renderContent();
+});
+
+onValue(ref(db,'nicBase'), snap => {
+  const v = snap.val();
+  if(v) NICHOLAS = v; else { try{ set(ref(db,'nicBase'), NICHOLAS); }catch(e){} }
+  if(!editBase && (tab==='oggi' || tab==='nicholas')) renderContent();
+});
+
+onValue(ref(db,'schedule'), snap => {
+  schedule = snap.val() || {};
+  if(!editBase && (tab==='oggi' || tab==='nicholas')) renderContent();
+});
+
+// ══════════════════════════════════════════
+//  RENDER HELPERS
+// ══════════════════════════════════════════
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+function catPill(cat){ const c = CAT[cat]||CAT.altro; return `<span class="cat-pill ${cat}">${c.pill}</span>`; }
+
+function foodRow(cat, text){
+  return `<div class="food-row">${catPill(cat)}<span class="food-text">${esc(text)}</span></div>`;
+}
+
+function choiceBox(cat, opts, shared){
+  const id = 'ch'+(_cid++);
+  const word = opts.length>1 ? 'scelte' : 'scelta';
+  return `<div class="choice" id="${id}">
+    <div class="choice-head" onclick="toggleChoice('${id}')">
+      ${catPill(cat)}
+      <span class="choice-count">${opts.length} ${word}</span>
+      <span class="choice-arrow">▾</span>
+    </div>
+    <div class="choice-body"><div class="choice-inner">
+      ${opts.map(o=>`<div class="choice-opt">${esc(o)}</div>`).join('')}
+      ${shared ? `<div class="choice-shared">+ ${esc(shared)}</div>` : ''}
+    </div></div>
+  </div>`;
+}
+window.toggleChoice = id => document.getElementById(id).classList.toggle('open');
+
+function renderItem(it){
+  if(it.alts) return choiceBox(it.cat, it.alts, it.shared||'');
+  return foodRow(it.cat, it.v);
+}
+
+function renderInteg(integ){
+  if(!integ) return '';
+  const g = 'var(--n-g)';
+  const rows = integ.multi
+    ? integ.multi.map(r=>`<div class="integ-row"><span class="integ-pill">${esc(r.tag)}</span><span class="integ-val">${esc(r.v)}</span></div>`).join('')
+    : `${integ.pre  ? `<div class="integ-row"><span class="integ-pill">Pre</span><span class="integ-val">${esc(integ.pre)}</span></div>`:''}
+       ${integ.post ? `<div class="integ-row"><span class="integ-pill">Post</span><span class="integ-val">${esc(integ.post)}</span></div>`:''}`;
+  return `<div class="integ-banner" style="background:${g}"><div class="integ-head">💊 Integrazione</div>${rows}</div>`;
+}
+
+// ── Nicholas ──
+function renderNicholasDay(day){
+  let html = renderInteg(day.integ);
+  const sections = day.pasti.map(p=>`
+    <div class="meal-sec">
+      <div class="meal-sec-head">
+        <span class="meal-sec-icon">${p.icon}</span>
+        <span class="meal-sec-title">${esc(p.nome)}</span>
+        ${p.note ? `<span class="meal-sec-note">${esc(p.note)}</span>`:''}
+      </div>
+      <div class="meal-sec-body">${p.items.map(renderItem).join('')}</div>
+    </div>`).join('');
+  html += `<div class="day-card">${sections}</div>`;
+  if(day.pastoLibero) html += `<div class="banner yellow">${esc(day.pastoLibero)}</div>`;
+  return html;
+}
+function renderNicholasWeek(){
+  return NICHOLAS.days.map(day=>`
+    <div class="day-block" id="d-${day.id}">
+      <div class="day-head"><span class="day-name">${esc(day.label)}</span></div>
+      ${renderNicholasDay(day)}
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+//  NOEMI — piano (scelte per giorno)
+// ══════════════════════════════════════════
+function getDayPlan(wd){
+  const saved = (noemiPlan && noemiPlan[wd]) || {};
+  const dp = {};
+  NOEMI_MEALS.forEach(mk=>NOEMI_BASE[mk].slots.forEach(s=>{
+    dp[s.key] = (saved[s.key]!==undefined && saved[s.key]!=='') ? saved[s.key] : s.opts[0];
+  }));
+  return dp;
+}
+function noemiMealItems(wd, mealKey){
+  const dp = getDayPlan(wd);
+  const meal = NOEMI_BASE[mealKey];
+  const items = [];
+  meal.slots.forEach(s=>{ const v=dp[s.key]; if(v && v!=='— niente') items.push({cat:s.cat, v}); });
+  (meal.fixed||[]).forEach(f=>items.push(f));
+  return items;
+}
+function noteFor(wd, mealKey){ return ((noemiPlan && noemiPlan[wd]) || {})[mealKey+'_note'] || ''; }
+function isMealFree(wd, mealKey){ return !!(((noemiPlan && noemiPlan[wd]) || {})[mealKey+'_free']); }
+function noemiSideHTML(wd, mealKey){
+  if(isMealFree(wd, mealKey)) return `<div class="free-chip">🎉 Pasto libero</div>`;
+  const items = noemiMealItems(wd, mealKey);
+  let html = items.length ? items.map(it=>foodRow(it.cat, it.v)).join('') : dash();
+  const note = noteFor(wd, mealKey);
+  if(note) html += `<div class="recipe-note">📝 ${esc(note)}</div>`;
+  return html;
+}
+
+// ══════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════
+function todayId(){ const wd=new Date().getDay(); return NOEMI_DAYS[(wd+6)%7]; }
+function todayLabel(){ const s=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); }
+
+const EDIT_SVG = '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+
+function chipRow(items, sel, fn, cls){
+  return `<div class="chips-wrap"><div class="chips">${
+    items.map(it=>`<button class="chip ${sel===it.id?('sel-'+cls):''}" onclick="${fn}('${it.id}')">${esc(it.label)}</button>`).join('')
+  }</div></div>`;
+}
+const nicChips   = (sel,fn)=> chipRow(NICHOLAS.days.map(d=>({id:d.id,label:d.label})), sel, fn, 'n');
+const noemiChips = (sel,fn)=> chipRow(NOEMI_DAYS.map(id=>({id,label:NOEMI_LABELS[id]})), sel, fn, 'e');
+const loadingCard = `<div class="day-card"><div class="meal-sec"><div class="meal-sec-body"><div class="food-text">Caricamento…</div></div></div></div>`;
+
+// ── OGGI: confronto pasto per pasto ──
+function dash(){ return '<div class="food-text" style="color:#C9D0D9">—</div>'; }
+function nicMealBy(day, kind){
+  if(kind==='preall')    return day.pasti.find(p=>p.nome==='Pre-allenamento');
+  if(kind==='colazione') return day.pasti.find(p=>/colazione/i.test(p.nome));
+  if(kind==='spmatt')    return day.pasti.find(p=>/spuntino mattina/i.test(p.nome));
+  if(kind==='pranzo')    return day.pasti.find(p=>/pranzo/i.test(p.nome));
+  if(kind==='sppom')     return day.pasti.find(p=>/spuntino pomeriggio|spuntino pre/i.test(p.nome));
+  if(kind==='cena')      return day.pasti.find(p=>/cena/i.test(p.nome));
+  return null;
+}
+function getTrain(wd){ return (schedule && schedule[wd]) || 'riposo'; }
+function integCompact(integ){
+  if(!integ) return dash();
+  if(integ.multi) return integ.multi.map(r=>`<div class="food-row"><span class="cat-pill integra">${esc(r.tag)}</span><span class="food-text">${esc(r.v)}</span></div>`).join('');
+  let h='';
+  if(integ.pre)  h+=`<div class="food-row"><span class="cat-pill integra">Pre</span><span class="food-text">${esc(integ.pre)}</span></div>`;
+  if(integ.post) h+=`<div class="food-row"><span class="cat-pill integra">Post</span><span class="food-text">${esc(integ.post)}</span></div>`;
+  return h || dash();
+}
+const NIC_SHORT = {corsa:'🏃 Corsa', bici:'🚴 Bici', palestra:'🏊 Palestra · Nuoto · Padel', combinato:'🔥 Combinato', riposo:'😴 Riposo'};
+function weekDates(){
+  const now=new Date();
+  const dow=(now.getDay()+6)%7;            // 0 = lunedì
+  const monday=new Date(now); monday.setDate(now.getDate()-dow);
+  return NOEMI_DAYS.map((id,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return {id,label:NOEMI_LABELS[id],num:d.getDate(),obj:d}; });
+}
+function fmtFull(d){ const s=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); }
+function calendarHTML(){
+  const t=todayId();
+  return `<div class="cal">${weekDates().map(d=>`
+    <button class="cal-day ${oggiDay===d.id?'sel':''} ${d.id===t?'today':''}" onclick="setOggiDay('${d.id}')">
+      <span class="cal-wd">${d.label}</span>
+      <span class="cal-dt">${d.num}</span>
+    </button>`).join('')}</div>`;
+}
+function renderOggi(){
+  const wd   = oggiDay;
+  const isT  = wd===todayId();
+  const nd   = NICHOLAS.days.find(d=>d.id===getTrain(wd)) || NICHOLAS.days.find(d=>d.id==='riposo');
+
+  const rows = [{icon:'💊', title:'Integrazione', e:null, integ:nd.integ}];
+  const pre = nicMealBy(nd,'preall');
+  if(pre) rows.push({icon:'⚡', title:'Pre-allenamento', e:null, n:pre});
+  rows.push({icon:'☀️', title:'Colazione',          e:'colazione', n:nicMealBy(nd,'colazione')});
+  rows.push({icon:'🍎', title:'Spuntino mattina',    e:'spuntino',  n:nicMealBy(nd,'spmatt')});
+  rows.push({icon:'🍽️', title:'Pranzo',              e:'pranzo',    n:nicMealBy(nd,'pranzo')});
+  rows.push({icon:'🍊', title:'Spuntino pomeriggio', e:'merenda',   n:nicMealBy(nd,'sppom')});
+  rows.push({icon:'🌙', title:'Cena',                e:'cena',      n:nicMealBy(nd,'cena')});
+  if(nd.pastoLibero) rows.push({icon:'🍕', title:'Pasto libero', e:null, libero:nd.pastoLibero});
+
+  const cards = rows.map(r=>{
+    const eSide = r.e ? noemiSideHTML(wd, r.e) : dash();
+    let nSide;
+    if(r.integ!==undefined) nSide = integCompact(r.integ);
+    else if(r.n) nSide = r.n.items.map(renderItem).join('');
+    else if(r.libero) nSide = `<div class="extra-item" style="background:#FEFCE8;border-color:#FDE047;color:#854D0E">${esc(r.libero)}</div>`;
+    else nSide = dash();
+    return `<div class="cmp-card">
+      <div class="cmp-head"><span class="em">${r.icon}</span><span>${r.title}</span></div>
+      <div class="cmp-cols">
+        <div class="cmp-col"><div class="cmp-items">${eSide}</div></div>
+        <div class="cmp-col"><div class="cmp-items">${nSide}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const sel = weekDates().find(x=>x.id===wd);
+  return `
+    <div class="page-title">${isT?'Oggi':NOEMI_FULL[wd]}</div>
+    <div class="page-sub">${sel?fmtFull(sel.obj):NOEMI_FULL[wd]}</div>
+    ${calendarHTML()}
+    <div class="cmp-top">
+      <div class="cmp-top-col e">🍓 Noemi</div>
+      <div class="cmp-top-col n"><span>💪 Nicholas</span><span class="train-tag">${esc(NIC_SHORT[nd.id]||nd.label)}</span></div>
+    </div>
+    ${cards}
+  `;
+}
+
+// ── NICHOLAS (piano settimana + consultazione) ──
+function renderNicholasTab(){
+  const sched = `<div class="sched">${
+    NOEMI_DAYS.map(wd=>`
+      <div class="sched-row">
+        <span class="sched-day">${NOEMI_LABELS[wd]}${wd===todayId()?' •':''}</span>
+        <div class="sched-selwrap">
+          <select class="sched-sel" onchange="setSchedule('${wd}',this.value)">
+            ${NICHOLAS.days.map(d=>`<option value="${d.id}" ${getTrain(wd)===d.id?'selected':''}>${esc(d.label)}</option>`).join('')}
+          </select>
+        </div>
+      </div>`).join('')
+  }</div>`;
+  const d = NICHOLAS.days.find(x=>x.id===nicType) || NICHOLAS.days[0];
+  return `
+    <div class="page-title">Nicholas</div>
+    <div class="page-sub">I tuoi allenamenti della settimana</div>
+    <button class="be-open" onclick="openBase('nicholas')">⚙︎ Modifica dieta base</button>
+    ${sched}
+    <div class="sec-title n" style="margin-top:12px">Consulta una giornata</div>
+    ${nicChips(nicType,'setNicType')}
+    <div class="day-block">${renderNicholasDay(d)}</div>
+  `;
+}
+
+// ── NOEMI (pianificatore) ──
+function renderNoemiTab(){
+  const dp = getDayPlan(noemiDay);
+  const meals = NOEMI_MEALS.map(mk=>{
+    const m = NOEMI_BASE[mk];
+    const mfree = isMealFree(noemiDay, mk);
+    const slots = m.slots.map(s=>{
+      const opts = s.opts.map(o=>`<option ${dp[s.key]===o?'selected':''}>${esc(o)}</option>`).join('');
+      return `<div class="pl-slot">
+        ${catPill(s.cat)}
+        <div class="sched-selwrap"><select class="sched-sel" onchange="setPlan('${noemiDay}','${s.key}',this.value)">${opts}</select></div>
+      </div>`;
+    }).join('');
+    const fixed = (m.fixed||[]).map(f=>`<div class="pl-fixed">+ ${esc(f.v)}</div>`).join('');
+    const note = noteFor(noemiDay, mk);
+    const recipe = `<input class="pl-recipe" value="${esc(note)}" placeholder="📝 Ricetta / note (facoltativo)" onchange="setPlan('${noemiDay}','${mk}_note',this.value)">`;
+    const body = mfree ? `<div class="pl-free">🎉 Pasto libero</div>` : `${slots}${fixed}${recipe}`;
+    return `<div class="pl-meal">
+      <div class="meal-sec-head" style="padding:0 0 9px">
+        <span class="meal-sec-icon">${m.icon}</span><span class="meal-sec-title">${m.nome}</span>
+        <button class="meal-free ${mfree?'on':''}" onclick="toggleMealFree('${noemiDay}','${mk}')">🎉 libero</button>
+      </div>
+      ${body}
+    </div>`;
+  }).join('');
+  const notes = NOEMI_NOTES.map(n=>`<div class="pl-note">${esc(n)}</div>`).join('');
+  const ref   = NOEMI_REF.map(([t,d])=>`<div class="pl-ref"><b>${esc(t)}</b> ${esc(d)}</div>`).join('');
+  return `
+    <div class="page-title">Noemi</div>
+    <div class="pl-hello">😅 Spoiler: la risposta NON è «non lo so»</div>
+    <button class="be-open" onclick="openBase('noemi')">⚙︎ Modifica dieta base</button>
+    ${noemiChips(noemiDay,'setNoemiDay')}
+    <div class="day-card" style="padding:14px 14px 6px">${meals}</div>
+    <div class="sec-title e" style="margin-top:6px">📋 Promemoria settimana</div>
+    <div class="pl-notes">${notes}</div>
+    <div class="sec-title e" style="margin-top:6px">🔎 Alimenti ammessi</div>
+    <div class="pl-notes">${ref}</div>
+  `;
+}
+
+// ── EDITOR DIETA BASE ──
+function saveNoemiBase(){ try{ set(ref(db,'noemiBase'), NOEMI_BASE); }catch(e){} }
+function saveNicBase(){ try{ set(ref(db,'nicBase'), NICHOLAS); }catch(e){} }
+
+function renderNoemiBaseEdit(){
+  const meals = NOEMI_MEALS.map(mk=>{
+    const m = NOEMI_BASE[mk];
+    const slots = m.slots.map((s,si)=>{
+      const opts = s.opts.map((o,oi)=>`
+        <div class="be-opt">
+          <input class="be-in" value="${esc(o)}" onchange="beNoemiOpt('${mk}',${si},${oi},this.value)">
+          <button class="ed-x" onclick="beNoemiOptDel('${mk}',${si},${oi})">✕</button>
+        </div>`).join('');
+      return `<div class="be-slot">
+        <div class="be-slot-h">${esc(s.label)} ${catPill(s.cat)}</div>
+        ${opts}
+        <button class="ed-add-opt" onclick="beNoemiOptAdd('${mk}',${si})">+ opzione</button>
+      </div>`;
+    }).join('');
+    return `<div class="pl-meal">
+      <div class="meal-sec-head" style="padding:0 0 9px"><span class="meal-sec-icon">${m.icon}</span><span class="meal-sec-title">${m.nome}</span></div>
+      ${slots}
+    </div>`;
+  }).join('');
+  return `
+    <div class="page-title">Dieta base · Noemi</div>
+    <div class="page-sub">Modifica le opzioni del nutrizionista</div>
+    <button class="be-done" onclick="closeBase()">✓ Fatto</button>
+    <div class="day-card" style="padding:14px 14px 6px">${meals}</div>`;
+}
+window.beNoemiOpt    = (mk,si,oi,v)=>{ NOEMI_BASE[mk].slots[si].opts[oi]=v; saveNoemiBase(); toast('✓ Salvato'); };
+window.beNoemiOptAdd = (mk,si)=>{ NOEMI_BASE[mk].slots[si].opts.push('nuova opzione'); saveNoemiBase(); renderContent(); };
+window.beNoemiOptDel = (mk,si,oi)=>{ const a=NOEMI_BASE[mk].slots[si].opts; a.splice(oi,1); if(!a.length)a.push(''); saveNoemiBase(); renderContent(); };
+
+function renderNicBaseEdit(){
+  const d = NICHOLAS.days.find(x=>x.id===baseNicDay) || NICHOLAS.days[0];
+  const pasti = d.pasti.map((p,pi)=>{
+    const items = p.items.map((it,ii)=>{
+      if(it.alts){
+        const alts = it.alts.map((a,ai)=>`
+          <div class="be-opt">
+            <input class="be-in" value="${esc(a)}" onchange="beNicAlt(${pi},${ii},${ai},this.value)">
+            <button class="ed-x" onclick="beNicAltDel(${pi},${ii},${ai})">✕</button>
+          </div>`).join('');
+        return `<div class="be-slot">
+          <div class="be-slot-h">${catPill(it.cat)}</div>
+          ${alts}
+          <button class="ed-add-opt" onclick="beNicAltAdd(${pi},${ii})">+ opzione</button>
+        </div>`;
+      }
+      return `<div class="be-opt">${catPill(it.cat)}<input class="be-in" value="${esc(it.v)}" onchange="beNicVal(${pi},${ii},this.value)"></div>`;
+    }).join('');
+    return `<div class="pl-meal">
+      <div class="meal-sec-head" style="padding:0 0 9px"><span class="meal-sec-icon">${p.icon}</span><span class="meal-sec-title">${esc(p.nome)}</span></div>
+      ${items}
+    </div>`;
+  }).join('');
+  return `
+    <div class="page-title">Dieta base · Nicholas</div>
+    <div class="page-sub">Modifica le opzioni del nutrizionista</div>
+    <button class="be-done" onclick="closeBase()">✓ Fatto</button>
+    ${nicChips(baseNicDay,'setBaseNicDay')}
+    <div class="day-card" style="padding:14px 14px 6px">${pasti}</div>`;
+}
+function nicBaseDay(){ return NICHOLAS.days.find(x=>x.id===baseNicDay) || NICHOLAS.days[0]; }
+window.setBaseNicDay = id=>{ baseNicDay=id; renderContent(); };
+window.beNicVal    = (pi,ii,v)=>{ nicBaseDay().pasti[pi].items[ii].v=v; saveNicBase(); toast('✓ Salvato'); };
+window.beNicAlt    = (pi,ii,ai,v)=>{ nicBaseDay().pasti[pi].items[ii].alts[ai]=v; saveNicBase(); toast('✓ Salvato'); };
+window.beNicAltAdd = (pi,ii)=>{ nicBaseDay().pasti[pi].items[ii].alts.push('nuova opzione'); saveNicBase(); renderContent(); };
+window.beNicAltDel = (pi,ii,ai)=>{ const a=nicBaseDay().pasti[pi].items[ii].alts; a.splice(ai,1); if(!a.length)a.push(''); saveNicBase(); renderContent(); };
+
+window.openBase  = p=>{ editBase=p; renderContent(); window.scrollTo(0,0); };
+window.closeBase = ()=>{ editBase=null; renderContent(); window.scrollTo(0,0); };
+
+// ── ACTIONS ──
+window.setTab     = t => { tab=t; editMode=false; editBase=null; updateTabbar(); renderContent(); window.scrollTo(0,0); };
+window.setNicType = id => { nicType=id; renderContent(); };
+window.setOggiDay = id => { oggiDay=id; renderContent(); };
+window.setNoemiDay= id => { noemiDay=id; renderContent(); };
+window.setSchedule= (wd,type) => { schedule[wd]=type; try{ set(ref(db,'schedule/'+wd), type); }catch(e){} if(tab==='oggi') renderContent(); };
+window.setPlan    = (wd,key,val) => { if(!noemiPlan[wd]) noemiPlan[wd]={}; noemiPlan[wd][key]=val; try{ set(ref(db,'noemiPlan/'+wd+'/'+key), val); }catch(e){} toast('✓ Salvato'); };
+window.toggleMealFree = (wd,mk) => { const nv=!isMealFree(wd,mk); if(!noemiPlan[wd]) noemiPlan[wd]={}; noemiPlan[wd][mk+'_free']=nv; try{ set(ref(db,'noemiPlan/'+wd+'/'+mk+'_free'), nv); }catch(e){} renderContent(); };
+
+function updateTabbar(){
+  document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('act', b.dataset.tab===tab));
+}
+
+function renderContent(){
+  const el = document.getElementById('content');
+  el.innerHTML = editBase==='noemi'    ? renderNoemiBaseEdit()
+               : editBase==='nicholas' ? renderNicBaseEdit()
+               : tab==='oggi'      ? renderOggi()
+               : tab==='nicholas'  ? renderNicholasTab()
+               :                     renderNoemiTab();
+  el.classList.remove('saving');
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+oggiDay = todayId(); noemiDay = todayId();
+updateTabbar();
+renderContent();
+</script>
+</body>
+</html>
