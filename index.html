@@ -16,6 +16,7 @@
       --n:#3B82F6;--n-l:#EFF6FF;--n-g:linear-gradient(135deg,#2563EB,#60A5FA);
       --e:#E879A0;--e-l:#FDF2F8;--e-g:linear-gradient(135deg,#DB2777,#F472B6);
       --bg:#F1F5F9;--card:#fff;--text:#111827;--muted:#9CA3AF;--border:#F0F0F0;--r:18px;
+      --grn:#16A34A;
     }
     body{
       font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
@@ -128,22 +129,47 @@
     .reset-btn:active{background:#F8F4F6;color:#9D5577}
 
     /* ── SPESA ── */
-    .sp-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .sp-gen{border:none;background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;font-size:13.5px;font-weight:700;padding:9px 16px;border-radius:50px;cursor:pointer;box-shadow:0 3px 12px rgba(22,163,74,.32)}
-    .sp-gen:active{opacity:.85}
-    .sp-item{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid #F3F4F6}
-    .sp-item:last-of-type{border-bottom:none}
-    .sp-check{flex-shrink:0;width:24px;height:24px;border-radius:7px;border:1.5px solid #D1D5DB;background:#fff;color:#fff;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
-    .sp-check.on{background:#16A34A;border-color:#16A34A}
-    .sp-text{flex:1;font-size:14px;color:#374151;line-height:1.4}
-    .sp-item.done .sp-text{text-decoration:line-through;color:#C9D0D9}
-    .sp-del{flex-shrink:0;border:none;background:transparent;color:#D1D5DB;font-size:13px;cursor:pointer;padding:4px}
+    /* check circolare (riutilizzabile) */
+    .sp-circle{
+      flex-shrink:0;width:25px;height:25px;border-radius:50%;
+      border:2px solid #D7DCE2;background:#fff;cursor:pointer;position:relative;
+      transition:all .15s;padding:0;
+    }
+    .sp-circle.on{background:var(--grn);border-color:var(--grn)}
+    .sp-circle.on::after{content:'';position:absolute;left:7px;top:3.5px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+    .sp-circle.big{width:30px;height:30px}
+    .sp-circle.big.on::after{left:9px;top:5px;width:7px;height:13px}
+
+    /* master block */
+    .sp-master{
+      display:flex;align-items:center;gap:12px;
+      background:#fff;border-radius:var(--r);padding:14px 16px;
+      box-shadow:0 1px 6px rgba(0,0,0,.07);
+    }
+    .sp-master-txt{flex:1;min-width:0}
+    .sp-master-title{font-size:16px;font-weight:800;color:#1F2937;letter-spacing:-.3px}
+    .sp-master-sub{font-size:12.5px;color:#9CA3AF;font-weight:600;margin-top:1px}
+    .sp-gen{flex-shrink:0;border:none;background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;font-size:13.5px;font-weight:800;padding:10px 16px;border-radius:50px;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,.35)}
+    .sp-gen:active{transform:scale(.96)}
+
+    /* card categoria */
+    .sp-card{background:#fff;border-radius:var(--r);box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
+    .sp-cat-head{display:flex;align-items:center;gap:10px;padding:12px 15px;border-bottom:1px solid var(--border)}
+    .sp-cat-label{font-size:13px;font-weight:800;color:#374151;letter-spacing:.01em}
+    .sp-cat-count{margin-left:auto;font-size:11px;font-weight:800;color:var(--grn);background:#E9F9EE;border-radius:20px;padding:2px 9px}
+    .sp-list{padding:4px 15px}
+    .sp-item{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid #F5F6F8}
+    .sp-item:last-child{border-bottom:none}
+    .sp-text{flex:1;font-size:14.5px;color:#374151;line-height:1.35}
+    .sp-item.done .sp-text{text-decoration:line-through;color:#C5CAD2}
+    .sp-del{flex-shrink:0;border:none;background:transparent;color:#D7DCE2;font-size:13px;cursor:pointer;padding:4px 2px}
     .sp-del:active{color:#9CA3AF}
-    .sp-add{display:flex;gap:7px;margin-top:9px}
-    .sp-in{flex:1;min-width:0;font-family:inherit;font-size:13.5px;padding:8px 11px;border:1.5px solid #E5E7EB;border-radius:10px;outline:none}
-    .sp-in:focus{border-color:#16A34A}
-    .sp-addbtn{flex-shrink:0;width:38px;border:none;background:#16A34A;color:#fff;font-size:18px;font-weight:700;border-radius:10px;cursor:pointer}
-    .sp-addbtn:active{opacity:.85}
+    .sp-empty{font-size:13px;color:#C9D0D9;padding:8px 0}
+    .sp-add{display:flex;gap:8px;padding:10px 15px 13px}
+    .sp-in{flex:1;min-width:0;font-family:inherit;font-size:14px;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:11px;outline:none;background:#FAFBFC}
+    .sp-in:focus{border-color:var(--grn);background:#fff}
+    .sp-addbtn{flex-shrink:0;width:40px;border:none;background:var(--grn);color:#fff;font-size:20px;font-weight:700;border-radius:11px;cursor:pointer}
+    .sp-addbtn:active{transform:scale(.94)}
     .pl-hello{font-size:13.5px;color:var(--e);font-weight:600;line-height:1.45;padding:2px 2px 8px;font-style:italic}
     .cmp-items .food-row{gap:6px}
     .cmp-items .cat-pill{padding:2px 7px 2px 6px;font-size:9px}
@@ -598,9 +624,11 @@ const ING_MAP = [
   [/\briso\b|basmati|venere/i,'cereali','Riso'],
   [/cous/i,'cereali','Cous cous'],
   [/\bfarro\b/i,'cereali','Farro'],
-  [/avena|fiocchi d/i,'cereali',"Avena / fiocchi"],
+  [/avena|fiocchi d|fiocchi di mais|porridge/i,'cereali',"Avena / fiocchi"],
+  [/pancake|farina d.?avena/i,'cereali',"Farina d'avena"],
   [/\bcereali\b/i,'cereali','Cereali integrali'],
   [/ravioli/i,'cereali','Ravioli'],
+  [/patate/i,'cereali','Patate'],
   [/pane/i,'dispensa','Pane integrale'],
   [/crackers|grissini/i,'dispensa','Crackers / grissini'],
   [/gallett/i,'dispensa','Gallette mais/riso'],
@@ -613,6 +641,8 @@ const ING_MAP = [
   [/frutta secca/i,'dispensa','Frutta secca'],
   [/barretta/i,'dispensa','Barrette'],
   [/cacao|cannella/i,'dispensa','Cacao / cannella'],
+  [/burro d.?arachid|arachid/i,'dispensa','Burro di arachidi'],
+  [/olio evo|olio extra|\bolio\b/i,'dispensa','Olio EVO'],
   [/insalat|lattuga|rucola/i,'verdure','Insalata'],
   [/pomodor/i,'verdure','Pomodori'],
   [/zucchin/i,'verdure','Zucchine'],
@@ -633,7 +663,11 @@ const ING_MAP = [
   [/frutto|frutta di stagione|\bfrutta\b/i,'frutta','Frutta di stagione'],
   [/pesce|salmon|tonno|merluzz|orata|branzin|nasell|triglia|sgombro|spada|baccal|platess|sogliol|\btrota\b/i,'proteine','Pesce'],
   [/gamber|seppie|polipo|vongole|cozze|crostace|mollusch|calamar|totani|astice|moscardin/i,'proteine','Crostacei / molluschi'],
-  [/\buov|albume/i,'proteine','Uova'],
+  [/\buov|albume|frittata/i,'proteine','Uova'],
+  [/carne bianca|\bpollo\b|tacchino/i,'proteine','Carne bianca / pollo'],
+  [/carne rossa|vitello|lonza|maiale|\bmanzo\b/i,'proteine','Carne rossa'],
+  [/bresaola|prosciutt|affettato/i,'proteine','Affettati magri'],
+  [/\btofu\b/i,'proteine','Tofu'],
   [/formagg|ricotta|mozzarell|\bfeta\b|stracchin|robiola|crescenza|philadelphia|primosale/i,'proteine','Formaggio'],
   [/yogurt|skyr|kefir/i,'proteine','Yogurt greco / magro'],
   [/\blatte\b/i,'proteine','Latte'],
@@ -1041,56 +1075,66 @@ window.openBase  = p=>{ editBase=p; renderContent(); window.scrollTo(0,0); };
 window.closeBase = ()=>{ editBase=null; renderContent(); window.scrollTo(0,0); };
 
 // ── SPESA ──
-function nicShoppingSummary(){
-  const uniq = (cat)=>{ const s=new Set(); NICHOLAS.days.forEach(d=>d.pasti.forEach(p=>p.items.forEach(it=>{ if(it.cat===cat && it.alts) it.alts.forEach(a=>s.add(a.replace(/^\s*\d+[\s\d–\-\/]*g?\s*/i,'').replace(/\(.*?\)/g,'').trim())); }))); return [...s]; };
-  const prot = uniq('prot').slice(0,14).join(', ');
-  const carb = uniq('carbo').slice(0,10).join(', ');
-  return `<div class="day-card" style="padding:13px 14px">
-    <div class="meal-sec-head" style="padding:0 0 8px"><span class="meal-sec-icon">💪</span><span class="meal-sec-title">Per Nicholas — scegli tra</span></div>
-    <div class="food-row" style="gap:8px"><span class="cat-pill prot">🥩 Proteine</span></div>
-    <div class="food-text" style="font-size:12.5px;color:#6B7280;margin:2px 0 9px">${esc(prot)}</div>
-    <div class="food-row" style="gap:8px"><span class="cat-pill carbo">🌾 Carbo</span></div>
-    <div class="food-text" style="font-size:12.5px;color:#6B7280;margin:2px 0 0">${esc(carb)}</div>
-  </div>`;
-}
+function spesaCounts(){ let total=0,done=0; SPESA_CATS.forEach(c=>(spesa[c.key]||[]).forEach(i=>{ total++; if(i.d) done++; })); return {total,done}; }
+
 function renderSpesaTab(){
+  const {total,done} = spesaCounts();
+  const allDone = total>0 && done===total;
+  const master = `
+    <div class="sp-master">
+      <button class="sp-circle big ${allDone?'on':''}" onclick="toggleAllSpesa()" aria-label="seleziona tutto"></button>
+      <div class="sp-master-txt">
+        <div class="sp-master-title">La lista</div>
+        <div class="sp-master-sub">${total ? done+' / '+total+' presi' : 'ancora vuota'}</div>
+      </div>
+      <button class="sp-gen" onclick="generaSpesa()">✨ Genera</button>
+    </div>`;
+
   const cards = SPESA_CATS.map(c=>{
     const items = (spesa[c.key]||[]);
-    const rows = items.map((it,i)=>`
+    const allc = items.length>0 && items.every(i=>i.d);
+    const toBuy = items.filter(i=>!i.d).length;
+    const rows = items.length ? items.map((it,i)=>`
       <div class="sp-item ${it.d?'done':''}">
-        <button class="sp-check ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${i})">${it.d?'✓':''}</button>
+        <button class="sp-circle ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${i})"></button>
         <span class="sp-text">${esc(it.t)}</span>
         <button class="sp-del" onclick="delSpesa('${c.key}',${i})">✕</button>
-      </div>`).join('') || `<div class="food-text" style="color:#C9D0D9;font-size:13px">vuoto</div>`;
-    return `<div class="day-card" style="padding:12px 14px 12px">
-      <div class="meal-sec-head" style="padding:0 0 9px"><span class="meal-sec-title" style="font-size:13px">${esc(c.label)}</span></div>
-      ${rows}
+      </div>`).join('') : `<div class="sp-empty">vuoto</div>`;
+    return `<div class="sp-card">
+      <div class="sp-cat-head">
+        <button class="sp-circle ${allc?'on':''}" onclick="toggleCatAll('${c.key}')" aria-label="tutto"></button>
+        <span class="sp-cat-label">${esc(c.label)}</span>
+        ${toBuy ? `<span class="sp-cat-count">${toBuy}</span>` : ''}
+      </div>
+      <div class="sp-list">${rows}</div>
       <div class="sp-add">
         <input class="sp-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
         <button class="sp-addbtn" onclick="addSpesa('${c.key}')">+</button>
       </div>
     </div>`;
   }).join('');
+
   return `
     <div class="page-title">Spesa</div>
-    <div class="page-sub">Lista condivisa · spunta ciò che prendi</div>
-    <div class="sp-actions">
-      <button class="sp-gen" onclick="generaSpesa()">✨ Genera dalla dieta</button>
-      <button class="reset-btn" onclick="clearDoneSpesa()">🧹 Togli spuntati</button>
-    </div>
-    ${nicShoppingSummary()}
+    <div class="page-sub">Lista condivisa · spunta ciò che hai già</div>
+    ${master}
     ${cards}
   `;
 }
-window.addSpesa = (cat)=>{ const el=document.getElementById('spin-'+cat); const v=(el?el.value:'').trim(); if(!v) return; const list=(spesa[cat]||[]).slice(); list.push({t:v,d:false}); spesa[cat]=list; try{ set(ref(db,'spesa/'+cat), list); }catch(e){} renderContent(); };
-window.toggleSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); if(!list[i])return; list[i]={...list[i],d:!list[i].d}; spesa[cat]=list; try{ set(ref(db,'spesa/'+cat), list); }catch(e){} renderContent(); };
-window.delSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); list.splice(i,1); spesa[cat]=list; try{ set(ref(db,'spesa/'+cat), list.length?list:null); }catch(e){} renderContent(); };
-window.clearDoneSpesa = ()=>{ if(!confirm('Rimuovere tutti gli articoli spuntati?'))return; SPESA_CATS.forEach(c=>{ const list=(spesa[c.key]||[]).filter(it=>!it.d); spesa[c.key]=list; try{ set(ref(db,'spesa/'+c.key), list.length?list:null); }catch(e){} }); renderContent(); toast('Puliti gli spuntati'); };
+
+function saveSpesaCat(cat){ try{ const l=spesa[cat]; set(ref(db,'spesa/'+cat), (l&&l.length)?l:null); }catch(e){} }
+window.addSpesa = (cat)=>{ const el=document.getElementById('spin-'+cat); const v=(el?el.value:'').trim(); if(!v) return; const list=(spesa[cat]||[]).slice(); list.push({t:v,d:false}); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
+window.toggleSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); if(!list[i])return; list[i]={...list[i],d:!list[i].d}; spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
+window.delSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); list.splice(i,1); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
+window.toggleCatAll = (cat)=>{ const list=(spesa[cat]||[]).slice(); if(!list.length)return; const all=list.every(i=>i.d); list.forEach(i=>i.d=!all); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
+window.toggleAllSpesa = ()=>{ const {total,done}=spesaCounts(); const target=!(total>0&&done===total); SPESA_CATS.forEach(c=>{ const list=(spesa[c.key]||[]); if(!list.length)return; list.forEach(i=>i.d=target); spesa[c.key]=list; saveSpesaCat(c.key); }); renderContent(); };
+
 window.generaSpesa = ()=>{
-  if(!confirm('Genera la lista dalla dieta di Noemi della settimana?\n(aggiunge agli elenchi, non cancella nulla)')) return;
+  if(!confirm('Genera la lista dalla dieta della settimana (Noemi + tuo piano)?\nAggiunge agli elenchi, non cancella nulla.')) return;
   const found = {};
   const add = (cat,label)=>{ (found[cat]=found[cat]||new Set()).add(label); };
   const scan = txt=>{ if(!txt)return; for(const [re,cat,label] of ING_MAP){ if(re.test(txt)) add(cat,label); } };
+  // Noemi: scelte + ricette
   NOEMI_DAYS.forEach(wd=>{
     const dp = getDayPlan(wd);
     NOEMI_MEALS.forEach(mk=>{
@@ -1099,15 +1143,24 @@ window.generaSpesa = ()=>{
       scan(noteFor(wd,mk));
     });
   });
+  // Nicholas: opzioni dei tipi di giornata pianificati
+  NOEMI_DAYS.forEach(wd=>{
+    const day = NICHOLAS.days.find(d=>d.id===getTrain(wd));
+    if(!day) return;
+    day.pasti.forEach(p=>p.items.forEach(it=>{
+      if(it.v) scan(it.v);
+      if(it.alts) it.alts.forEach(scan);
+    }));
+  });
   let added=0;
   Object.keys(found).forEach(cat=>{
     const list=(spesa[cat]||[]).slice();
     const have=new Set(list.map(i=>i.t.toLowerCase()));
     found[cat].forEach(label=>{ if(!have.has(label.toLowerCase())){ list.push({t:label,d:false}); added++; } });
-    spesa[cat]=list; try{ set(ref(db,'spesa/'+cat), list); }catch(e){}
+    spesa[cat]=list; saveSpesaCat(cat);
   });
   renderContent();
-  toast(added ? ('✨ '+added+' voci aggiunte') : 'Niente di nuovo');
+  toast(added ? ('✨ '+added+' voci aggiunte') : 'Niente di nuovo da aggiungere');
 };
 
 // ── ACTIONS ──
