@@ -222,8 +222,9 @@
     /* ── EDITOR CATEGORIE ── */
     .shop-sec-edit{border:none;background:transparent;color:#9CA3AF;cursor:pointer;padding:0;font-size:12px;margin-left:auto;opacity:.6;transition:opacity .15s}
     .shop-sec-edit:hover{opacity:1}
-    .cat-editor{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;animation:slideUp .22s ease}
+    .cat-editor{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;animation:fadeIn .18s ease}
     @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
     .cat-editor-panel{background:#fff;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:600px;margin:0 auto}
     .cat-editor-title{font-size:18px;font-weight:800;margin-bottom:16px}
     .cat-editor-field{margin-bottom:12px}
@@ -1187,29 +1188,58 @@ function ownerBadgesHTML(owners, cat, idx){
     +'</span>';
 }
 // ── CATEGORY MANAGER ──
+function splitLabel(label){
+  // separa emoji iniziale dal resto
+  const parts = label.split(' ');
+  // se la prima parte è non-alfanumerica (emoji), separala
+  if(parts.length>1 && !/^[a-zA-Z0-9]/.test(parts[0])) return [parts[0], parts.slice(1).join(' ')];
+  return ['', label];
+}
 function renderCategoryManager(){
   const SPESA_CATS = getSpesaCats();
-  const items = SPESA_CATS.map(c=>`
-    <div style="padding:11px 14px;border-bottom:1px solid #F0F0F0;display:flex;align-items:center;gap:8px;transition:background .15s" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
-      <div style="flex:1;min-width:0;cursor:pointer" ondblclick="startEditCat('${c.key}')">
-        <div id="catname-${c.key}" style="font-size:14px;font-weight:700">${esc(c.label)}</div>
-        <div style="font-size:11px;color:#9CA3AF;margin-top:2px">${c.custom ? '✓ Custom' : 'Default'}</div>
-      </div>
-      ${c.custom ? `<button style="border:none;background:transparent;color:#DC2626;cursor:pointer;font-size:14px;padding:4px 6px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'" onclick="deleteCategoryEdit('${c.key}')" title="Elimina">🗑️</button>` : ''}
-    </div>`).join('');
+  const items = SPESA_CATS.map(c=>{
+    const [emoji, name] = splitLabel(c.label);
+    return `
+    <div style="padding:9px 12px;border-bottom:1px solid #F0F0F0;display:flex;align-items:center;gap:8px">
+      <input class="cat-manager-edit-input" style="width:48px;flex:none;text-align:center;font-size:18px;padding:6px 4px" maxlength="2" value="${esc(emoji)}" onchange="saveCatInline('${c.key}',this.value,null)" title="Emoji">
+      <input class="cat-manager-edit-input" style="flex:1;font-weight:700" value="${esc(name)}" onchange="saveCatInline('${c.key}',null,this.value)" placeholder="Nome categoria">
+      ${c.custom ? `<button style="border:none;background:transparent;color:#DC2626;cursor:pointer;font-size:15px;padding:4px 6px;flex-none" onclick="deleteCategoryEdit('${c.key}')" title="Elimina">🗑️</button>` : `<span style="width:28px;flex:none;font-size:9px;color:#C5CAD2;text-align:center">def</span>`}
+    </div>`;
+  }).join('');
   return `<div class="cat-editor-overlay show" onclick="managerCategories()"></div>
-    <div class="cat-editor" style="max-height:70vh;width:95%;max-width:480px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);margin:0" onclick="event.stopPropagation()">
-      <div class="cat-editor-panel" style="max-height:70vh;display:flex;flex-direction:column;padding:18px 14px">
-        <div class="cat-editor-title" style="margin-bottom:12px;font-size:18px">Gestisci Categorie</div>
-        <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:12px;overflow-y:auto;flex:1;min-height:200px">
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;width:92%;max-width:460px" onclick="event.stopPropagation()">
+      <div style="background:#fff;border-radius:18px;padding:18px 14px;max-height:75vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+        <div class="cat-editor-title" style="margin-bottom:6px;font-size:18px">Gestisci Categorie</div>
+        <div style="font-size:11px;color:#9CA3AF;margin-bottom:12px">Modifica emoji e nome direttamente qui</div>
+        <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:12px;overflow-y:auto;flex:1;min-height:180px">
           ${items}
         </div>
-        <button class="cat-editor-btn save" style="width:100%;margin-bottom:8px;padding:11px" onclick="managerAddNewCat()">+ Aggiungi categoria nuova</button>
+        <button class="cat-editor-btn save" style="width:100%;margin-bottom:8px;padding:11px" onclick="managerAddNewCat()">+ Aggiungi categoria</button>
         <button class="cat-editor-btn cancel" style="width:100%;padding:11px" onclick="managerCategories()">Chiudi</button>
       </div>
     </div>`;
 }
-window.managerAddNewCat = () => { editingCat = null; categoryManager = false; renderContent(); setTimeout(()=>{ editingCat = '___new'; renderContent(); }, 50); };
+// salva inline: passa emoji o nome (l'altro resta invariato)
+window.saveCatInline = (key, newEmoji, newName) => {
+  const SPESA_CATS = getSpesaCats();
+  const c = SPESA_CATS.find(x=>x.key===key);
+  if(!c) return;
+  const [curEmoji, curName] = splitLabel(c.label);
+  const emoji = newEmoji!==null ? newEmoji.trim() : curEmoji;
+  const name  = newName!==null  ? newName.trim()  : curName;
+  if(!name) return toast('Il nome non può essere vuoto');
+  const label = (emoji ? emoji+' ' : '') + name;
+  const order = c.order || 100;
+  try{ set(ref(db,'spesaCategories/'+key), {label, order}); }catch(e){}
+  toast('✓ Salvato');
+};
+window.managerAddNewCat = () => {
+  const newKey = 'cat_' + Date.now();
+  const SPESA_CATS = getSpesaCats();
+  const order = Math.max(...SPESA_CATS.map(c=>c.order||100)) + 1;
+  try{ set(ref(db,'spesaCategories/'+newKey), {label:'🆕 Nuova categoria', order}); }catch(e){}
+  renderContent();
+};
 window.managerCategories = () => { categoryManager = !categoryManager; renderContent(); };
 
 // ── EDITOR CATEGORIE ──
