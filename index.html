@@ -210,10 +210,11 @@
     .sp-circle.sm.on::after{left:5.5px;top:2.5px;width:5px;height:9px}
 
     /* ── OWNER BADGES ── */
-    .owner-badges{display:flex;gap:3px;flex-shrink:0;align-items:center;margin-left:4px}
-    .owner-badge{width:17px;height:17px;border-radius:50%;font-size:8.5px;font-weight:900;display:flex;align-items:center;justify-content:center;letter-spacing:0}
-    .owner-badge.n{background:var(--n-l);color:var(--n)}
-    .owner-badge.e{background:#FCE7F3;color:var(--e)}
+    .owner-badges{display:flex;gap:3px;flex-shrink:0;align-items:center;margin-left:6px}
+    .owner-badge{width:20px;height:20px;border-radius:50%;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;letter-spacing:0;border:1.5px solid transparent;cursor:pointer;transition:all .15s}
+    .owner-badge.n{background:var(--n-l);color:var(--n);border-color:var(--n)}
+    .owner-badge.e{background:#FCE7F3;color:var(--e);border-color:var(--e)}
+    .owner-badge.off{opacity:.3;border-color:#E0E0E0}
     .shop-tool:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
     @keyframes spin{to{transform:rotate(360deg)}}
     .shop-tool.loading .spin{display:inline-block;animation:spin .8s linear infinite}
@@ -1142,11 +1143,12 @@ window.openBase  = p=>{ editBase=p; renderContent(); window.scrollTo(0,0); };
 window.closeBase = ()=>{ editBase=null; renderContent(); window.scrollTo(0,0); };
 
 // ── SPESA ──
-function ownerBadgesHTML(owners){
-  if(!owners||!owners.length) return '';
+function ownerBadgesHTML(owners, cat, idx){
+  const hasN = owners&&owners.includes('nicholas');
+  const hasE = owners&&owners.includes('noemi');
   return '<span class="owner-badges">'
-    +(owners.includes('nicholas')?'<span class="owner-badge n">N</span>':'')
-    +(owners.includes('noemi')?'<span class="owner-badge e">E</span>':'')
+    +'<span class="owner-badge n '+(hasN?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'nicholas\')" title="Nicholas">N</span>'
+    +'<span class="owner-badge e '+(hasE?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'noemi\')" title="Noemi">E</span>'
     +'</span>';
 }
 function spesaCounts(){ let total=0,done=0; SPESA_CATS.forEach(c=>(spesa[c.key]||[]).forEach(i=>{ total++; if(i.d) done++; })); return {total,done}; }
@@ -1165,21 +1167,18 @@ function renderSpesaTab(){
       <div class="shop-row ${it.d?'done':''}">
         <button class="sp-circle ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${it.idx})"></button>
         <span class="shop-name">${esc(it.t)}</span>
-        ${ownerBadgesHTML(it.owners)}
+        ${ownerBadgesHTML(it.owners, c.key, it.idx)}
         <button class="shop-x" onclick="delSpesa('${c.key}',${it.idx})">✕</button>
       </div>`).join('');
-    // sezione vuota: solo header con input inline, niente altezza sprecata
-    if(isEmpty) return `<div class="shop-sec shop-sec-empty">
-      <div class="shop-sec-h" style="cursor:pointer" onclick="document.getElementById('spin-${c.key}').focus()">
-        <span class="shop-sec-name" style="color:#CDD1D9">${esc(c.label)}</span>
-        <span style="margin-left:auto;color:#C8CDD6;font-size:12px">+</span>
+    // sezione vuota: header collapso + input visibile con bottone
+    if(isEmpty) return `<div class="shop-sec">
+      <div class="shop-sec-h" style="color:#CDD1D9">
+        <span class="shop-sec-name">${esc(c.label)}</span>
       </div>
-      <div class="shop-addrow" style="display:none" id="sadd-${c.key}">
+      <div class="shop-addrow">
         <span class="shop-plus">+</span>
-        <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…"
-          onfocus="document.getElementById('sadd-${c.key}').style.display='flex';this.closest('.shop-sec').classList.remove('shop-sec-empty')"
-          onblur="if(!this.value){document.getElementById('sadd-${c.key}').style.display='none'}"
-          onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
+        <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
+        <button style="border:none;background:transparent;color:#9CA3AF;cursor:pointer;padding:4px 8px;font-size:12px;font-weight:700" onclick="addSpesa('${c.key}')">Aggiungi</button>
       </div>
     </div>`;
     return `<div class="shop-sec">
@@ -1232,6 +1231,20 @@ window.svuotaEMemorizza = ()=>{
   SPESA_CATS.forEach(c=>{ spesa[c.key]=[]; try{ set(ref(db,'spesa/'+c.key), null); }catch(e){} });
   renderContent();
   toast(hasItems ? '✓ Lista salvata e svuotata' : 'Lista svuotata');
+};
+
+// ── Toggle owner su voce ──
+window.toggleOwner = (cat, idx, owner) => {
+  const list = (spesa[cat]||[]).slice();
+  if (!list[idx]) return;
+  if (!list[idx].owners) list[idx].owners = [];
+  const owners = list[idx].owners;
+  const pos = owners.indexOf(owner);
+  if (pos >= 0) owners.splice(pos, 1);
+  else owners.push(owner);
+  spesa[cat] = list;
+  saveSpesaCat(cat);
+  renderContent();
 };
 
 // ── Genera con AI ──
