@@ -45,8 +45,23 @@ module.exports = async (req, res) => {
     else { const m = rawText.match(/\{[\s\S]*\}/); if (m) jsonStr = m[0]; }
 
     const result = JSON.parse(jsonStr);
+    console.log('Parsed result keys:', Object.keys(result));
+    console.log('Sample item:', JSON.stringify((Object.values(result).find(v=>Array.isArray(v)&&v.length)||[])[0]));
+
     const CATS = ['cereali','dispensa','proteine','verdure','frutta','surgelati','integratori','casa','gatto','coniglio'];
-    CATS.forEach(c => { if (!Array.isArray(result[c])) result[c] = []; });
+    CATS.forEach(c => {
+      if (!Array.isArray(result[c])) { result[c] = []; return; }
+      // Normalizza: accetta stringhe, oggetti con t/nome/name/item, qualsiasi formato
+      result[c] = result[c].map(item => {
+        if (!item) return null;
+        if (typeof item === 'string') return { t: item, owners: [] };
+        const t = item.t || item.nome || item.name || item.item || item.prodotto || item.voce
+                  || Object.entries(item).find(([k,v]) => typeof v === 'string' && v.length > 1)?.[1]
+                  || '';
+        const owners = Array.isArray(item.owners) ? item.owners : [];
+        return t ? { t: String(t), owners } : null;
+      }).filter(Boolean);
+    });
 
     return res.status(200).json(result);
 
