@@ -1267,7 +1267,7 @@ function renderSpesaTab(){
         ${ownerBadgesHTML(it.owners, c.key, it.idx)}
         <button class="shop-x" onclick="delSpesa('${c.key}',${it.idx})">✕</button>
       </div>`).join('');
-    // sezione vuota: header collapso + input visibile con bottone grande
+    // sezione vuota: header collapso + input con invio
     if(isEmpty) return `<div class="shop-sec">
       <div class="shop-sec-h" style="color:#CDD1D9">
         <span class="shop-sec-name">${esc(c.label)}</span>
@@ -1275,7 +1275,6 @@ function renderSpesaTab(){
       <div class="shop-addrow">
         <span class="shop-plus">+</span>
         <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter'){addSpesa('${c.key}');return false}">
-        <button style="border:1.5px solid #E5E7EB;background:#fff;color:#374151;cursor:pointer;padding:8px 14px;font-size:13px;font-weight:700;border-radius:9px;flex-shrink:0" onclick="addSpesa('${c.key}')" ontouchend="addSpesa('${c.key}');return false">+ Aggiungi</button>
       </div>
     </div>`;
     return `<div class="shop-sec">
@@ -1300,11 +1299,18 @@ function renderSpesaTab(){
         <div class="shop-prog-txt">${total ? done+' / '+total+' presi' : 'lista vuota'}</div>
         <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
       </div>
-      <button class="shop-tool" onclick="editCategory(null)" title="Aggiungi categoria">+ Cat</button>
       <button class="shop-tool gen" id="btn-genera" onclick="generaSpesaAI()">✨ Genera</button>
       <button class="shop-tool danger" onclick="svuotaEMemorizza()" title="Salva nella cronologia e svuota">🗑</button>
     </div>
-    <div class="shop">${sections}</div>
+    <div class="shop">
+      <div class="shop-sec" style="border-bottom:2px solid #F0F0F0">
+        <div class="shop-addrow" style="justify-content:flex-start">
+          <span class="shop-plus" style="font-size:16px">+</span>
+          <input class="shop-in" placeholder="nuova categoria…" id="new-cat-input" onkeydown="if(event.key==='Enter'){editCategory(null);return false}" style="flex:0;width:200px">
+        </div>
+      </div>
+      ${sections}
+    </div>
     ${editingCat!==null ? renderCategoryEditor() : ''}
   `;
 }
