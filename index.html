@@ -1187,19 +1187,23 @@ function ownerBadgesHTML(owners, cat, idx){
 function renderCategoryManager(){
   const SPESA_CATS = getSpesaCats();
   const items = SPESA_CATS.map(c=>`
-    <div style="padding:13px 16px;border-bottom:1px solid #F0F0F0;cursor:pointer;transition:background .15s" onclick="editCategory('${c.key}')" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
-      <div style="font-size:16px;font-weight:700">${esc(c.label)}</div>
-      <div style="font-size:12px;color:#9CA3AF;margin-top:3px">${c.custom ? '✓ Custom' : 'Default'}</div>
+    <div style="padding:11px 14px;border-bottom:1px solid #F0F0F0;display:flex;align-items:center;gap:10px;transition:background .15s" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+      <div style="flex:1;min-width:0;cursor:pointer" onclick="editCategory('${c.key}')">
+        <div style="font-size:14px;font-weight:700">${esc(c.label)}</div>
+        <div style="font-size:11px;color:#9CA3AF;margin-top:2px">${c.custom ? '✓ Custom' : 'Default'}</div>
+      </div>
+      <button style="border:none;background:transparent;color:#9CA3AF;cursor:pointer;font-size:14px;padding:4px 6px" onclick="editCategory('${c.key}')" title="Modifica">✏️</button>
+      ${c.custom ? `<button style="border:none;background:transparent;color:#DC2626;cursor:pointer;font-size:14px;padding:4px 6px" onclick="deleteCategoryEdit('${c.key}')" title="Elimina">🗑️</button>` : ''}
     </div>`).join('');
   return `<div class="cat-editor-overlay show" onclick="managerCategories()"></div>
-    <div class="cat-editor" style="max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">
-      <div class="cat-editor-panel">
-        <div class="cat-editor-title">Gestisci Categorie</div>
-        <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:16px;max-height:50vh;overflow-y:auto">
+    <div class="cat-editor" style="max-height:70vh;width:90%;max-width:450px" onclick="event.stopPropagation()">
+      <div class="cat-editor-panel" style="max-height:70vh;display:flex;flex-direction:column">
+        <div class="cat-editor-title" style="margin-bottom:12px">Gestisci Categorie</div>
+        <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:14px;overflow-y:auto;flex:1">
           ${items}
         </div>
-        <button class="cat-editor-btn save" style="width:100%" onclick="editCategory(null)">+ Aggiungi categoria nuova</button>
-        <button class="cat-editor-btn cancel" style="width:100%;margin-top:8px" onclick="managerCategories()">Chiudi</button>
+        <button class="cat-editor-btn save" style="width:100%;margin-bottom:8px" onclick="editCategory(null)">+ Aggiungi categoria nuova</button>
+        <button class="cat-editor-btn cancel" style="width:100%" onclick="managerCategories()">Chiudi</button>
       </div>
     </div>`;
 }
