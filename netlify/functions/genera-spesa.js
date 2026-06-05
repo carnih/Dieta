@@ -138,32 +138,52 @@ function buildPrompt(nicholas, noemi, schedule, history) {
     histBlock += '\n→ Voci ricorrenti nello storico NON da dieta (es. fieno, cibo gatto, ghiaccioli…): includile nelle categorie appropriate.\n';
   }
 
-  return `Sei un assistente italiano per la spesa alimentare. Analizza i piani dieta di Nicholas e Noemi e produci una lista della spesa settimanale intelligente.
+  // Ottimizzazione token: per Nicholas manda solo i tipi di giornata UNICI usati questa settimana
+  const usedDietIds = [...new Set(DAYS.map(wd => {
+    const sOpt = SCHED_OPTS.find(o => o.id === ((schedule && schedule[wd]) || 'riposo')) || SCHED_OPTS[6];
+    return sOpt.diet;
+  }))];
+  let nicDiets = '\nDIETE NICHOLAS (tipi usati questa settimana):\n';
+  usedDietIds.forEach(dietId => {
+    const day = (nicholas.days || []).find(d => d.id === dietId);
+    if (!day) return;
+    nicDiets += `\n[Tipo: ${day.label || dietId}]\n`;
+    (day.pasti || []).forEach(p => {
+      nicDiets += `  ${p.nome}:\n`;
+      (p.items || []).forEach(it => {
+        if (it.v)    nicDiets += `    · (${it.cat}) ${it.v}\n`;
+        if (it.alts) nicDiets += `    · (${it.cat}) scelta: ${it.alts.slice(0,3).join(' | ')}${it.alts.length>3?' …':''}\n`;
+      });
+    });
+  });
+
+  return `Genera lista spesa settimanale per Nicholas e Noemi. Rispondi SOLO con JSON valido.
 
 ${nicBlock}
+${nicDiets}
 ${noemiBlock}
 ${histBlock}
 
-CATEGORIE (chiavi JSON esatte):
-  cereali   → pasta, riso, pane, gallette, biscotti, fette biscottate, patate, gnocchi, avena
-  dispensa  → olio EVO, marmellata, miele, parmigiano, passata/sugo, burro arachidi, frutta secca, cioccolato fondente, integratori sportivi (creatina/BCAA/carnitina/sali), barrette
-  proteine  → carne, pesce, uova, formaggi, yogurt, latte, legumi, tofu, affettati, budino proteico
-  verdure   → verdure fresche
-  frutta    → frutta fresca
-  surgelati → surgelati
-  casa      → prodotti pulizia/igiene
-  gatto     → cibo/lettiera gatto
-  coniglio  → fieno/cibo coniglio
+CATEGORIE JSON (10 chiavi esatte):
+  cereali      → pasta, riso, pane, gallette, biscotti, patate, avena
+  dispensa     → olio EVO, marmellata, miele, parmigiano/grana, passata, burro arachidi, frutta secca, cioccolato, barrette, cacao
+  proteine     → carne, pesce (raggruppa tutto il pesce in 1-2 voci), uova, formaggi, yogurt, latte, legumi, tofu, affettati, budino
+  verdure      → verdure fresche
+  frutta       → frutta fresca
+  surgelati    → surgelati
+  integratori  → creatina, BCAA, carnitina, sali minerali, proteine in polvere — tutti owners:["nicholas"]
+  casa         → pulizia/igiene
+  gatto        → cibo/lettiera gatto
+  coniglio     → fieno/cibo coniglio
 
 REGOLE:
-1. Proteine Nicholas: aggrega con grammature e pasti. Es: "Pollo / Tacchino (150g pranzo · 250g cena)"
-2. Ingrediente condiviso → owners: ["nicholas","noemi"], una sola voce.
-3. Raggruppa: "riso basmati" + "riso venere" → "Riso (basmati / venere)".
-4. Integratori (BCAA, creatina, carnitina) → dispensa, owners: ["nicholas"].
-5. Storico: includi voci ricorrenti non da dieta.
-6. NON includere acqua, sale, pepe.
-7. Rispondi SOLO con JSON valido, zero testo prima o dopo.
+1. Proteine Nicholas: aggrega tipo "Pollo / Tacchino (150g pranzo · 250g cena)" — non elencare ogni giorno.
+2. Pesce: massimo 1-2 voci raggruppate es. "Pesce bianco (merluzzo/orata/branzino)" + "Salmone / Pesce spada" se presente.
+3. Parmigiano/grana → dispensa (è un condimento).
+4. Condiviso da entrambi → owners:["nicholas","noemi"], una voce sola.
+5. Storico: aggiungi voci ricorrenti non da dieta nelle categorie giuste.
+6. NON includere acqua, sale, pepe, aromi.
 
-OUTPUT (tutte le 9 categorie sempre presenti):
-{"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"dispensa":[],"proteine":[{"t":"Pollo / Tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}],"verdure":[],"frutta":[],"surgelati":[],"casa":[],"gatto":[],"coniglio":[]}`;
+OUTPUT (tutte le 10 categorie sempre presenti, anche vuote):
+{"cereali":[],"dispensa":[],"proteine":[],"verdure":[],"frutta":[],"surgelati":[],"integratori":[],"casa":[],"gatto":[],"coniglio":[]}`;
 }
