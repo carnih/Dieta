@@ -1299,16 +1299,11 @@ function renderSpesaTab(){
         <div class="shop-prog-txt">${total ? done+' / '+total+' presi' : 'lista vuota'}</div>
         <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
       </div>
+      <button class="shop-tool" style="background:linear-gradient(135deg,#E879A0,#F472B6);color:#fff;box-shadow:0 4px 14px rgba(219,39,119,.35)" onclick="editCategory(null)">➕ Categoria</button>
       <button class="shop-tool gen" id="btn-genera" onclick="generaSpesaAI()">✨ Genera</button>
       <button class="shop-tool danger" onclick="svuotaEMemorizza()" title="Salva nella cronologia e svuota">🗑</button>
     </div>
     <div class="shop">
-      <div class="shop-sec" style="border-bottom:2px solid #F0F0F0">
-        <div class="shop-addrow" style="justify-content:flex-start">
-          <span class="shop-plus" style="font-size:16px">+</span>
-          <input class="shop-in" placeholder="nuova categoria…" id="new-cat-input" onkeydown="if(event.key==='Enter'){editCategory(null);return false}" style="flex:0;width:200px">
-        </div>
-      </div>
       ${sections}
     </div>
     ${editingCat!==null ? renderCategoryEditor() : ''}
