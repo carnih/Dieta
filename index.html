@@ -218,6 +218,25 @@
     .shop-tool:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
     @keyframes spin{to{transform:rotate(360deg)}}
     .shop-tool.loading .spin{display:inline-block;animation:spin .8s linear infinite}
+
+    /* ── EDITOR CATEGORIE ── */
+    .shop-sec-edit{border:none;background:transparent;color:#9CA3AF;cursor:pointer;padding:0;font-size:12px;margin-left:auto;opacity:.6;transition:opacity .15s}
+    .shop-sec-edit:hover{opacity:1}
+    .cat-editor{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;animation:slideUp .22s ease}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .cat-editor-panel{background:#fff;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:600px;margin:0 auto}
+    .cat-editor-title{font-size:18px;font-weight:800;margin-bottom:16px}
+    .cat-editor-field{margin-bottom:12px}
+    .cat-editor-label{font-size:11px;font-weight:800;text-transform:uppercase;color:#9CA3AF;display:block;margin-bottom:6px}
+    .cat-editor-input{width:100%;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:9px;font-size:14px;font-family:inherit;outline:none}
+    .cat-editor-input:focus{border-color:var(--e)}
+    .cat-editor-buttons{display:flex;gap:10px;margin-top:18px}
+    .cat-editor-btn{flex:1;padding:12px;border:none;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer}
+    .cat-editor-btn.save{background:var(--e-g);color:#fff;box-shadow:0 4px 14px rgba(219,39,119,.35)}
+    .cat-editor-btn.cancel{background:#F3F4F6;color:#6B7280}
+    .cat-editor-btn.delete{flex:none;background:#FEE2E2;color:#DC2626}
+    .cat-editor-overlay{position:fixed;inset:0;z-index:998;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s}
+    .cat-editor-overlay.show{opacity:1;pointer-events:auto}
     .pl-hello{font-size:13.5px;color:var(--e);font-weight:600;line-height:1.45;padding:2px 2px 8px;font-style:italic}
     .cmp-items .food-row{flex-direction:column;align-items:flex-start;gap:3px}
     .cmp-items .cat-pill{padding:2px 8px 2px 6px;font-size:9px}
@@ -669,18 +688,26 @@ const NOEMI_LABELS= {lun:'Lun',mar:'Mar',mer:'Mer',gio:'Gio',ven:'Ven',sab:'Sab'
 const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì',ven:'Venerdì',sab:'Sabato',dom:'Domenica'};
 
 // ── SPESA ──
-const SPESA_CATS = [
-  {key:'cereali',     label:'🌾 Cereali'},
-  {key:'dispensa',    label:'🥫 Dispensa'},
-  {key:'proteine',    label:'🥩 Proteine / Banco'},
-  {key:'verdure',     label:'🥦 Verdure'},
-  {key:'frutta',      label:'🍓 Frutta'},
-  {key:'surgelati',   label:'❄️ Surgelati'},
-  {key:'integratori', label:'💊 Integratori'},
-  {key:'casa',        label:'🧴 Casa'},
-  {key:'gatto',       label:'🐈 Gatto'},
-  {key:'coniglio',    label:'🐰 Coniglio'},
+const SPESA_CATS_DEFAULT = [
+  {key:'cereali',     label:'🌾 Cereali',     order:1},
+  {key:'dispensa',    label:'🥫 Dispensa',    order:2},
+  {key:'proteine',    label:'🥩 Proteine',    order:3},
+  {key:'verdure',     label:'🥦 Verdure',     order:4},
+  {key:'frutta',      label:'🍓 Frutta',      order:5},
+  {key:'surgelati',   label:'❄️ Surgelati',   order:6},
+  {key:'integratori', label:'💊 Integratori', order:7},
+  {key:'casa',        label:'🧴 Casa',        order:8},
+  {key:'gatto',       label:'🐈 Gatto',       order:9},
+  {key:'coniglio',    label:'🐰 Coniglio',    order:10},
 ];
+function getSpesaCats(){
+  const all = SPESA_CATS_DEFAULT.map(c=>({...c, custom:false}));
+  Object.entries(spesaCategories||{}).forEach(([k,v])=>{
+    if(!all.find(x=>x.key===k)) all.push({key:k, label:v.label||k, order:v.order||100, custom:true});
+    else { const idx=all.findIndex(x=>x.key===k); if(idx>=0) all[idx].label=v.label; }
+  });
+  return all.sort((a,b)=>(a.order||100)-(b.order||100));
+}
 // regole estrazione ingredienti: [regex, categoria, etichetta pulita]
 const ING_MAP = [
   [/pasta/i,'cereali','Pasta'],
@@ -742,7 +769,7 @@ const ING_MAP = [
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa';
+let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null;
 
 onValue(ref(db,'noemiPlan'), snap => {
   noemiPlan = snap.val() || {};
@@ -773,6 +800,11 @@ onValue(ref(db,'spesa'), snap => {
 
 onValue(ref(db,'spesaHistory'), snap => {
   spesaHistory = snap.val() || {};
+});
+
+onValue(ref(db,'spesaCategories'), snap => {
+  spesaCategories = snap.val() || {};
+  if(tab==='spesa') renderContent();
 });
 
 onValue(ref(db,'schedule'), snap => {
@@ -1151,11 +1183,76 @@ function ownerBadgesHTML(owners, cat, idx){
     +'<span class="owner-badge e '+(hasE?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'noemi\')" title="Noemi">E</span>'
     +'</span>';
 }
-function spesaCounts(){ let total=0,done=0; SPESA_CATS.forEach(c=>(spesa[c.key]||[]).forEach(i=>{ total++; if(i.d) done++; })); return {total,done}; }
+// ── EDITOR CATEGORIE ──
+function renderCategoryEditor(){
+  if(editingCat===null) return '';
+  const SPESA_CATS = getSpesaCats();
+  const cat = editingCat ? SPESA_CATS.find(c=>c.key===editingCat) : null;
+  const isNew = !cat;
+  const label = cat?.label || '🆕 Nuova';
+  const [emoji, name] = label.includes(' ') ? [label.split(' ')[0], label.split(' ').slice(1).join(' ')] : ['', label];
+  return `<div class="cat-editor-overlay show"></div>
+    <div class="cat-editor" onclick="if(event.target===this)editCategory(null)">
+      <div class="cat-editor-panel">
+        <div class="cat-editor-title">${isNew ? 'Nuova categoria' : 'Modifica categoria'}</div>
+        <div class="cat-editor-field">
+          <label class="cat-editor-label">Emoji</label>
+          <input class="cat-editor-input" id="cat-emoji" style="font-size:24px;text-align:center" maxlength="2" value="${emoji}">
+        </div>
+        <div class="cat-editor-field">
+          <label class="cat-editor-label">Nome</label>
+          <input class="cat-editor-input" id="cat-name" placeholder="es. Cereali" value="${name}">
+        </div>
+        <div class="cat-editor-buttons">
+          ${!isNew ? `<button class="cat-editor-btn delete" onclick="deleteCategoryEdit('${editingCat}')">Elimina</button>` : ''}
+          <button class="cat-editor-btn cancel" onclick="editCategory(null)">Annulla</button>
+          <button class="cat-editor-btn save" onclick="saveCategoryEdit('${editingCat||''}')">Salva</button>
+        </div>
+      </div>
+    </div>`;
+}
+window.editCategory = (key) => { editingCat = key; renderContent(); };
+window.saveCategoryEdit = (key) => {
+  const emoji = (document.getElementById('cat-emoji')?.value||'').trim();
+  const name = (document.getElementById('cat-name')?.value||'').trim();
+  if(!emoji || !name) return toast('Inserisci emoji e nome');
+  const label = emoji + ' ' + name;
+  const newKey = key || 'cat_' + Date.now();
+  const SPESA_CATS = getSpesaCats();
+  const cat = SPESA_CATS.find(c=>c.key===newKey);
+  const order = cat?.order || (Math.max(...SPESA_CATS.map(c=>c.order||100)) + 1);
+  try{
+    set(ref(db,'spesaCategories/'+newKey), {label, order});
+    spesa[newKey] = spesa[newKey] || [];
+    set(ref(db,'spesa/'+newKey), spesa[newKey].length ? spesa[newKey] : null);
+  }catch(e){}
+  editingCat = null;
+  renderContent();
+  toast('✓ Categoria salvata');
+};
+window.deleteCategoryEdit = (key) => {
+  if(!confirm('Eliminare questa categoria e tutti gli articoli?')) return;
+  try{
+    set(ref(db,'spesaCategories/'+key), null);
+    set(ref(db,'spesa/'+key), null);
+    delete spesa[key];
+  }catch(e){}
+  editingCat = null;
+  renderContent();
+  toast('✓ Categoria eliminata');
+};
+
+function spesaCounts(){
+  const SPESA_CATS = getSpesaCats();
+  let total=0,done=0;
+  SPESA_CATS.forEach(c=>(spesa[c.key]||[]).forEach(i=>{ total++; if(i.d) done++; }));
+  return {total,done};
+}
 
 function renderSpesaTab(){
   const {total,done} = spesaCounts();
   const pct = total ? Math.round(done/total*100) : 0;
+  const SPESA_CATS = getSpesaCats();
 
   const sections = SPESA_CATS.map(c=>{
     let items = (spesa[c.key]||[]).map((it,idx)=>({...it, idx}));
@@ -1186,6 +1283,7 @@ function renderSpesaTab(){
         <button class="sp-circle sm ${allc?'on':''}" onclick="toggleCatAll('${c.key}')" aria-label="tutto"></button>
         <span class="shop-sec-name">${esc(c.label)}</span>
         ${toBuy ? `<span class="shop-sec-n">${toBuy}</span>` : ''}
+        <button class="shop-sec-edit" onclick="editCategory('${c.key}')">✏️</button>
       </div>
       ${rows}
       <div class="shop-addrow">
@@ -1202,10 +1300,12 @@ function renderSpesaTab(){
         <div class="shop-prog-txt">${total ? done+' / '+total+' presi' : 'lista vuota'}</div>
         <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
       </div>
+      <button class="shop-tool" onclick="editCategory(null)" title="Aggiungi categoria">+ Cat</button>
       <button class="shop-tool gen" id="btn-genera" onclick="generaSpesaAI()">✨ Genera</button>
       <button class="shop-tool danger" onclick="svuotaEMemorizza()" title="Salva nella cronologia e svuota">🗑</button>
     </div>
     <div class="shop">${sections}</div>
+    ${editingCat!==null ? renderCategoryEditor() : ''}
   `;
 }
 
