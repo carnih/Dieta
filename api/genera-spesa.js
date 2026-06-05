@@ -32,7 +32,12 @@ module.exports = async (req, res) => {
     const resp = await httpsPost(
       'api.anthropic.com', '/v1/messages',
       { 'Content-Type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
-      { model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }
+      {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: 'Sei un assistente che genera liste della spesa. Rispondi SEMPRE e SOLO con JSON valido, senza nessun testo prima o dopo, senza markdown, senza spiegazioni.',
+        messages: [{ role: 'user', content: prompt }]
+      }
     );
 
     console.log('Anthropic status:', resp.status);
