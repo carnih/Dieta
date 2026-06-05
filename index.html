@@ -75,6 +75,8 @@
 
     /* ── PAGE TITLES ── */
     .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;padding:8px 2px 0;color:#111827}
+    .page-title.n{background:var(--n-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .page-title.e{background:var(--e-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .page-sub{font-size:14px;color:#9CA3AF;font-weight:600;padding:2px 2px 6px}
     .sec-title{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:8px 2px 2px}
     .sec-title.n{color:var(--n)}
@@ -97,12 +99,16 @@
     /* ── OGGI: header colonne (una volta) ── */
     .cmp-top{
       position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:grid;grid-template-columns:1fr 1fr;
-      background:var(--bg);padding:8px 2px 9px;margin-bottom:-2px;
+      background:var(--bg);padding:6px 2px 8px;margin-bottom:-2px;gap:6px;
     }
-    .cmp-top-col{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;display:flex;flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap}
-    .cmp-top-col.e{color:var(--e)}
-    .cmp-top-col.n{color:var(--n);padding-left:13px}
-    .train-tag{display:inline-block;width:fit-content;font-size:10px;font-weight:800;background:var(--n-l);color:var(--n);padding:2px 9px;border-radius:20px;text-transform:none;letter-spacing:0}
+    .cmp-top-col{
+      font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+      display:flex;flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap;
+      padding:7px 10px;border-radius:10px;
+    }
+    .cmp-top-col.e{color:var(--e);background:#FCE7F3;border-bottom:2px solid var(--e)}
+    .cmp-top-col.n{color:var(--n);background:var(--n-l);border-bottom:2px solid var(--n)}
+    .train-tag{display:inline-block;width:fit-content;font-size:10px;font-weight:800;background:rgba(255,255,255,.7);color:var(--n);padding:2px 8px;border-radius:20px;text-transform:none;letter-spacing:0;border:1px solid rgba(59,130,246,.25)}
 
     /* ── OGGI: card di confronto a 2 colonne ── */
     .cmp-card{background:#fff;border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
@@ -137,7 +143,8 @@
     .recipe-note{margin-top:2px;font-size:12px;color:#9D5577;background:#FDF2F8;border-radius:8px;padding:6px 9px;line-height:1.4;font-style:italic}
 
     /* ── EDITOR DIETA BASE ── */
-    .be-open{border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;cursor:pointer;padding:0 2px 8px;text-decoration:underline}
+    .be-open{display:inline-flex;align-items:center;gap:5px;border:1.5px solid #F0D9E4;background:#FDF2F8;color:var(--e);font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 14px;border-radius:50px;margin-bottom:4px}
+    .be-open:active{background:#F5E2EE}
     .be-done{border:1.5px solid #E5E7EB;background:#fff;border-radius:50px;padding:8px 18px;font-size:13px;font-weight:700;color:#374151;cursor:pointer;margin-bottom:4px;align-self:flex-start}
     .be-done:active{background:#F3F4F6}
     .be-slot{margin-bottom:13px}
@@ -177,6 +184,8 @@
     .shop-prog-fill{height:100%;background:linear-gradient(90deg,#16A34A,#4ADE80);border-radius:50px;transition:width .3s}
     .shop-tool{flex-shrink:0;border:none;background:#fff;color:#6B7280;font-size:14px;font-weight:700;padding:10px 14px;border-radius:50px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
     .shop-tool.gen{background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;box-shadow:0 4px 14px rgba(22,163,74,.35)}
+    .shop-tool.danger{color:#EF4444;border:1.5px solid #FEE2E2;background:#fff;box-shadow:none}
+    .shop-tool.danger:active{background:#FFF5F5}
     .shop-tool:active{transform:scale(.95)}
 
     /* lista (stile Listonic): un'unica superficie, sezioni leggere */
@@ -357,11 +366,20 @@
 
     /* ── TOAST ── */
     #toast{
-      position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(16px);
+      position:fixed;bottom:calc(88px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(16px);
       background:#1F2937;color:#fff;padding:10px 22px;border-radius:50px;font-size:14px;font-weight:500;
       opacity:0;transition:all .28s;pointer-events:none;white-space:nowrap;z-index:100;
     }
     #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media (min-width:760px){#toast{bottom:32px}}
+
+    /* ── ANIMAZIONE TAB ── */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .content.tab-anim > *{animation:fadeUp .22s ease both}
+    .content.tab-anim > *:nth-child(2){animation-delay:.03s}
+    .content.tab-anim > *:nth-child(3){animation-delay:.06s}
+    .content.tab-anim > *:nth-child(4){animation-delay:.09s}
+    .content.tab-anim > *:nth-child(n+5){animation-delay:.12s}
   </style>
 </head>
 <body>
@@ -941,7 +959,7 @@ function renderOggi(){
   const sel = weekDates().find(x=>x.id===wd);
   return `
     <div class="page-title">${isT?'Oggi':NOEMI_FULL[wd]}</div>
-    <div class="page-sub">${sel?fmtFull(sel.obj):NOEMI_FULL[wd]}</div>
+    <div class="page-sub">${sel?fmtFull(sel.obj):NOEMI_FULL[wd]} · ${trainLabel(wd)}</div>
     ${calendarHTML()}
     <div class="cmp-top">
       <div class="cmp-top-col e">🍓 Noemi</div>
@@ -966,7 +984,7 @@ function renderNicholasTab(){
   }</div>`;
   const d = NICHOLAS.days.find(x=>x.id===nicType) || NICHOLAS.days[0];
   return `
-    <div class="page-title">Nicholas</div>
+    <div class="page-title n">Nicholas</div>
     <div class="page-sub">I tuoi allenamenti della settimana</div>
     <button class="be-open" onclick="openBase('nicholas')">⚙︎ Modifica dieta base</button>
     ${sched}
@@ -1005,7 +1023,7 @@ function renderNoemiTab(){
   const notes = NOEMI_NOTES.map(n=>`<div class="pl-note">${esc(n)}</div>`).join('');
   const ref   = NOEMI_REF.map(([t,d])=>`<div class="pl-ref"><b>${esc(t)}</b> ${esc(d)}</div>`).join('');
   return `
-    <div class="page-title">Noemi</div>
+    <div class="page-title e">Noemi</div>
     <div class="pl-hello">😅 Spoiler: la risposta NON è «non lo so»</div>
     <button class="be-open" onclick="openBase('noemi')">⚙︎ Modifica dieta base</button>
     ${noemiChips(noemiDay,'setNoemiDay')}
@@ -1121,12 +1139,27 @@ function renderSpesaTab(){
     items.sort((a,b)=>(a.d?1:0)-(b.d?1:0));   // i presi vanno in fondo
     const allc  = items.length>0 && items.every(i=>i.d);
     const toBuy = items.filter(i=>!i.d).length;
+    const isEmpty = items.length===0;
     const rows = items.map(it=>`
       <div class="shop-row ${it.d?'done':''}">
         <button class="sp-circle ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${it.idx})"></button>
         <span class="shop-name">${esc(it.t)}</span>
         <button class="shop-x" onclick="delSpesa('${c.key}',${it.idx})">✕</button>
       </div>`).join('');
+    // sezione vuota: solo header con input inline, niente altezza sprecata
+    if(isEmpty) return `<div class="shop-sec shop-sec-empty">
+      <div class="shop-sec-h" style="cursor:pointer" onclick="document.getElementById('spin-${c.key}').focus()">
+        <span class="shop-sec-name" style="color:#CDD1D9">${esc(c.label)}</span>
+        <span style="margin-left:auto;color:#C8CDD6;font-size:12px">+</span>
+      </div>
+      <div class="shop-addrow" style="display:none" id="sadd-${c.key}">
+        <span class="shop-plus">+</span>
+        <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…"
+          onfocus="document.getElementById('sadd-${c.key}').style.display='flex';this.closest('.shop-sec').classList.remove('shop-sec-empty')"
+          onblur="if(!this.value){document.getElementById('sadd-${c.key}').style.display='none'}"
+          onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
+      </div>
+    </div>`;
     return `<div class="shop-sec">
       <div class="shop-sec-h">
         <button class="sp-circle sm ${allc?'on':''}" onclick="toggleCatAll('${c.key}')" aria-label="tutto"></button>
@@ -1149,7 +1182,7 @@ function renderSpesaTab(){
         <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
       </div>
       <button class="shop-tool gen" onclick="generaSpesa()">✨ Genera</button>
-      <button class="shop-tool" onclick="svuotaSpesa()" aria-label="svuota">🗑</button>
+      <button class="shop-tool danger" onclick="svuotaSpesa()" aria-label="svuota">🗑</button>
     </div>
     <div class="shop">${sections}</div>
   `;
@@ -1197,7 +1230,7 @@ window.generaSpesa = ()=>{
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editMode=false; editBase=null; closeNav(); updateTabbar(); renderContent(); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editMode=false; editBase=null; closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
 window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
@@ -1215,8 +1248,9 @@ function updateTabbar(){
   document.querySelectorAll('#rail button[data-tab]').forEach(b=>b.classList.toggle('act', b.dataset.tab===tab));
 }
 
-function renderContent(){
+function renderContent(animate){
   const el = document.getElementById('content');
+  el.classList.remove('tab-anim');
   el.innerHTML = editBase==='noemi'    ? renderNoemiBaseEdit()
                : editBase==='nicholas' ? renderNicBaseEdit()
                : tab==='oggi'      ? renderOggi()
@@ -1224,6 +1258,7 @@ function renderContent(){
                : tab==='spesa'     ? renderSpesaTab()
                :                     renderNoemiTab();
   el.classList.remove('saving');
+  if(animate){ void el.offsetWidth; el.classList.add('tab-anim'); }
 }
 
 function toast(msg){
