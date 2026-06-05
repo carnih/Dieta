@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
       'api.anthropic.com', '/v1/messages',
       { 'Content-Type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
       {
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5',
         max_tokens: 4096,
         system: 'Sei un assistente che genera liste della spesa. Rispondi SEMPRE e SOLO con JSON valido, senza nessun testo prima o dopo, senza markdown, senza spiegazioni.',
         messages: [{ role: 'user', content: prompt }]
