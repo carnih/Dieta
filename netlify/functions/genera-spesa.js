@@ -39,7 +39,7 @@ exports.handler = async (event) => {
         'anthropic-version': '2023-06-01'
       },
       {
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-haiku-4-5',
         max_tokens: 3000,
         messages: [{ role: 'user', content: prompt }]
       }
