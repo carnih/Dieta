@@ -1,18 +1,3 @@
-const https = require('https');
-
-function httpsPost(hostname, path, headers, body) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const req = https.request(
-      { hostname, path, method: 'POST', headers: { ...headers, 'Content-Length': Buffer.byteLength(data) } },
-      res => { let raw = ''; res.on('data', c => raw += c); res.on('end', () => resolve({ status: res.statusCode, body: raw })); }
-    );
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
-}
-
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -29,23 +14,28 @@ module.exports = async (req, res) => {
     const prompt = buildPrompt(nicholasData, noemiData, scheduleData, historyData || []);
     console.log('Prompt length:', prompt.length, 'chars');
 
-    const resp = await httpsPost(
-      'api.anthropic.com', '/v1/messages',
-      { 'Content-Type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
-      {
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
         model: 'claude-haiku-4-5',
         max_tokens: 4096,
-        system: 'Sei un assistente che genera liste della spesa. Rispondi SEMPRE e SOLO con JSON valido, senza nessun testo prima o dopo, senza markdown, senza spiegazioni.',
+        system: 'Rispondi SOLO con JSON valido, senza testo prima o dopo, senza markdown.',
         messages: [{ role: 'user', content: prompt }]
-      }
-    );
+      })
+    });
 
-    console.log('Anthropic status:', resp.status);
-    if (resp.status !== 200) {
-      return res.status(502).json({ error: 'Anthropic ' + resp.status + ': ' + resp.body.slice(0, 300) });
+    console.log('Anthropic status:', aiRes.status);
+    if (!aiRes.ok) {
+      const errText = await aiRes.text();
+      return res.status(502).json({ error: 'Anthropic ' + aiRes.status + ': ' + errText.slice(0, 300) });
     }
 
-    const data = JSON.parse(resp.body);
+    const data = await aiRes.json();
     const rawText = data.content[0].text.trim();
     console.log('Raw response length:', rawText.length);
 
