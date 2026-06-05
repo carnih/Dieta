@@ -208,6 +208,15 @@
     .shop-empty span{display:block;font-size:13px;font-weight:500;color:#C5CAD2;margin-top:4px}
     .sp-circle.sm{width:21px;height:21px;border-width:2px}
     .sp-circle.sm.on::after{left:5.5px;top:2.5px;width:5px;height:9px}
+
+    /* ── OWNER BADGES ── */
+    .owner-badges{display:flex;gap:3px;flex-shrink:0;align-items:center;margin-left:4px}
+    .owner-badge{width:17px;height:17px;border-radius:50%;font-size:8.5px;font-weight:900;display:flex;align-items:center;justify-content:center;letter-spacing:0}
+    .owner-badge.n{background:var(--n-l);color:var(--n)}
+    .owner-badge.e{background:#FCE7F3;color:var(--e)}
+    .shop-tool:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .shop-tool.loading .spin{display:inline-block;animation:spin .8s linear infinite}
     .pl-hello{font-size:13.5px;color:var(--e);font-weight:600;line-height:1.45;padding:2px 2px 8px;font-style:italic}
     .cmp-items .food-row{flex-direction:column;align-items:flex-start;gap:3px}
     .cmp-items .cat-pill{padding:2px 8px 2px 6px;font-size:9px}
@@ -731,7 +740,7 @@ const ING_MAP = [
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa';
+let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa';
 
 onValue(ref(db,'noemiPlan'), snap => {
   noemiPlan = snap.val() || {};
@@ -758,6 +767,10 @@ onValue(ref(db,'catLabels'), snap => {
 onValue(ref(db,'spesa'), snap => {
   spesa = snap.val() || {};
   if(tab==='spesa') renderContent();
+});
+
+onValue(ref(db,'spesaHistory'), snap => {
+  spesaHistory = snap.val() || {};
 });
 
 onValue(ref(db,'schedule'), snap => {
@@ -1128,6 +1141,13 @@ window.openBase  = p=>{ editBase=p; renderContent(); window.scrollTo(0,0); };
 window.closeBase = ()=>{ editBase=null; renderContent(); window.scrollTo(0,0); };
 
 // ── SPESA ──
+function ownerBadgesHTML(owners){
+  if(!owners||!owners.length) return '';
+  return '<span class="owner-badges">'
+    +(owners.includes('nicholas')?'<span class="owner-badge n">N</span>':'')
+    +(owners.includes('noemi')?'<span class="owner-badge e">E</span>':'')
+    +'</span>';
+}
 function spesaCounts(){ let total=0,done=0; SPESA_CATS.forEach(c=>(spesa[c.key]||[]).forEach(i=>{ total++; if(i.d) done++; })); return {total,done}; }
 
 function renderSpesaTab(){
@@ -1144,6 +1164,7 @@ function renderSpesaTab(){
       <div class="shop-row ${it.d?'done':''}">
         <button class="sp-circle ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${it.idx})"></button>
         <span class="shop-name">${esc(it.t)}</span>
+        ${ownerBadgesHTML(it.owners)}
         <button class="shop-x" onclick="delSpesa('${c.key}',${it.idx})">✕</button>
       </div>`).join('');
     // sezione vuota: solo header con input inline, niente altezza sprecata
@@ -1181,8 +1202,8 @@ function renderSpesaTab(){
         <div class="shop-prog-txt">${total ? done+' / '+total+' presi' : 'lista vuota'}</div>
         <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
       </div>
-      <button class="shop-tool gen" onclick="generaSpesa()">✨ Genera</button>
-      <button class="shop-tool danger" onclick="svuotaSpesa()" aria-label="svuota">🗑</button>
+      <button class="shop-tool gen" id="btn-genera" onclick="generaSpesaAI()">✨ Genera</button>
+      <button class="shop-tool danger" onclick="svuotaEMemorizza()" title="Salva nella cronologia e svuota">🗑</button>
     </div>
     <div class="shop">${sections}</div>
   `;
@@ -1193,40 +1214,77 @@ window.addSpesa = (cat)=>{ const el=document.getElementById('spin-'+cat); const 
 window.toggleSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); if(!list[i])return; list[i]={...list[i],d:!list[i].d}; spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.delSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); list.splice(i,1); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.toggleCatAll = (cat)=>{ const list=(spesa[cat]||[]).slice(); if(!list.length)return; const all=list.every(i=>i.d); list.forEach(i=>i.d=!all); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
-window.svuotaSpesa = ()=>{ if(!confirm('Svuotare tutta la lista della spesa?')) return; SPESA_CATS.forEach(c=>{ spesa[c.key]=[]; try{ set(ref(db,'spesa/'+c.key), null); }catch(e){} }); renderContent(); toast('Lista svuotata'); };
 
-window.generaSpesa = ()=>{
-  if(!confirm('Genera la lista dalla dieta della settimana (Noemi + tuo piano)?\nAggiunge agli elenchi, non cancella nulla.')) return;
-  const found = {};
-  const add = (cat,label)=>{ (found[cat]=found[cat]||new Set()).add(label); };
-  const scan = txt=>{ if(!txt)return; for(const [re,cat,label] of ING_MAP){ if(re.test(txt)) add(cat,label); } };
-  // Noemi: scelte + ricette
-  NOEMI_DAYS.forEach(wd=>{
-    const dp = getDayPlan(wd);
-    NOEMI_MEALS.forEach(mk=>{
-      if(isMealFree(wd,mk)) return;
-      NOEMI_BASE[mk].slots.forEach(s=>scan(dp[s.key]));
-      scan(noteFor(wd,mk));
-    });
-  });
-  // Nicholas: opzioni dei tipi di giornata pianificati
-  NOEMI_DAYS.forEach(wd=>{
-    const day = NICHOLAS.days.find(d=>d.id===getTrain(wd));
-    if(!day) return;
-    day.pasti.forEach(p=>p.items.forEach(it=>{
-      if(it.v) scan(it.v);
-      if(it.alts) it.alts.forEach(scan);
-    }));
-  });
-  let added=0;
-  Object.keys(found).forEach(cat=>{
-    const list=(spesa[cat]||[]).slice();
-    const have=new Set(list.map(i=>i.t.toLowerCase()));
-    found[cat].forEach(label=>{ if(!have.has(label.toLowerCase())){ list.push({t:label,d:false}); added++; } });
-    spesa[cat]=list; saveSpesaCat(cat);
-  });
+// ── Svuota e memorizza nello storico ──
+window.svuotaEMemorizza = ()=>{
+  const hasItems = SPESA_CATS.some(c=>(spesa[c.key]||[]).length>0);
+  const msg = hasItems
+    ? 'Salvare la lista nella cronologia e svuotarla?'
+    : 'La lista è già vuota. Svuotare comunque?';
+  if(!confirm(msg)) return;
+  if(hasItems){
+    const ts = Date.now();
+    const snap = { date: new Date().toLocaleDateString('it-IT'), items:{} };
+    SPESA_CATS.forEach(c=>{ if((spesa[c.key]||[]).length) snap.items[c.key]=spesa[c.key]; });
+    try{ set(ref(db,'spesaHistory/'+ts), snap); }catch(e){}
+  }
+  SPESA_CATS.forEach(c=>{ spesa[c.key]=[]; try{ set(ref(db,'spesa/'+c.key), null); }catch(e){} });
   renderContent();
-  toast(added ? ('✨ '+added+' voci aggiunte') : 'Niente di nuovo da aggiungere');
+  toast(hasItems ? '✓ Lista salvata e svuotata' : 'Lista svuotata');
+};
+
+// ── Genera con AI ──
+window.generaSpesaAI = async ()=>{
+  const btn = document.getElementById('btn-genera');
+  if(btn){ btn.innerHTML='⏳ Genera…'; btn.disabled=true; }
+
+  try{
+    // Storico: ultimi 8 snapshot ordinati per data
+    const historyArr = Object.entries(spesaHistory)
+      .sort((a,b)=>Number(a[0])-Number(b[0]))
+      .slice(-8)
+      .map(([,h])=>h);
+
+    const res = await fetch('/.netlify/functions/genera-spesa',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        nicholasData: NICHOLAS,
+        noemiData:    { plan: noemiPlan, base: NOEMI_BASE },
+        scheduleData: schedule,
+        historyData:  historyArr
+      })
+    });
+
+    if(!res.ok){
+      const err = await res.json().catch(()=>({error:'Errore '+res.status}));
+      throw new Error(err.error||'Errore '+res.status);
+    }
+
+    const result = await res.json();
+    let added = 0;
+
+    SPESA_CATS.forEach(c=>{
+      const newItems = result[c.key]||[];
+      const list = (spesa[c.key]||[]).slice();
+      const have = new Set(list.map(i=>i.t.toLowerCase()));
+      newItems.forEach(it=>{
+        if(!have.has(it.t.toLowerCase())){
+          list.push({t:it.t, d:false, owners:it.owners||[]});
+          added++;
+        }
+      });
+      spesa[c.key]=list;
+      saveSpesaCat(c.key);
+    });
+
+    renderContent();
+    toast(added ? `✨ ${added} voci aggiunte dall'AI` : 'Nessuna novità da aggiungere');
+
+  }catch(e){
+    renderContent(); // ripristina bottone
+    toast('❌ '+e.message);
+  }
 };
 
 // ── ACTIONS ──
