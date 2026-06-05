@@ -1268,8 +1268,8 @@ window.generaSpesaAI = async ()=>{
     SPESA_CATS.forEach(c=>{
       const newItems = result[c.key]||[];
       const list = (spesa[c.key]||[]).slice();
-      const have = new Set(list.map(i=>i.t.toLowerCase()));
-      newItems.forEach(it=>{
+      const have = new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase()));
+      (newItems||[]).filter(it=>it&&it.t).forEach(it=>{
         if(!have.has(it.t.toLowerCase())){
           list.push({t:it.t, d:false, owners:it.owners||[]});
           added++;
