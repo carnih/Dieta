@@ -20,24 +20,29 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
 
   try {
-    const { nicholasData, noemiData, scheduleData, historyData } = req.body;
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { nicholasData, noemiData, scheduleData, historyData } = body;
+
     const KEY = process.env.ANTHROPIC_API_KEY;
     if (!KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY mancante su Vercel' });
 
     const prompt = buildPrompt(nicholasData, noemiData, scheduleData, historyData || []);
+    console.log('Prompt length:', prompt.length, 'chars');
 
     const resp = await httpsPost(
       'api.anthropic.com', '/v1/messages',
       { 'Content-Type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
-      { model: 'claude-sonnet-4-6', max_tokens: 3000, messages: [{ role: 'user', content: prompt }] }
+      { model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }
     );
 
+    console.log('Anthropic status:', resp.status);
     if (resp.status !== 200) {
-      return res.status(502).json({ error: 'Anthropic error ' + resp.status + ': ' + resp.body });
+      return res.status(502).json({ error: 'Anthropic ' + resp.status + ': ' + resp.body.slice(0, 300) });
     }
 
     const data = JSON.parse(resp.body);
     const rawText = data.content[0].text.trim();
+    console.log('Raw response length:', rawText.length);
 
     let jsonStr = rawText;
     const mdMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -51,116 +56,98 @@ module.exports = async (req, res) => {
     return res.status(200).json(result);
 
   } catch (e) {
-    console.error('genera-spesa:', e);
+    console.error('genera-spesa error:', e.message);
     return res.status(500).json({ error: e.message });
   }
 };
 
 // ─────────────────────────────────────────────
-//  PROMPT
+//  PROMPT COMPATTO
 // ─────────────────────────────────────────────
 function buildPrompt(nicholas, noemi, schedule, history) {
-  const DAYS     = ['lun','mar','mer','gio','ven','sab','dom'];
-  const DAY_FULL = { lun:'Lunedì', mar:'Martedì', mer:'Mercoledì', gio:'Giovedì', ven:'Venerdì', sab:'Sabato', dom:'Domenica' };
+  const DAYS = ['lun','mar','mer','gio','ven','sab','dom'];
+  const DLBL = { lun:'Lun', mar:'Mar', mer:'Mer', gio:'Gio', ven:'Ven', sab:'Sab', dom:'Dom' };
   const SCHED_OPTS = [
-    {id:'corsa',label:'Corsa',diet:'corsa'},{id:'bici',label:'Bici',diet:'bici'},
-    {id:'palestra',label:'Palestra',diet:'palestra'},{id:'nuoto',label:'Nuoto',diet:'palestra'},
-    {id:'padel',label:'Padel',diet:'palestra'},{id:'combinato',label:'Combinato',diet:'combinato'},
-    {id:'riposo',label:'Riposo',diet:'riposo'},
+    {id:'corsa',diet:'corsa',label:'Corsa'},{id:'bici',diet:'bici',label:'Bici'},
+    {id:'palestra',diet:'palestra',label:'Palestra'},{id:'nuoto',diet:'palestra',label:'Nuoto'},
+    {id:'padel',diet:'palestra',label:'Padel'},{id:'combinato',diet:'combinato',label:'Combinato'},
+    {id:'riposo',diet:'riposo',label:'Riposo'},
   ];
+  const getOpt = wd => SCHED_OPTS.find(o=>o.id===((schedule&&schedule[wd])||'riposo'))||SCHED_OPTS[6];
 
-  // Piano settimana Nicholas (giorni)
-  let nicBlock = 'PIANO NICHOLAS (questa settimana):\n';
-  DAYS.forEach(wd => {
-    const sOpt = SCHED_OPTS.find(o => o.id === ((schedule && schedule[wd]) || 'riposo')) || SCHED_OPTS[6];
-    const day  = (nicholas.days || []).find(d => d.id === sOpt.diet);
-    if (!day) return;
-    nicBlock += `${DAY_FULL[wd]}: ${sOpt.label}\n`;
-  });
+  // Settimana Nicholas — 1 riga per giorno
+  const nicWeek = DAYS.map(wd => `${DLBL[wd]}:${getOpt(wd).label}`).join(' ');
 
-  // Diete uniche usate (ottimizzazione token)
-  const usedDietIds = [...new Set(DAYS.map(wd => {
-    const sOpt = SCHED_OPTS.find(o => o.id === ((schedule && schedule[wd]) || 'riposo')) || SCHED_OPTS[6];
-    return sOpt.diet;
-  }))];
-  let nicDiets = '\nDIETE NICHOLAS (dettaglio per tipo):\n';
-  usedDietIds.forEach(dietId => {
-    const day = (nicholas.days || []).find(d => d.id === dietId);
-    if (!day) return;
-    nicDiets += `\n[${day.label || dietId}]\n`;
-    (day.pasti || []).forEach(p => {
-      nicDiets += `  ${p.nome}:\n`;
-      (p.items || []).forEach(it => {
-        if (it.v)    nicDiets += `    · (${it.cat}) ${it.v}\n`;
-        if (it.alts) nicDiets += `    · (${it.cat}) scelta: ${it.alts.slice(0,3).join(' | ')}${it.alts.length>3?' …':''}\n`;
+  // Diete uniche Nicholas
+  const usedIds = [...new Set(DAYS.map(wd => getOpt(wd).diet))];
+  let nicDiets = '';
+  usedIds.forEach(id => {
+    const day = (nicholas.days||[]).find(d=>d.id===id); if(!day) return;
+    nicDiets += `\n[${day.label||id}]\n`;
+    (day.pasti||[]).forEach(p => {
+      nicDiets += ` ${p.nome}:`;
+      (p.items||[]).forEach(it => {
+        if(it.v) nicDiets += ` ${it.v} /`;
+        if(it.alts) nicDiets += ` [scelta:${it.alts.slice(0,2).join('|')}] /`;
       });
+      nicDiets += '\n';
     });
-    if (day.integ) {
-      if (day.integ.pre)   nicDiets += `  Integratori pre: ${day.integ.pre}\n`;
-      if (day.integ.post)  nicDiets += `  Integratori post: ${day.integ.post}\n`;
-      if (day.integ.multi) day.integ.multi.forEach(r => nicDiets += `  Integratori ${r.tag}: ${r.v}\n`);
+    if(day.integ){
+      const parts = [];
+      if(day.integ.pre)  parts.push('pre:'+day.integ.pre);
+      if(day.integ.post) parts.push('post:'+day.integ.post);
+      if(day.integ.multi) day.integ.multi.forEach(r=>parts.push(r.tag+':'+r.v));
+      if(parts.length) nicDiets += ` Integratori: ${parts.join(', ')}\n`;
     }
   });
 
-  // Piano Noemi
-  const MEALS    = ['colazione','spuntino','pranzo','merenda','cena'];
-  const base     = noemi.base || {};
-  const planData = noemi.plan || {};
-  let noemiBlock = '\nPIANO NOEMI — vegetariana:\n';
+  // Noemi — scelte uniche (dedup per ridurre token)
+  const noemiSelections = new Set();
+  const noemiNotes = [];
+  const base = noemi.base||{}, planData = noemi.plan||{};
+  const MEALS = ['colazione','spuntino','pranzo','merenda','cena'];
   DAYS.forEach(wd => {
-    const dp = planData[wd] || {};
-    noemiBlock += `\n${DAY_FULL[wd]}:\n`;
+    const dp = planData[wd]||{};
     MEALS.forEach(mk => {
-      const meal = base[mk]; if (!meal) return;
-      if (dp[mk+'_free']) { noemiBlock += `  ${meal.nome}: PASTO LIBERO\n`; return; }
-      noemiBlock += `  ${meal.nome}:\n`;
-      (meal.slots || []).forEach(s => {
-        const val = (dp[s.key] !== undefined && dp[s.key] !== '') ? dp[s.key] : (s.opts||[])[0];
-        if (val && val !== '— niente') noemiBlock += `    · ${val}\n`;
+      const meal = base[mk]; if(!meal) return;
+      if(dp[mk+'_free']){ noemiSelections.add('PASTO LIBERO'); return; }
+      (meal.slots||[]).forEach(s => {
+        const val = (dp[s.key]!==undefined&&dp[s.key]!=='') ? dp[s.key] : (s.opts||[])[0];
+        if(val && val!=='— niente') noemiSelections.add(val);
       });
-      (meal.fixed || []).forEach(f => noemiBlock += `    · ${f.v}\n`);
+      (meal.fixed||[]).forEach(f => noemiSelections.add(f.v));
       const note = dp[mk+'_note'];
-      if (note) noemiBlock += `    📝 ${note}\n`;
+      if(note) noemiNotes.push(note);
     });
   });
+  const noemiBlock = [...noemiSelections].join(' / ') + (noemiNotes.length ? '\nRicette: '+noemiNotes.join('; ') : '');
 
-  // Storico
-  let histBlock = '';
-  if (history && history.length > 0) {
-    histBlock = '\nSTORICO LISTE PASSATE:\n';
-    history.slice(-4).forEach(h => {
-      histBlock += `[${h.date}]: `;
-      const all = Object.values(h.items || {}).flat().map(i=>i.t).join(', ');
-      histBlock += all + '\n';
-    });
-    histBlock += '→ Voci ricorrenti non da dieta (fieno, cibo gatto, ghiaccioli, prodotti casa…): includile.\n';
+  // Storico compatto
+  let histLine = '';
+  if(history && history.length>0){
+    const allItems = history.slice(-3).flatMap(h=>Object.values(h.items||{}).flat().map(i=>i.t));
+    const freq = {};
+    allItems.forEach(t=>{ freq[t]=(freq[t]||0)+1; });
+    const recurring = Object.entries(freq).filter(([,n])=>n>=2).map(([t])=>t);
+    if(recurring.length) histLine = '\nRicorrenti storico: '+recurring.join(', ');
   }
 
-  return `Genera lista spesa settimanale per Nicholas e Noemi. Rispondi SOLO con JSON valido, zero testo prima o dopo.
+  return `Lista spesa settimanale Nicholas+Noemi. Solo JSON valido, nessun testo.
 
-${nicBlock}
+NICHOLAS settimana: ${nicWeek}
 ${nicDiets}
-${noemiBlock}
-${histBlock}
+NOEMI (vegetariana) scelte settimana: ${noemiBlock}
+${histLine}
 
-CATEGORIE (10 chiavi JSON esatte):
-  cereali      → pasta, riso, pane, gallette, biscotti, patate, avena
-  dispensa     → olio EVO, marmellata, miele, parmigiano/grana, passata, burro arachidi, frutta secca, cioccolato, barrette
-  proteine     → carne, pesce (max 2 voci raggruppate), uova, formaggi, yogurt, latte, legumi, tofu, affettati, budino
-  verdure      → verdure fresche
-  frutta       → frutta fresca
-  surgelati    → surgelati
-  integratori  → creatina, BCAA, carnitina, sali minerali, proteine polvere — owners:["nicholas"]
-  casa         → pulizia/igiene
-  gatto        → cibo/lettiera gatto
-  coniglio     → fieno/cibo coniglio
+CATEGORIE JSON (10 chiavi):
+cereali(pasta/riso/pane/gallette/biscotti/patate/avena)
+dispensa(olio/marmellata/miele/parmigiano/passata/burro-arachidi/frutta-secca/cioccolato/barrette)
+proteine(carne/pesce max 2 voci raggruppate/uova/formaggi/yogurt/latte/legumi/tofu/affettati/budino)
+verdure frutta surgelati
+integratori(creatina/BCAA/carnitina/sali — solo nicholas)
+casa gatto coniglio
 
-REGOLE:
-1. Proteine Nicholas: aggrega es. "Pollo / Tacchino (150g pranzo · 250g cena)".
-2. Pesce: max 2 voci es. "Pesce bianco (merluzzo/orata/branzino)" + "Salmone / Pesce spada".
-3. Condiviso → owners:["nicholas","noemi"], una voce sola.
-4. Storico: aggiungi voci ricorrenti non da dieta.
-5. NON includere acqua, sale, pepe.
+REGOLE: aggrega proteine Nicholas con grammature (es."Pollo/Tacchino 150g pranzo·250g cena"). Pesce max 2 voci. Condiviso→owners:["nicholas","noemi"]. Storico ricorrenti→includi. No acqua/sale/pepe.
 
-FORMAT: {"cereali":[],"dispensa":[],"proteine":[],"verdure":[],"frutta":[],"surgelati":[],"integratori":[],"casa":[],"gatto":[],"coniglio":[]}`;
+OUTPUT: {"cereali":[],"dispensa":[],"proteine":[],"verdure":[],"frutta":[],"surgelati":[],"integratori":[],"casa":[],"gatto":[],"coniglio":[]}`;
 }

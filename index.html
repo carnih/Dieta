@@ -1283,8 +1283,11 @@ window.generaSpesaAI = async ()=>{
     toast(added ? `✨ ${added} voci aggiunte dall'AI` : 'Nessuna novità da aggiungere');
 
   }catch(e){
-    renderContent(); // ripristina bottone
-    toast('❌ '+e.message);
+    renderContent();
+    // Errore visibile sia nel toast che in un alert (per debug)
+    const msg = '❌ Errore generazione: '+e.message;
+    toast(msg);
+    console.error('generaSpesaAI:', e);
   }
 };
 
