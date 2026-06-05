@@ -769,7 +769,7 @@ const ING_MAP = [
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null;
+let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false;
 
 onValue(ref(db,'noemiPlan'), snap => {
   noemiPlan = snap.val() || {};
@@ -1183,6 +1183,28 @@ function ownerBadgesHTML(owners, cat, idx){
     +'<span class="owner-badge e '+(hasE?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'noemi\')" title="Noemi">E</span>'
     +'</span>';
 }
+// ── CATEGORY MANAGER ──
+function renderCategoryManager(){
+  const SPESA_CATS = getSpesaCats();
+  const items = SPESA_CATS.map(c=>`
+    <div style="padding:13px 16px;border-bottom:1px solid #F0F0F0;cursor:pointer;transition:background .15s" onclick="editCategory('${c.key}')" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+      <div style="font-size:16px;font-weight:700">${esc(c.label)}</div>
+      <div style="font-size:12px;color:#9CA3AF;margin-top:3px">${c.custom ? '✓ Custom' : 'Default'}</div>
+    </div>`).join('');
+  return `<div class="cat-editor-overlay show" onclick="managerCategories()"></div>
+    <div class="cat-editor" style="max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">
+      <div class="cat-editor-panel">
+        <div class="cat-editor-title">Gestisci Categorie</div>
+        <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:16px;max-height:50vh;overflow-y:auto">
+          ${items}
+        </div>
+        <button class="cat-editor-btn save" style="width:100%" onclick="editCategory(null)">+ Aggiungi categoria nuova</button>
+        <button class="cat-editor-btn cancel" style="width:100%;margin-top:8px" onclick="managerCategories()">Chiudi</button>
+      </div>
+    </div>`;
+}
+window.managerCategories = () => { categoryManager = !categoryManager; renderContent(); };
+
 // ── EDITOR CATEGORIE ──
 function renderCategoryEditor(){
   if(editingCat===null) return '';
@@ -1282,8 +1304,7 @@ function renderSpesaTab(){
         <button class="sp-circle sm ${allc?'on':''}" onclick="toggleCatAll('${c.key}')" aria-label="tutto"></button>
         <span class="shop-sec-name">${esc(c.label)}</span>
         ${toBuy ? `<span class="shop-sec-n">${toBuy}</span>` : ''}
-        <button class="shop-sec-edit" onclick="editCategory('${c.key}')">✏️</button>
-      </div>
+        </div>
       ${rows}
       <div class="shop-addrow">
         <span class="shop-plus">+</span>
@@ -1299,13 +1320,14 @@ function renderSpesaTab(){
         <div class="shop-prog-txt">${total ? done+' / '+total+' presi' : 'lista vuota'}</div>
         <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
       </div>
-      <button class="shop-tool" style="background:linear-gradient(135deg,#E879A0,#F472B6);color:#fff;box-shadow:0 4px 14px rgba(219,39,119,.35)" onclick="editCategory(null)">➕ Categoria</button>
+      <button class="shop-tool" style="background:linear-gradient(135deg,#E879A0,#F472B6);color:#fff;box-shadow:0 4px 14px rgba(219,39,119,.35)" onclick="managerCategories()">⚙️ Categorie</button>
       <button class="shop-tool gen" id="btn-genera" onclick="generaSpesaAI()">✨ Genera</button>
       <button class="shop-tool danger" onclick="svuotaEMemorizza()" title="Salva nella cronologia e svuota">🗑</button>
     </div>
     <div class="shop">
       ${sections}
     </div>
+    ${categoryManager ? renderCategoryManager() : ''}
     ${editingCat!==null ? renderCategoryEditor() : ''}
   `;
 }
