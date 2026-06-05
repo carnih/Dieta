@@ -1246,7 +1246,7 @@ window.generaSpesaAI = async ()=>{
       .slice(-8)
       .map(([,h])=>h);
 
-    const res = await fetch('/.netlify/functions/genera-spesa',{
+    const res = await fetch('/api/genera-spesa',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
