@@ -1170,15 +1170,15 @@ function renderSpesaTab(){
         ${ownerBadgesHTML(it.owners, c.key, it.idx)}
         <button class="shop-x" onclick="delSpesa('${c.key}',${it.idx})">✕</button>
       </div>`).join('');
-    // sezione vuota: header collapso + input visibile con bottone
+    // sezione vuota: header collapso + input visibile con bottone grande
     if(isEmpty) return `<div class="shop-sec">
       <div class="shop-sec-h" style="color:#CDD1D9">
         <span class="shop-sec-name">${esc(c.label)}</span>
       </div>
       <div class="shop-addrow">
         <span class="shop-plus">+</span>
-        <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
-        <button style="border:none;background:transparent;color:#9CA3AF;cursor:pointer;padding:4px 8px;font-size:12px;font-weight:700" onclick="addSpesa('${c.key}')">Aggiungi</button>
+        <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter'){addSpesa('${c.key}');return false}">
+        <button style="border:1.5px solid #E5E7EB;background:#fff;color:#374151;cursor:pointer;padding:8px 14px;font-size:13px;font-weight:700;border-radius:9px;flex-shrink:0" onclick="addSpesa('${c.key}')" ontouchend="addSpesa('${c.key}');return false">+ Aggiungi</button>
       </div>
     </div>`;
     return `<div class="shop-sec">
