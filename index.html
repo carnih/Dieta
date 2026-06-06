@@ -1448,9 +1448,18 @@ function renderSpesaTab(){
   const ownerFilter = (spesaFilter==='nicholas'||spesaFilter==='noemi') ? spesaFilter : null;
   const histCount = Object.keys(spesaHistory||{}).length;
 
+  const masterRow = (total>0 && !ownerFilter)
+    ? `<div class="shop-sec" style="border-bottom:2px solid #EEF0F3">
+        <div class="shop-sec-h">
+          <button class="sp-circle sm ${done===total?'on':''}" onclick="toggleAllSpesa()" aria-label="seleziona tutto"></button>
+          <span class="shop-sec-name">${done===total?'Deseleziona tutto':'Seleziona tutto'}</span>
+        </div>
+      </div>`
+    : '';
+
   const body = spesaFilter==='pantry'
     ? renderPantryInline()
-    : `<div class="shop">${
+    : `<div class="shop">${masterRow}${
         SPESA_CATS.map(c=>{
           let items = (spesa[c.key]||[]).map((it,idx)=>({...it, idx}));
           if(ownerFilter) items = items.filter(it=>(it.owners||[]).includes(ownerFilter));
@@ -1563,24 +1572,38 @@ window.addSpesa = (cat)=>{ const el=document.getElementById('spin-'+cat); const 
 window.toggleSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); if(!list[i])return; list[i]={...list[i],d:!list[i].d}; spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.delSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); list.splice(i,1); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.toggleCatAll = (cat)=>{ const list=(spesa[cat]||[]).slice(); if(!list.length)return; const all=list.every(i=>i.d); list.forEach(i=>i.d=!all); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
+window.toggleAllSpesa = ()=>{
+  const SPESA_CATS = getSpesaCats();
+  const allDone = SPESA_CATS.every(c=>(spesa[c.key]||[]).every(i=>i.d)) && SPESA_CATS.some(c=>(spesa[c.key]||[]).length);
+  const newSpesa = {};
+  SPESA_CATS.forEach(c=>{ const l=(spesa[c.key]||[]).map(i=>({...i, d:!allDone})); if(l.length) newSpesa[c.key]=l; });
+  spesa = newSpesa;
+  try{ set(ref(db,'spesa'), Object.keys(newSpesa).length ? newSpesa : null); }catch(e){}
+  renderContent();
+};
 
 // ── Salva spesa: archivia i FLAGGATI nello storico, tiene i non presi ──
 window.salvaSpesa = ()=>{
   const SPESA_CATS = getSpesaCats();
   const snap = { date: new Date().toLocaleDateString('it-IT'), items:{} };
+  const newSpesa = {};
   let bought = 0, kept = 0;
   SPESA_CATS.forEach(c=>{
     const list = spesa[c.key]||[];
-    const taken   = list.filter(i=>i.d);
-    const leftover= list.filter(i=>!i.d);
+    const taken    = list.filter(i=>i.d);
+    const leftover = list.filter(i=>!i.d);
     if(taken.length){ snap.items[c.key]=taken; bought += taken.length; }
-    spesa[c.key]=leftover; kept += leftover.length;
+    if(leftover.length){ newSpesa[c.key]=leftover; kept += leftover.length; }
   });
   if(!bought) return toast('Nessun articolo preso (flaggato) da salvare');
   if(!confirm(`Salvare ${bought} articoli presi nello storico?\nRestano in lista ${kept} articoli non presi.`)) return;
   const ts = Date.now();
-  try{ set(ref(db,'spesaHistory/'+ts), snap); }catch(e){}
-  SPESA_CATS.forEach(c=>saveSpesaCat(c.key));
+  try{
+    set(ref(db,'spesaHistory/'+ts), snap);
+    // scrittura ATOMICA dell'intero nodo spesa (evita race tra categorie)
+    set(ref(db,'spesa'), Object.keys(newSpesa).length ? newSpesa : null);
+  }catch(e){}
+  spesa = newSpesa;
   // nascondi la dispensa: riapparirà al prossimo Genera se ancora rilevante
   pantry = pantry.map(p=>({...p, active:false}));
   savePantry();
@@ -1592,11 +1615,15 @@ window.salvaSpesa = ()=>{
 window.svuotaSpesa = ()=>{
   const SPESA_CATS = getSpesaCats();
   const hasItems = SPESA_CATS.some(c=>(spesa[c.key]||[]).length>0);
-  if(!hasItems) return toast('La lista è già vuota');
-  if(!confirm('Svuotare la lista SENZA salvarla nello storico?')) return;
-  SPESA_CATS.forEach(c=>{ spesa[c.key]=[]; try{ set(ref(db,'spesa/'+c.key), null); }catch(e){} });
+  if(!hasItems && !pantry.length) return toast('La lista è già vuota');
+  if(hasItems && !confirm('Svuotare la lista SENZA salvarla nello storico?')) return;
+  if(hasItems){ try{ set(ref(db,'spesa'), null); }catch(e){} spesa = {}; }
+  // chiede se svuotare anche la dispensa
+  if(pantry.length && confirm('Svuotare anche la DISPENSA di casa?')){
+    pantry = []; savePantry();
+  }
   renderContent();
-  toast('🗑 Lista svuotata');
+  toast('🗑 Svuotato');
 };
 
 // ── DISPENSA DI CASA (pantry) ──
