@@ -181,9 +181,9 @@
     .shop-prog-txt{font-size:12.5px;font-weight:700;color:#9CA3AF;margin-bottom:5px}
     .shop-prog-track{height:6px;background:#E7EAEF;border-radius:50px;overflow:hidden}
     .shop-prog-fill{height:100%;background:linear-gradient(90deg,#16A34A,#4ADE80);border-radius:50px;transition:width .3s}
-    .shop-actions{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+    .shop-actions{display:flex;align-items:center;gap:8px;margin-bottom:10px}
     .shop-tool{flex-shrink:0;border:none;background:#fff;color:#6B7280;font-size:14px;font-weight:700;padding:10px 14px;border-radius:50px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-    .shop-tool.gen{background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;box-shadow:0 4px 14px rgba(22,163,74,.35);flex:1;min-width:120px}
+    .shop-tool.gen{background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;box-shadow:0 4px 14px rgba(22,163,74,.35);margin-right:auto}
     .shop-tool.icon{width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:16px}
     .shop-tool.danger{color:#EF4444;border:1.5px solid #FEE2E2;background:#fff;box-shadow:none}
     .shop-tool.danger:active{background:#FFF5F5}
@@ -1474,7 +1474,8 @@ function renderSpesaTab(){
   const matchOwner = it => ownerFilters.some(o => (it.owners||[]).includes(o));
   const histCount = Object.keys(spesaHistory||{}).length;
 
-  const masterRow = (total>0 && !ownerFilter)
+  const filtered = ownerFilter || pantryView;     // viste filtrate: niente add-row / master / categorie vuote
+  const masterRow = (total>0 && !filtered)
     ? `<div class="shop-sec" style="border-bottom:2px solid #EEF0F3">
         <div class="shop-sec-h">
           <button class="sp-circle sm ${done===total?'on':''}" onclick="toggleAllSpesa()" aria-label="seleziona tutto"></button>
@@ -1483,23 +1484,22 @@ function renderSpesaTab(){
       </div>`
     : '';
 
-  const body = pantryView
-    ? renderPantryInline()
-    : `<div class="shop">${masterRow}${
+  const body = `<div class="shop">${masterRow}${
         SPESA_CATS.map(c=>{
           const alpha = (a,b)=>(a.t||'').localeCompare(b.t||'', 'it', {sensitivity:'base'});
-          let items = (spesa[c.key]||[]).map((it,idx)=>({...it, idx}));
+          // nella vista Dispensa non mostro gli articoli "da comprare"
+          let items = pantryView ? [] : (spesa[c.key]||[]).map((it,idx)=>({...it, idx}));
           if(ownerFilter) items = items.filter(matchOwner);
           items.sort(alpha);                        // alfabetico
           const allc  = items.length>0 && items.every(i=>i.d);
           const toBuy = items.filter(i=>!i.d).length;
-          // voci in dispensa ATTIVE appartenenti a questa categoria (in coda, sbiadite, alfabetiche)
-          let pantryItems = pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key && p.active!==false);
+          // voci in dispensa: nella vista Dispensa le mostro tutte, altrove solo le attive
+          let pantryItems = pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key && (pantryView || p.active!==false));
           if(ownerFilter) pantryItems = pantryItems.filter(matchOwner);
           pantryItems.sort(alpha);
           const isEmpty = items.length===0 && pantryItems.length===0;
-          // sotto filtro owner: salto le categorie senza nulla
-          if(ownerFilter && isEmpty) return '';
+          // viste filtrate: salto le categorie senza nulla
+          if(filtered && isEmpty) return '';
           const rows = items.map(it=>`
             <div class="shop-row ${it.d?'done':''}">
               <button class="sp-circle ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${it.idx})"></button>
@@ -1532,7 +1532,7 @@ function renderSpesaTab(){
             </div>
             ${rows}
             ${pantryRows}
-            ${ownerFilter ? '' : `<div class="shop-addrow">
+            ${filtered ? '' : `<div class="shop-addrow">
               <span class="shop-plus">+</span>
               <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
             </div>`}
@@ -1548,6 +1548,7 @@ function renderSpesaTab(){
     </div>
     <div class="shop-actions">
       <button class="shop-tool gen" onclick="spesaFatta()">✓ Spesa fatta</button>
+      <button class="shop-tool icon danger" onclick="svuotaDispensa()" title="Svuota dispensa">🧹</button>
       <button class="shop-tool icon" onclick="managerCategories()" title="Categorie">⚙️</button>
     </div>
     <div class="shop-filters">
@@ -1654,6 +1655,14 @@ window.spesaFatta = ()=>{
   savePantry();
   renderContent();
   toast(`✓ ${moved} in dispensa`);
+};
+
+// ── Svuota dispensa ──
+window.svuotaDispensa = ()=>{
+  if(!pantry.length) return toast('La dispensa è già vuota');
+  if(!confirm(`Svuotare la dispensa (${pantry.length} voci)?`)) return;
+  pantry = []; savePantry(); renderContent();
+  toast('🧹 Dispensa svuotata');
 };
 
 // ── DISPENSA DI CASA (pantry) ──
