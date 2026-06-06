@@ -851,7 +851,7 @@ const ING_MAP = [
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaFilter=null;
+let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], pantryView=false;
 
 onValue(ref(db,'noemiPlan'), snap => {
   noemiPlan = snap.val() || {};
@@ -1462,7 +1462,9 @@ function renderSpesaTab(){
   const {total,done} = spesaCounts();
   const pct = total ? Math.round(done/total*100) : 0;
   const SPESA_CATS = getSpesaCats();
-  const ownerFilter = ['nicholas','noemi','gatto','coniglio'].includes(spesaFilter) ? spesaFilter : null;
+  const ownerFilters = spesaOwners;                 // array multi-selezione (OR)
+  const ownerFilter = ownerFilters.length > 0;       // true se almeno un filtro attivo
+  const matchOwner = it => ownerFilters.some(o => (it.owners||[]).includes(o));
   const histCount = Object.keys(spesaHistory||{}).length;
 
   const masterRow = (total>0 && !ownerFilter)
@@ -1474,18 +1476,18 @@ function renderSpesaTab(){
       </div>`
     : '';
 
-  const body = spesaFilter==='pantry'
+  const body = pantryView
     ? renderPantryInline()
     : `<div class="shop">${masterRow}${
         SPESA_CATS.map(c=>{
           let items = (spesa[c.key]||[]).map((it,idx)=>({...it, idx}));
-          if(ownerFilter) items = items.filter(it=>(it.owners||[]).includes(ownerFilter));
+          if(ownerFilter) items = items.filter(matchOwner);
           items.sort((a,b)=>(a.d?1:0)-(b.d?1:0));   // i presi vanno in fondo
           const allc  = items.length>0 && items.every(i=>i.d);
           const toBuy = items.filter(i=>!i.d).length;
           // voci in dispensa ATTIVE appartenenti a questa categoria (in coda, sbiadite)
           let pantryItems = pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key && p.active!==false);
-          if(ownerFilter) pantryItems = pantryItems.filter(p=>(p.owners||[]).includes(ownerFilter));
+          if(ownerFilter) pantryItems = pantryItems.filter(matchOwner);
           const isEmpty = items.length===0 && pantryItems.length===0;
           // sotto filtro owner: salto le categorie senza nulla
           if(ownerFilter && isEmpty) return '';
@@ -1542,11 +1544,11 @@ function renderSpesaTab(){
       <button class="shop-tool icon" onclick="managerCategories()" title="Categorie">⚙️</button>
     </div>
     <div class="shop-filters">
-      <button class="shop-filter f-nicholas ${spesaFilter==='nicholas'?'on':''}" onclick="setSpesaFilter('nicholas')">🔵 Nicholas</button>
-      <button class="shop-filter f-noemi ${spesaFilter==='noemi'?'on':''}" onclick="setSpesaFilter('noemi')">🩷 Noemi</button>
-      <button class="shop-filter f-gatto ${spesaFilter==='gatto'?'on':''}" onclick="setSpesaFilter('gatto')">🐈 Gatto</button>
-      <button class="shop-filter f-coniglio ${spesaFilter==='coniglio'?'on':''}" onclick="setSpesaFilter('coniglio')">🐰 Coniglio</button>
-      <button class="shop-filter f-pantry ${spesaFilter==='pantry'?'on':''}" onclick="setSpesaFilter('pantry')">🏠 Dispensa</button>
+      <button class="shop-filter f-nicholas ${spesaOwners.includes('nicholas')?'on':''}" onclick="toggleOwnerFilter('nicholas')">🔵 Nicholas</button>
+      <button class="shop-filter f-noemi ${spesaOwners.includes('noemi')?'on':''}" onclick="toggleOwnerFilter('noemi')">🩷 Noemi</button>
+      <button class="shop-filter f-gatto ${spesaOwners.includes('gatto')?'on':''}" onclick="toggleOwnerFilter('gatto')">🐈 Gatto</button>
+      <button class="shop-filter f-coniglio ${spesaOwners.includes('coniglio')?'on':''}" onclick="toggleOwnerFilter('coniglio')">🐰 Coniglio</button>
+      <button class="shop-filter f-pantry ${pantryView?'on':''}" onclick="togglePantryView()">🏠 Dispensa</button>
     </div>
     ${body}
     ${histCount ? `<div style="text-align:center;padding:14px 0 4px"><button onclick="clearHistory()" style="border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">🧹 Svuota cronologia (${histCount} spese memorizzate)</button></div>` : ''}
@@ -1555,7 +1557,13 @@ function renderSpesaTab(){
   `;
 }
 
-window.setSpesaFilter = (f) => { spesaFilter = (spesaFilter===f) ? null : f; renderContent(); };
+window.toggleOwnerFilter = (o) => {
+  pantryView = false;                              // gli owner e la dispensa si escludono
+  const i = spesaOwners.indexOf(o);
+  if(i>=0) spesaOwners.splice(i,1); else spesaOwners.push(o);
+  renderContent();
+};
+window.togglePantryView = () => { pantryView = !pantryView; if(pantryView) spesaOwners=[]; renderContent(); };
 window.clearHistory = () => {
   const n = Object.keys(spesaHistory||{}).length;
   if(!confirm('Svuotare la cronologia delle '+n+' spese memorizzate? L\'AI non imparerà più dal pregresso.')) return;
