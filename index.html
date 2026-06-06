@@ -183,7 +183,9 @@
     .shop-prog-fill{height:100%;background:linear-gradient(90deg,#16A34A,#4ADE80);border-radius:50px;transition:width .3s}
     .shop-actions{display:flex;align-items:center;gap:8px;margin-bottom:10px}
     .shop-tool{flex-shrink:0;border:none;background:#fff;color:#6B7280;font-size:14px;font-weight:700;padding:10px 14px;border-radius:50px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-    .shop-tool.gen{background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;box-shadow:0 4px 14px rgba(22,163,74,.35);margin-right:auto}
+    .shop-tool.gen{background:linear-gradient(135deg,#16A34A,#4ADE80);color:#fff;box-shadow:0 4px 14px rgba(22,163,74,.35)}
+    .shop-tool.sec{background:#FFF7ED;color:#B45309;border:1.5px solid #FED7AA;box-shadow:none}
+    .shop-tool.sec:active{background:#FFEDD5}
     .shop-tool.icon{width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:16px}
     .shop-tool.danger{color:#EF4444;border:1.5px solid #FEE2E2;background:#fff;box-shadow:none}
     .shop-tool.danger:active{background:#FFF5F5}
@@ -1548,8 +1550,8 @@ function renderSpesaTab(){
     </div>
     <div class="shop-actions">
       <button class="shop-tool gen" onclick="spesaFatta()">✓ Spesa fatta</button>
-      <button class="shop-tool icon danger" onclick="svuotaDispensa()" title="Svuota dispensa">🧹</button>
-      <button class="shop-tool icon" onclick="managerCategories()" title="Categorie">⚙️</button>
+      <button class="shop-tool sec" onclick="svuotaDispensa()">Svuota dispensa</button>
+      <button class="shop-tool icon" style="margin-left:auto" onclick="managerCategories()" title="Categorie">⚙️</button>
     </div>
     <div class="shop-filters">
       <button class="shop-filter f-nicholas ${spesaOwners.includes('nicholas')?'on':''}" onclick="toggleOwnerFilter('nicholas')">🔵 Nicholas</button>
@@ -1559,7 +1561,10 @@ function renderSpesaTab(){
       <button class="shop-filter f-pantry ${pantryView?'on':''}" onclick="togglePantryView()">🏠 Dispensa</button>
     </div>
     ${body}
-    ${histCount ? `<div style="text-align:center;padding:14px 0 4px"><button onclick="clearHistory()" style="border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">🧹 Svuota cronologia (${histCount} spese memorizzate)</button></div>` : ''}
+    ${histCount ? `<div style="text-align:center;padding:14px 0 4px;display:flex;gap:18px;justify-content:center;flex-wrap:wrap">
+      <button onclick="recuperaStorico()" style="border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline">↩️ Recupera spesa da cronologia</button>
+      <button onclick="clearHistory()" style="border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">🧹 Svuota cronologia (${histCount})</button>
+    </div>` : ''}
     ${categoryManager ? renderCategoryManager() : ''}
     ${editingCat!==null ? renderCategoryEditor() : ''}
   `;
@@ -1657,12 +1662,31 @@ window.spesaFatta = ()=>{
   toast(`✓ ${moved} in dispensa`);
 };
 
-// ── Svuota dispensa ──
+// ── Svuota dispensa = rimette tutti gli articoli in lista (NON cancella) ──
 window.svuotaDispensa = ()=>{
   if(!pantry.length) return toast('La dispensa è già vuota');
-  if(!confirm(`Svuotare la dispensa (${pantry.length} voci)?`)) return;
-  pantry = []; savePantry(); renderContent();
-  toast('🧹 Dispensa svuotata');
+  if(!confirm(`Rimettere in lista i ${pantry.length} articoli della dispensa?`)) return;
+  const addTo=(cat,t,owners)=>{ const list=(spesa[cat]||[]).slice(); const have=new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase())); if(have.has((t||'').toLowerCase()))return false; list.push({t,d:false,owners:owners||[]}); spesa[cat]=list; return true; };
+  pantry.forEach(p=>addTo(p.cat||'dispensa', p.t, p.owners));
+  pantry=[];
+  const clean={}; Object.keys(spesa).forEach(k=>{ if((spesa[k]||[]).length) clean[k]=spesa[k]; }); spesa=clean;
+  try{ set(ref(db,'spesa'), Object.keys(clean).length?clean:null); set(ref(db,'pantry'), null); }catch(e){}
+  renderContent();
+  toast('↩️ Articoli rimessi in lista');
+};
+
+// ── Recupero d'emergenza: ricostruisce la lista dalla cronologia ──
+window.recuperaStorico = ()=>{
+  const snaps = Object.values(spesaHistory||{});
+  if(!snaps.length) return toast('Nessuna cronologia da cui recuperare');
+  if(!confirm('Recuperare tutti gli articoli salvati nella cronologia e rimetterli in lista?')) return;
+  let added=0;
+  const addTo=(cat,t,owners)=>{ const list=(spesa[cat]||[]).slice(); const have=new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase())); if(have.has((t||'').toLowerCase()))return false; list.push({t,d:false,owners:owners||[]}); spesa[cat]=list; return true; };
+  snaps.forEach(h=>Object.entries(h.items||{}).forEach(([cat,arr])=>(arr||[]).forEach(i=>{ if(i&&i.t && addTo(cat,i.t,i.owners)) added++; })));
+  const clean={}; Object.keys(spesa).forEach(k=>{ if((spesa[k]||[]).length) clean[k]=spesa[k]; }); spesa=clean;
+  try{ set(ref(db,'spesa'), Object.keys(clean).length?clean:null); }catch(e){}
+  renderContent();
+  toast(`↩️ ${added} articoli recuperati`);
 };
 
 // ── DISPENSA DI CASA (pantry) ──
