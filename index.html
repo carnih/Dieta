@@ -203,6 +203,8 @@
     .shop-row:hover .shop-pantry-btn{opacity:.7}
     .shop-pantry-btn:active{transform:scale(.85)}
     .shop-pantry-btn.on{opacity:1;filter:none;background:#FEF3C7}
+    .shop-row.pantry-row .shop-name{font-style:italic;color:#B6BCC6;font-size:14px}
+    .shop-row.pantry-row{background:#FCFCFD}
 
     /* lista (stile Listonic): un'unica superficie, sezioni leggere */
     .shop{background:#fff;border-radius:var(--r);box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;padding:4px 0}
@@ -1251,7 +1253,7 @@ function ownerBadgesHTML(owners, cat, idx){
   const hasE = owners&&owners.includes('noemi');
   return '<span class="owner-badges">'
     +'<span class="owner-badge n '+(hasN?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'nicholas\')" title="Nicholas">N</span>'
-    +'<span class="owner-badge e '+(hasE?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'noemi\')" title="Noemi">E</span>'
+    +'<span class="owner-badge e '+(hasE?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'noemi\')" title="Noemi">N</span>'
     +'</span>';
 }
 // ── CATEGORY MANAGER ──
@@ -1444,6 +1446,7 @@ function renderSpesaTab(){
   const pct = total ? Math.round(done/total*100) : 0;
   const SPESA_CATS = getSpesaCats();
   const ownerFilter = (spesaFilter==='nicholas'||spesaFilter==='noemi') ? spesaFilter : null;
+  const histCount = Object.keys(spesaHistory||{}).length;
 
   const body = spesaFilter==='pantry'
     ? renderPantryInline()
@@ -1454,8 +1457,11 @@ function renderSpesaTab(){
           items.sort((a,b)=>(a.d?1:0)-(b.d?1:0));   // i presi vanno in fondo
           const allc  = items.length>0 && items.every(i=>i.d);
           const toBuy = items.filter(i=>!i.d).length;
-          const isEmpty = items.length===0;
-          // sotto filtro owner: salto le categorie vuote (niente input/clutter)
+          // voci in dispensa appartenenti a questa categoria (in coda, sbiadite)
+          let pantryItems = pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key);
+          if(ownerFilter) pantryItems = pantryItems.filter(p=>(p.owners||[]).includes(ownerFilter));
+          const isEmpty = items.length===0 && pantryItems.length===0;
+          // sotto filtro owner: salto le categorie senza nulla
           if(ownerFilter && isEmpty) return '';
           const rows = items.map(it=>`
             <div class="shop-row ${it.d?'done':''}">
@@ -1464,6 +1470,12 @@ function renderSpesaTab(){
               ${ownerBadgesHTML(it.owners, c.key, it.idx)}
               <button class="shop-pantry-btn" onclick="toPantry('${c.key}',${it.idx})" title="Ho già in casa">🏠</button>
               <button class="shop-x" onclick="delSpesa('${c.key}',${it.idx})">✕</button>
+            </div>`).join('');
+          const pantryRows = pantryItems.map(p=>`
+            <div class="shop-row pantry-row">
+              <span class="shop-name">${esc(p.t)}</span>
+              ${ownerBadgesHTML(p.owners, '__pantry', p.pi)}
+              <button class="shop-pantry-btn on" onclick="fromPantry(${p.pi})" title="Rimetti in lista">🏠</button>
             </div>`).join('');
           if(isEmpty) return `<div class="shop-sec">
             <div class="shop-sec-h" style="color:#CDD1D9">
@@ -1481,6 +1493,7 @@ function renderSpesaTab(){
               ${toBuy ? `<span class="shop-sec-n">${toBuy}</span>` : ''}
             </div>
             ${rows}
+            ${pantryRows}
             ${ownerFilter ? '' : `<div class="shop-addrow">
               <span class="shop-plus">+</span>
               <input class="shop-in" id="spin-${c.key}" placeholder="aggiungi…" onkeydown="if(event.key==='Enter')addSpesa('${c.key}')">
@@ -1499,7 +1512,6 @@ function renderSpesaTab(){
       <button class="shop-tool gen" id="btn-genera" onclick="generaSpesaAI()">✨ Genera lista</button>
       <button class="shop-tool icon" onclick="salvaSpesa()" title="Salva spesa fatta (archivia e svuota)">💾</button>
       <button class="shop-tool icon danger" onclick="svuotaSpesa()" title="Svuota lista (senza salvare)">🗑</button>
-      <button class="shop-tool icon" onclick="managerPantry()" title="Dispensa di casa">🏠</button>
       <button class="shop-tool icon" onclick="managerCategories()" title="Categorie">⚙️</button>
     </div>
     <div class="shop-filters">
@@ -1508,13 +1520,21 @@ function renderSpesaTab(){
       <button class="shop-filter f-pantry ${spesaFilter==='pantry'?'on':''}" onclick="setSpesaFilter('pantry')">🏠 Dispensa</button>
     </div>
     ${body}
+    ${histCount ? `<div style="text-align:center;padding:14px 0 4px"><button onclick="clearHistory()" style="border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">🧹 Svuota cronologia (${histCount} spese memorizzate)</button></div>` : ''}
     ${categoryManager ? renderCategoryManager() : ''}
-    ${pantryManager ? renderPantryManager() : ''}
     ${editingCat!==null ? renderCategoryEditor() : ''}
   `;
 }
 
 window.setSpesaFilter = (f) => { spesaFilter = (spesaFilter===f) ? null : f; renderContent(); };
+window.clearHistory = () => {
+  const n = Object.keys(spesaHistory||{}).length;
+  if(!confirm('Svuotare la cronologia delle '+n+' spese memorizzate? L\'AI non imparerà più dal pregresso.')) return;
+  try{ set(ref(db,'spesaHistory'), null); }catch(e){}
+  spesaHistory = {};
+  renderContent();
+  toast('🧹 Cronologia svuotata');
+};
 
 // vista dispensa inline (quando filtro = pantry)
 function renderPantryInline(){
@@ -1523,7 +1543,8 @@ function renderPantryInline(){
     <div class="shop-row">
       <span class="shop-name">${esc(p.t)}</span>
       ${ownerBadgesHTML(p.owners, '__pantry', i)}
-      <button class="shop-x" style="opacity:1" onclick="fromPantry(${i})" title="Tolgo dalla dispensa">✕</button>
+      <button class="shop-pantry-btn on" onclick="fromPantry(${i})" title="Rimetti in lista">🏠</button>
+      <button class="shop-x" style="opacity:1" onclick="removePantry(${i})" title="Elimina dalla dispensa">✕</button>
     </div>`).join('');
   return `<div class="shop">
     <div class="shop-sec">
@@ -1575,14 +1596,25 @@ window.toPantry = (cat, idx)=>{
   const list = (spesa[cat]||[]).slice();
   const it = list[idx]; if(!it) return;
   list.splice(idx,1); spesa[cat]=list; saveSpesaCat(cat);
-  if(!pantry.some(p=>p.t.toLowerCase()===it.t.toLowerCase())) pantry.push({t:it.t, owners:it.owners||[]});
+  if(!pantry.some(p=>p.t.toLowerCase()===it.t.toLowerCase())) pantry.push({t:it.t, owners:it.owners||[], cat});
   savePantry(); renderContent();
-  toast('🏠 Spostato in dispensa');
+  toast('🏠 In dispensa');
 };
-window.fromPantry = (i)=>{ pantry.splice(i,1); savePantry(); renderContent(); toast('Rimosso dalla dispensa'); };
+// rimette in lista una voce della dispensa (torna nella sua categoria)
+window.fromPantry = (i)=>{
+  const p = pantry[i]; if(!p) return;
+  const cat = p.cat || 'dispensa';
+  const list = (spesa[cat]||[]).slice();
+  if(!list.some(x=>x&&x.t&&x.t.toLowerCase()===p.t.toLowerCase())) list.push({t:p.t, d:false, owners:p.owners||[]});
+  spesa[cat]=list; saveSpesaCat(cat);
+  pantry.splice(i,1); savePantry(); renderContent();
+  toast('Rimesso in lista');
+};
+// rimuove del tutto dalla dispensa (senza rimetterla in lista)
+window.removePantry = (i)=>{ pantry.splice(i,1); savePantry(); renderContent(); };
 window.addPantryManual = ()=>{
   const el = document.getElementById('pantry-in'); const v=(el?el.value:'').trim(); if(!v) return;
-  if(!pantry.some(p=>p.t.toLowerCase()===v.toLowerCase())) pantry.push({t:v, owners:[]});
+  if(!pantry.some(p=>p.t.toLowerCase()===v.toLowerCase())) pantry.push({t:v, owners:[], cat:'dispensa'});
   savePantry(); renderContent();
 };
 window.managerPantry = ()=>{ pantryManager = !pantryManager; renderContent(); };

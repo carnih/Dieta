@@ -179,19 +179,23 @@ ${pantryLine}
 ${catLines}
 
 ═══ REGOLE ═══
-1. NICHOLAS non sceglie: per le PROTEINE elenca ogni TIPO con le grammature di pranzo E cena.
-   Esempio formato voce: {"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}
-   Idem per pesce (raggruppa: bianco, salmone, tonno, spada…), uova, legumi, ecc.
-2. Carboidrati Nicholas: stessa logica con grammature principali (es. riso, pasta, pane, patate).
-3. Integratori Nicholas (creatina/BCAA/carnitina/sali) → categoria "integratori", owners ["nicholas"].
-4. NOEMI: includi ingredienti delle sue scelte E quelli estratti dalle ricette scritte a mano.
-5. Se un alimento serve a ENTRAMBI → una sola voce con owners ["nicholas","noemi"].
-6. VOCI RICORRENTI dello storico che NON derivano dalle diete (es. fieno coniglio, lettiera gatto,
-   ghiaccioli, detersivi) → riproponile nella categoria giusta.
-7. Dosa le quantità in base a quante volte ricorre il tipo di giornata (×N/sett).
-8. NON includere acqua, sale, pepe, aromi. NON includere ciò che è "GIÀ IN CASA".
-9. Assegna owners corretti: roba solo di Nicholas→["nicholas"], solo Noemi→["noemi"].
+1. Leggi ENTRAMBE le diete (Nicholas E Noemi) e fai un merge intelligente in un'unica lista.
+2. GRAMMATURE: indicale SOLO per la parte proteica/secondi di NICHOLAS (le sue scelte di pranzo/cena).
+   Nicholas non sceglie: per ogni TIPO di proteina elenca una voce con i grammi di pranzo E cena.
+   Esempio: {"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}
+   Idem pesce (raggruppa: bianco, salmone, tonno, spada…), uova, legumi.
+3. Tutto il RESTO (carboidrati, frutta, verdura, latticini, condimenti, integratori, voci di Noemi)
+   → SENZA grammature, solo il nome dell'alimento (es. "Pasta", "Riso basmati", "Yogurt greco").
+4. Integratori Nicholas (creatina/BCAA/carnitina/sali) → categoria "integratori", owners ["nicholas"].
+5. NOEMI (vegetariana): includi gli ingredienti delle sue scelte E quelli estratti dalle RICETTE
+   scritte a mano. NON dimenticare la sua dieta: deve comparire roba sua.
+6. MERGE: se un alimento serve a ENTRAMBI (es. pasta, riso, yogurt, verdura, frutta, olio)
+   → UNA SOLA voce con owners ["nicholas","noemi"]. Non duplicare.
+7. owners: solo Nicholas→["nicholas"], solo Noemi→["noemi"], entrambi→["nicholas","noemi"].
+8. VOCI RICORRENTI dello storico che NON derivano dalle diete (es. fieno coniglio, lettiera gatto,
+   ghiaccioli, detersivi) → riproponile nella categoria giusta (owners []).
+9. NON includere acqua, sale, pepe, aromi. NON includere ciò che è "GIÀ IN CASA".
 
 Esempio output (chiavi e voci illustrative):
-{"proteine":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"verdure":[{"t":"Verdure miste di stagione","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
+{"proteine":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]},{"t":"Tofu","owners":["noemi"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"verdure":[{"t":"Verdure miste di stagione","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
 }
