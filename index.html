@@ -197,6 +197,8 @@
     .shop-filter.on.f-pantry{background:#FEF3C7;color:#92400E}
     .shop-filter.on.f-nicholas{background:var(--n-l);color:var(--n)}
     .shop-filter.on.f-noemi{background:#FCE7F3;color:var(--e)}
+    .shop-filter.on.f-gatto{background:#FEF3C7;color:#92400E}
+    .shop-filter.on.f-coniglio{background:#E0E7FF;color:#4338CA}
 
     /* toggle dispensa 🏠 su voce */
     .shop-pantry-btn{flex-shrink:0;border:none;background:transparent;font-size:15px;cursor:pointer;padding:3px 5px;border-radius:8px;opacity:.35;filter:grayscale(1);transition:all .15s}
@@ -236,7 +238,9 @@
     .owner-badge{width:20px;height:20px;border-radius:50%;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;letter-spacing:0;border:1.5px solid transparent;cursor:pointer;transition:all .15s}
     .owner-badge.n{background:var(--n-l);color:var(--n);border-color:var(--n)}
     .owner-badge.e{background:#FCE7F3;color:var(--e);border-color:var(--e)}
-    .owner-badge.off{opacity:.3;border-color:#E0E0E0}
+    .owner-badge.g{background:#FEF3C7;border-color:#F59E0B;font-size:11px}
+    .owner-badge.c{background:#E0E7FF;border-color:#6366F1;font-size:11px}
+    .owner-badge.off{opacity:.28;border-color:#E0E0E0;filter:grayscale(.6)}
     .shop-tool:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
     @keyframes spin{to{transform:rotate(360deg)}}
     .shop-tool.loading .spin{display:inline-block;animation:spin .8s linear infinite}
@@ -772,8 +776,6 @@ const SPESA_CATS_DEFAULT = [
   {key:'surgelati',   label:'❄️ Surgelati',   order:10},
   {key:'integratori', label:'💊 Integratori', order:11},
   {key:'casa',        label:'🧴 Casa',        order:12},
-  {key:'gatto',       label:'🐈 Gatto',       order:13},
-  {key:'coniglio',    label:'🐰 Coniglio',    order:14},
 ];
 function getSpesaCats(){
   const all = SPESA_CATS_DEFAULT.map(c=>({...c, custom:false}));
@@ -1262,12 +1264,14 @@ window.closeBase = ()=>{ editBase=null; renderContent(); window.scrollTo(0,0); }
 
 // ── SPESA ──
 function ownerBadgesHTML(owners, cat, idx){
-  const hasN = owners&&owners.includes('nicholas');
-  const hasE = owners&&owners.includes('noemi');
+  const has = o => !!(owners && owners.includes(o));
+  const b = (o,cls,txt,title)=>`<span class="owner-badge ${cls} ${has(o)?'':'off'}" onclick="toggleOwner('${cat}',${idx},'${o}')" title="${title}">${txt}</span>`;
   return '<span class="owner-badges">'
-    +'<span class="owner-badge n '+(hasN?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'nicholas\')" title="Nicholas">N</span>'
-    +'<span class="owner-badge e '+(hasE?'':'off')+'" onclick="toggleOwner(\''+cat+'\','+idx+',\'noemi\')" title="Noemi">N</span>'
-    +'</span>';
+    + b('nicholas','n','N','Nicholas')
+    + b('noemi','e','N','Noemi')
+    + b('gatto','g','🐈','Gatto')
+    + b('coniglio','c','🐰','Coniglio')
+    + '</span>';
 }
 // ── CATEGORY MANAGER ──
 function splitLabel(label){
@@ -1458,7 +1462,7 @@ function renderSpesaTab(){
   const {total,done} = spesaCounts();
   const pct = total ? Math.round(done/total*100) : 0;
   const SPESA_CATS = getSpesaCats();
-  const ownerFilter = (spesaFilter==='nicholas'||spesaFilter==='noemi') ? spesaFilter : null;
+  const ownerFilter = ['nicholas','noemi','gatto','coniglio'].includes(spesaFilter) ? spesaFilter : null;
   const histCount = Object.keys(spesaHistory||{}).length;
 
   const masterRow = (total>0 && !ownerFilter)
@@ -1540,6 +1544,8 @@ function renderSpesaTab(){
     <div class="shop-filters">
       <button class="shop-filter f-nicholas ${spesaFilter==='nicholas'?'on':''}" onclick="setSpesaFilter('nicholas')">🔵 Nicholas</button>
       <button class="shop-filter f-noemi ${spesaFilter==='noemi'?'on':''}" onclick="setSpesaFilter('noemi')">🩷 Noemi</button>
+      <button class="shop-filter f-gatto ${spesaFilter==='gatto'?'on':''}" onclick="setSpesaFilter('gatto')">🐈 Gatto</button>
+      <button class="shop-filter f-coniglio ${spesaFilter==='coniglio'?'on':''}" onclick="setSpesaFilter('coniglio')">🐰 Coniglio</button>
       <button class="shop-filter f-pantry ${spesaFilter==='pantry'?'on':''}" onclick="setSpesaFilter('pantry')">🏠 Dispensa</button>
     </div>
     ${body}

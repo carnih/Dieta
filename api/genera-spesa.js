@@ -231,13 +231,18 @@ ${catLines}
 6. MERGE: alimento per ENTRAMBI (es. pasta, riso, yogurt, verdura, frutta, olio, uova, pane)
    → UNA SOLA voce con owners ["nicholas","noemi"]. Non duplicare.
 
-7. owners: solo Nicholas→["nicholas"], solo Noemi→["noemi"], entrambi→["nicholas","noemi"].
+7. owners: valori possibili "nicholas", "noemi", "gatto", "coniglio".
+   - cibo/persone: nicholas, noemi (o entrambi).
+   - ANIMALI: prodotti per il gatto (cibo, lettiera, croccantini) → owners ["gatto"];
+     prodotti per il coniglio (fieno, mangime) → owners ["coniglio"].
+   - NON esiste più una categoria gatto/coniglio: gli articoli per animali vanno in "casa"
+     (o "dispensa" se cibo a lunga conservazione) e si distinguono SOLO con l'owner.
 
 8. VOCI RICORRENTI dello storico che NON derivano dalle diete (es. fieno coniglio, lettiera gatto,
-   ghiaccioli, detersivi) → riproponile nella categoria giusta (owners []).
+   ghiaccioli, detersivi) → riproponile nella categoria giusta con l'owner adatto.
 
 9. NON includere acqua, sale, pepe, aromi.
 
 Esempio output (chiavi e voci illustrative):
-{"macelleria":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}],"pescheria":[{"t":"Pesce bianco merluzzo/orata/branzino (150g pranzo · 250g cena)","owners":["nicholas"]}],"banco":[{"t":"Tofu","owners":["noemi"]},{"t":"Uova","owners":["nicholas","noemi"]}],"latticini":[{"t":"Parmigiano","owners":["nicholas","noemi"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"panetteria":[{"t":"Pane integrale","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"verdure":[{"t":"Patate","owners":["nicholas"]},{"t":"Verdura","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
+{"macelleria":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}],"pescheria":[{"t":"Pesce bianco merluzzo/orata/branzino (150g pranzo · 250g cena)","owners":["nicholas"]}],"banco":[{"t":"Tofu","owners":["noemi"]},{"t":"Uova","owners":["nicholas","noemi"]}],"latticini":[{"t":"Parmigiano","owners":["nicholas","noemi"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"panetteria":[{"t":"Pane integrale","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"verdure":[{"t":"Patate","owners":["nicholas"]},{"t":"Verdura","owners":["nicholas","noemi"]}],"casa":[{"t":"Fieno","owners":["coniglio"]},{"t":"Lettiera","owners":["gatto"]}]}`;
 }
