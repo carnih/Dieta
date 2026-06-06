@@ -253,7 +253,7 @@
     .catman-close:active{background:#E2E8F0}
     .catman-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;padding:2px}
     .catman-row{display:flex;align-items:center;gap:9px;background:#fff;border-radius:13px}
-    .catman-row.catman-dragging{box-shadow:0 12px 30px rgba(0,0,0,.2);position:relative;z-index:5;transform:scale(1.025)}
+    .catman-row.catman-dragging{box-shadow:0 12px 30px rgba(0,0,0,.2);position:relative;z-index:5}
     .catman-drag{
       flex:none;width:24px;height:46px;display:flex;align-items:center;justify-content:center;
       color:#C5CAD2;font-size:18px;cursor:grab;touch-action:none;user-select:none;letter-spacing:-2px;
@@ -1296,7 +1296,7 @@ window.catDragStart = (e, key) => {
   const list = row.parentElement;
   row.classList.add('catman-dragging');
   try{ handle.setPointerCapture(e.pointerId); }catch(_){}
-  _catDrag = { row, list, handle };
+  _catDrag = { row, list, handle, startY: e.clientY };
   handle.addEventListener('pointermove', catDragMove, {passive:false});
   handle.addEventListener('pointerup', catDragEnd);
   handle.addEventListener('pointercancel', catDragEnd);
@@ -1306,13 +1306,23 @@ function catDragMove(e){
   e.preventDefault();
   const { row, list } = _catDrag;
   const y = e.clientY;
+  // 1) la riga segue il dito
+  row.style.transform = `translateY(${y - _catDrag.startY}px) scale(1.02)`;
+  // 2) trova dove inserire (primo fratello il cui centro sta sotto il dito)
   const sibs = [...list.querySelectorAll('.catman-row:not(.catman-dragging)')];
-  let placed = false;
+  let target = null;
   for(const sib of sibs){
     const r = sib.getBoundingClientRect();
-    if(y < r.top + r.height/2){ list.insertBefore(row, sib); placed = true; break; }
+    if(y < r.top + r.height/2){ target = sib; break; }
   }
-  if(!placed) list.appendChild(row);
+  // 3) riordina nel DOM correggendo la baseline così resta sotto al dito
+  const before = row.offsetTop;
+  if(target) list.insertBefore(row, target); else list.appendChild(row);
+  const after = row.offsetTop;
+  if(after !== before){
+    _catDrag.startY += (after - before);
+    row.style.transform = `translateY(${y - _catDrag.startY}px) scale(1.02)`;
+  }
 }
 function catDragEnd(){
   if(!_catDrag) return;
@@ -1321,6 +1331,7 @@ function catDragEnd(){
   handle.removeEventListener('pointerup', catDragEnd);
   handle.removeEventListener('pointercancel', catDragEnd);
   row.classList.remove('catman-dragging');
+  row.style.transform = '';
   const keys = [...list.querySelectorAll('.catman-row')].map(r=>r.dataset.key);
   _catDrag = null;
   saveCatOrder(keys);
