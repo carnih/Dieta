@@ -6,12 +6,23 @@ module.exports = async (req, res) => {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { nicholasData, noemiData, scheduleData, historyData } = body;
+    const { nicholasData, noemiData, scheduleData, historyData, categoriesData, pantryData } = body;
 
     const KEY = process.env.ANTHROPIC_API_KEY;
     if (!KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY mancante su Vercel' });
 
-    const prompt = buildPrompt(nicholasData, noemiData, scheduleData, historyData || []);
+    // categorie valide (fallback alle default se non passate)
+    const cats = (Array.isArray(categoriesData) && categoriesData.length)
+      ? categoriesData
+      : [
+          {key:'cereali',label:'🌾 Cereali'},{key:'dispensa',label:'🥫 Dispensa'},
+          {key:'proteine',label:'🥩 Proteine'},{key:'verdure',label:'🥦 Verdure'},
+          {key:'frutta',label:'🍓 Frutta'},{key:'surgelati',label:'❄️ Surgelati'},
+          {key:'integratori',label:'💊 Integratori'},{key:'casa',label:'🧴 Casa'},
+          {key:'gatto',label:'🐈 Gatto'},{key:'coniglio',label:'🐰 Coniglio'},
+        ];
+
+    const prompt = buildPrompt(nicholasData, noemiData, scheduleData, historyData || [], cats, pantryData || []);
     console.log('Prompt length:', prompt.length, 'chars');
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -48,11 +59,11 @@ module.exports = async (req, res) => {
     console.log('Parsed result keys:', Object.keys(result));
     console.log('Sample item:', JSON.stringify((Object.values(result).find(v=>Array.isArray(v)&&v.length)||[])[0]));
 
-    const CATS = ['cereali','dispensa','proteine','verdure','frutta','surgelati','integratori','casa','gatto','coniglio'];
-    CATS.forEach(c => {
-      if (!Array.isArray(result[c])) { result[c] = []; return; }
-      // Normalizza: accetta stringhe, oggetti con t/nome/name/item, qualsiasi formato
-      result[c] = result[c].map(item => {
+    // Normalizza su TUTTE le chiavi restituite (categorie dinamiche/custom incluse)
+    const out = {};
+    Object.keys(result || {}).forEach(c => {
+      if (!Array.isArray(result[c])) return;
+      out[c] = result[c].map(item => {
         if (!item) return null;
         if (typeof item === 'string') return { t: item, owners: [] };
         const t = item.t || item.nome || item.name || item.item || item.prodotto || item.voce
@@ -63,7 +74,7 @@ module.exports = async (req, res) => {
       }).filter(Boolean);
     });
 
-    return res.status(200).json(result);
+    return res.status(200).json(out);
 
   } catch (e) {
     console.error('genera-spesa error:', e.message);
@@ -72,9 +83,9 @@ module.exports = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────
-//  PROMPT COMPATTO
+//  PROMPT (ricco)
 // ─────────────────────────────────────────────
-function buildPrompt(nicholas, noemi, schedule, history) {
+function buildPrompt(nicholas, noemi, schedule, history, cats, pantryData) {
   const DAYS = ['lun','mar','mer','gio','ven','sab','dom'];
   const DLBL = { lun:'Lun', mar:'Mar', mer:'Mer', gio:'Gio', ven:'Ven', sab:'Sab', dom:'Dom' };
   const SCHED_OPTS = [
@@ -85,33 +96,34 @@ function buildPrompt(nicholas, noemi, schedule, history) {
   ];
   const getOpt = wd => SCHED_OPTS.find(o=>o.id===((schedule&&schedule[wd])||'riposo'))||SCHED_OPTS[6];
 
-  // Settimana Nicholas — 1 riga per giorno
+  // Quante volte a settimana ricorre ogni tipo di dieta (per dosare le quantità)
+  const dietCount = {};
+  DAYS.forEach(wd => { const d=getOpt(wd).diet; dietCount[d]=(dietCount[d]||0)+1; });
   const nicWeek = DAYS.map(wd => `${DLBL[wd]}:${getOpt(wd).label}`).join(' ');
 
-  // Diete uniche Nicholas
+  // Diete uniche Nicholas — dettaglio pasti con TUTTE le alternative (servono i grammi)
   const usedIds = [...new Set(DAYS.map(wd => getOpt(wd).diet))];
   let nicDiets = '';
   usedIds.forEach(id => {
     const day = (nicholas.days||[]).find(d=>d.id===id); if(!day) return;
-    nicDiets += `\n[${day.label||id}]\n`;
+    nicDiets += `\n[${day.label||id}] (×${dietCount[id]}/sett)\n`;
     (day.pasti||[]).forEach(p => {
-      nicDiets += ` ${p.nome}:`;
+      nicDiets += `  ${p.nome}:\n`;
       (p.items||[]).forEach(it => {
-        if(it.v) nicDiets += ` ${it.v} /`;
-        if(it.alts) nicDiets += ` [scelta:${it.alts.slice(0,2).join('|')}] /`;
+        if(it.v)    nicDiets += `    - (${it.cat}) ${it.v}\n`;
+        if(it.alts) nicDiets += `    - (${it.cat}) opzioni: ${it.alts.join(' | ')}\n`;
       });
-      nicDiets += '\n';
     });
     if(day.integ){
       const parts = [];
-      if(day.integ.pre)  parts.push('pre:'+day.integ.pre);
-      if(day.integ.post) parts.push('post:'+day.integ.post);
-      if(day.integ.multi) day.integ.multi.forEach(r=>parts.push(r.tag+':'+r.v));
-      if(parts.length) nicDiets += ` Integratori: ${parts.join(', ')}\n`;
+      if(day.integ.pre)  parts.push('pre: '+day.integ.pre);
+      if(day.integ.post) parts.push('post: '+day.integ.post);
+      if(day.integ.multi) day.integ.multi.forEach(r=>parts.push(r.tag+': '+r.v));
+      if(parts.length) nicDiets += `  Integratori: ${parts.join(', ')}\n`;
     }
   });
 
-  // Noemi — scelte uniche (dedup per ridurre token)
+  // Noemi — scelte uniche + ricette scritte a mano
   const noemiSelections = new Set();
   const noemiNotes = [];
   const base = noemi.base||{}, planData = noemi.plan||{};
@@ -120,7 +132,7 @@ function buildPrompt(nicholas, noemi, schedule, history) {
     const dp = planData[wd]||{};
     MEALS.forEach(mk => {
       const meal = base[mk]; if(!meal) return;
-      if(dp[mk+'_free']){ noemiSelections.add('PASTO LIBERO'); return; }
+      if(dp[mk+'_free']) return;
       (meal.slots||[]).forEach(s => {
         const val = (dp[s.key]!==undefined&&dp[s.key]!=='') ? dp[s.key] : (s.opts||[])[0];
         if(val && val!=='— niente') noemiSelections.add(val);
@@ -130,34 +142,56 @@ function buildPrompt(nicholas, noemi, schedule, history) {
       if(note) noemiNotes.push(note);
     });
   });
-  const noemiBlock = [...noemiSelections].join(' / ') + (noemiNotes.length ? '\nRicette: '+noemiNotes.join('; ') : '');
+  const noemiBlock = [...noemiSelections].join(' / ')
+    + (noemiNotes.length ? '\nRICETTE scritte a mano (estrai gli ingredienti!): '+noemiNotes.join(' ; ') : '');
 
-  // Storico compatto
+  // Storico — frequenza voci negli ultimi snapshot
   let histLine = '';
   if(history && history.length>0){
-    const allItems = history.slice(-3).flatMap(h=>Object.values(h.items||{}).flat().map(i=>i.t));
+    const allItems = history.slice(-6).flatMap(h=>Object.values(h.items||{}).flat().map(i=>i&&i.t).filter(Boolean));
     const freq = {};
-    allItems.forEach(t=>{ freq[t]=(freq[t]||0)+1; });
-    const recurring = Object.entries(freq).filter(([,n])=>n>=2).map(([t])=>t);
-    if(recurring.length) histLine = '\nRicorrenti storico: '+recurring.join(', ');
+    allItems.forEach(t=>{ const k=t.toLowerCase(); freq[k]=(freq[k]||0)+1; });
+    const recurring = Object.entries(freq).filter(([,n])=>n>=2)
+      .sort((a,b)=>b[1]-a[1]).map(([t,n])=>`${t} (${n}x)`);
+    if(recurring.length) histLine = '\nVOCI RICORRENTI nello storico: '+recurring.join(', ');
   }
 
-  return `Lista spesa settimanale Nicholas+Noemi. Solo JSON valido, nessun testo.
+  // Categorie valide (chiavi reali, incluse custom/rinominate)
+  const catLines = cats.map(c=>`  "${c.key}" = ${c.label}`).join('\n');
 
-NICHOLAS settimana: ${nicWeek}
+  // Dispensa di casa
+  const pantryLine = (pantryData && pantryData.length)
+    ? '\nGIÀ IN CASA (NON includere questi): '+pantryData.map(p=>p.t).join(', ')
+    : '';
+
+  return `Sei l'assistente spesa di Nicholas e Noemi. Genera la lista della spesa settimanale.
+Rispondi SOLO con JSON valido: un oggetto con le chiavi categoria, ogni valore è un array di {"t":"...","owners":[...]}.
+
+═══ DIETA NICHOLAS ═══
+Settimana: ${nicWeek}
 ${nicDiets}
-NOEMI (vegetariana) scelte settimana: ${noemiBlock}
+═══ DIETA NOEMI (vegetariana) ═══
+${noemiBlock}
 ${histLine}
+${pantryLine}
 
-CATEGORIE JSON (10 chiavi):
-cereali(pasta/riso/pane/gallette/biscotti/patate/avena)
-dispensa(olio/marmellata/miele/parmigiano/passata/burro-arachidi/frutta-secca/cioccolato/barrette)
-proteine(carne/pesce max 2 voci raggruppate/uova/formaggi/yogurt/latte/legumi/tofu/affettati/budino)
-verdure frutta surgelati
-integratori(creatina/BCAA/carnitina/sali — solo nicholas)
-casa gatto coniglio
+═══ CATEGORIE VALIDE (usa SOLO queste chiavi come chiavi JSON) ═══
+${catLines}
 
-REGOLE: aggrega proteine Nicholas con grammature (es."Pollo/Tacchino 150g pranzo·250g cena"). Pesce max 2 voci. Condiviso→owners:["nicholas","noemi"]. Storico ricorrenti→includi. No acqua/sale/pepe.
+═══ REGOLE ═══
+1. NICHOLAS non sceglie: per le PROTEINE elenca ogni TIPO con le grammature di pranzo E cena.
+   Esempio formato voce: {"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}
+   Idem per pesce (raggruppa: bianco, salmone, tonno, spada…), uova, legumi, ecc.
+2. Carboidrati Nicholas: stessa logica con grammature principali (es. riso, pasta, pane, patate).
+3. Integratori Nicholas (creatina/BCAA/carnitina/sali) → categoria "integratori", owners ["nicholas"].
+4. NOEMI: includi ingredienti delle sue scelte E quelli estratti dalle ricette scritte a mano.
+5. Se un alimento serve a ENTRAMBI → una sola voce con owners ["nicholas","noemi"].
+6. VOCI RICORRENTI dello storico che NON derivano dalle diete (es. fieno coniglio, lettiera gatto,
+   ghiaccioli, detersivi) → riproponile nella categoria giusta.
+7. Dosa le quantità in base a quante volte ricorre il tipo di giornata (×N/sett).
+8. NON includere acqua, sale, pepe, aromi. NON includere ciò che è "GIÀ IN CASA".
+9. Assegna owners corretti: roba solo di Nicholas→["nicholas"], solo Noemi→["noemi"].
 
-OUTPUT: {"cereali":[],"dispensa":[],"proteine":[],"verdure":[],"frutta":[],"surgelati":[],"integratori":[],"casa":[],"gatto":[],"coniglio":[]}`;
+Esempio output (chiavi e voci illustrative):
+{"proteine":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"verdure":[{"t":"Verdure miste di stagione","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
 }
