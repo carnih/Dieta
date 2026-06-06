@@ -148,12 +148,22 @@ function buildPrompt(nicholas, noemi, schedule, history, cats, pantryData) {
   // Storico — frequenza voci negli ultimi snapshot
   let histLine = '';
   if(history && history.length>0){
-    const allItems = history.slice(-6).flatMap(h=>Object.values(h.items||{}).flat().map(i=>i&&i.t).filter(Boolean));
-    const freq = {};
-    allItems.forEach(t=>{ const k=t.toLowerCase(); freq[k]=(freq[k]||0)+1; });
-    const recurring = Object.entries(freq).filter(([,n])=>n>=2)
-      .sort((a,b)=>b[1]-a[1]).map(([t,n])=>`${t} (${n}x)`);
-    if(recurring.length) histLine = '\nVOCI RICORRENTI nello storico: '+recurring.join(', ');
+    const baseName = s => (s||'').toLowerCase().split('(')[0].replace(/\d+\s*g\b/g,'').replace(/\s+/g,' ').trim();
+    const recent = history.slice(-8);
+    const totalShops = recent.length;
+    // conta in quante spese DISTINTE compare ogni articolo (per nome-base)
+    const freq = {}; const label = {};
+    recent.forEach(h=>{
+      const seen = new Set();
+      Object.values(h.items||{}).flat().forEach(i=>{ if(i&&i.t){ const k=baseName(i.t); if(!seen.has(k)){ seen.add(k); freq[k]=(freq[k]||0)+1; label[k]=label[k]||i.t; } } });
+    });
+    const recurring = Object.entries(freq)
+      .map(([k,n])=>({k,n,pct:n/totalShops,lbl:label[k]}))
+      .filter(x=>x.pct>0.5)                       // soglia >50% delle spese
+      .sort((a,b)=>b.pct-a.pct)
+      .slice(0,25)
+      .map(x=>`${x.lbl} (${Math.round(x.pct*100)}%)`);
+    if(recurring.length) histLine = `\nVOCI RICORRENTI nelle tue ultime ${totalShops} spese (compaiono in >50% dei casi → INCLUDILE SEMPRE nella categoria giusta, owners [] se non legate alle diete):\n`+recurring.join(', ');
   }
 
   // Categorie valide (chiavi reali, incluse custom/rinominate)
@@ -189,6 +199,13 @@ ${catLines}
    - "verdura a scelta" / "verdure cotte/crude"   → "Verdura"           (verdure)  ← una sola voce generica
    - "un frutto a scelta" / "frutta di stagione"  → "Frutta"            (frutta)   ← una sola voce generica
    NON scrivere mai "verdure miste di stagione": scrivi solo "Verdura".
+
+2b. RAGGRUPPA varianti simili dello stesso prodotto in UNA voce (alternative separate da /):
+   - "biscotti secchi integrali" + "biscotti senza zuccheri aggiunti" → "Biscotti integrali / s.z."
+   - "riso" + "riso basmati" + "riso venere"                          → "Riso (basmati / venere)"
+   - "fette biscottate integrali" + "fette biscottate"               → "Fette biscottate integrali"
+   - "yogurt greco magro" + "yogurt bianco intero"                   → "Yogurt greco / bianco"
+   Obiettivo: voci sintetiche e furbe, non un elenco ripetitivo di micro-varianti.
 
 3. ROUTING per reparto: ragiona su DOVE prendi fisicamente l'alimento al supermercato.
    - macelleria → carne (pollo, tacchino, carne bianca/rossa, bresaola fresca…)
