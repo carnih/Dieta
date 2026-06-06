@@ -1813,8 +1813,11 @@ window.generaSpesaAI = async ()=>{
       });
     }
 
-    // 5) salva tutte le categorie (incluse eventuali orfane create dagli extra)
-    getSpesaCats().forEach(c=>saveSpesaCat(c.key));
+    // 5) scrittura ATOMICA dell'intero nodo spesa (evita race col listener che resetta spesa)
+    const clean = {};
+    Object.keys(spesa).forEach(k=>{ if((spesa[k]||[]).length) clean[k]=spesa[k]; });
+    spesa = clean;
+    try{ set(ref(db,'spesa'), Object.keys(clean).length ? clean : null); }catch(e){}
 
     renderContent();
     toast(added ? `✨ ${added} voci in lista` : 'Nessuna novità da aggiungere');
