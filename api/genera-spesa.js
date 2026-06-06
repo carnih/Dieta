@@ -174,36 +174,53 @@ ${catLines}
 
 ═══ REGOLE ═══
 1. Leggi ENTRAMBE le diete (Nicholas E Noemi) e fai un merge intelligente in un'unica lista.
-2. ROUTING per reparto: ragiona su DOVE si trova fisicamente l'alimento al supermercato,
-   non sulla sua funzione nutrizionale. Es: le PATATE/zucca/legumi freschi stanno nell'ortofrutta
-   → "verdure", NON tra i cereali. Linee guida:
+
+2. PULIZIA NOMI (fondamentale): NON copiare il testo della dieta. Estrai SOLO l'alimento, nome
+   breve e da lista della spesa. RIMUOVI sempre:
+   - metodi di cottura: lessate, al forno, bollite, grigliate, in padella, cotte, crude…
+   - preparazioni e condimenti accessori: "+ sugo al pomodoro", "con olio", "velo di miele"…
+   - quantità/grammi (TRANNE le grammature dei secondi di Nicholas, vedi regola 4)
+   Esempi di trasformazione:
+   - "300 g patate lessate / al forno"            → "Patate"            (verdure)
+   - "330 g patate dolci lessate / al forno"      → "Patate dolci"      (verdure)
+   - "90 g pasta integrale + sugo al pomodoro"    → "Pasta integrale"   (cereali) + "Passata di pomodoro" (dispensa)
+   - "30 g parmigiano"                            → "Parmigiano"        (latticini)
+   - "3 gallette di riso con velo di burro arachidi" → "Gallette di riso" (cereali) + "Burro di arachidi" (dispensa)
+   - "verdura a scelta" / "verdure cotte/crude"   → "Verdura"           (verdure)  ← una sola voce generica
+   - "un frutto a scelta" / "frutta di stagione"  → "Frutta"            (frutta)   ← una sola voce generica
+   NON scrivere mai "verdure miste di stagione": scrivi solo "Verdura".
+
+3. ROUTING per reparto: ragiona su DOVE prendi fisicamente l'alimento al supermercato.
    - macelleria → carne (pollo, tacchino, carne bianca/rossa, bresaola fresca…)
    - pescheria → pesce e molluschi (merluzzo, orata, salmone, tonno fresco, gamberi, polpo…)
-   - latticini → yogurt, latte, formaggi, ricotta, mozzarella, burro…
+   - latticini → yogurt, latte, FORMAGGI, PARMIGIANO/grana, ricotta, mozzarella, burro…
    - banco → uova, affettati/salumi, tofu, ravioli/tortellini freschi, hummus
    - panetteria → pane, pane integrale, focaccia, pane di segale
-   - cereali → pasta, riso, gallette, biscotti, fette biscottate, avena, cous cous
+   - cereali → pasta, riso, gallette, biscotti, fette biscottate, avena, cous cous, farro
    - verdure → TUTTO l'ortofrutta verdura: insalata, pomodori, zucchine, PATATE, patate dolci, zucca, carote…
    - frutta → frutta fresca, banane, spremute
-   - dispensa → SOLO lunga conservazione: olio, marmellata, miele, passata, parmigiano, tonno/legumi
-     in scatola, frutta secca, cioccolato, barrette, cacao
+   - dispensa → SOLO lunga conservazione: olio, marmellata, miele, passata/sugo, burro arachidi,
+     tonno/legumi in scatola, frutta secca, cioccolato, barrette, cacao
    - integratori → creatina/BCAA/carnitina/sali/maltodestrine/proteine in polvere (owners ["nicholas"])
    - surgelati → solo se esplicitamente surgelato
-   Se un alimento è ambiguo, scegli il reparto dove lo prenderesti davvero al supermercato.
-3. GRAMMATURE: indicale SOLO per la parte proteica/secondi di NICHOLAS (macelleria e pescheria),
-   per ogni TIPO con i grammi di pranzo E cena.
-   Esempio: {"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}
-4. Tutto il RESTO (pane, carboidrati, frutta, verdura, latticini, condimenti, integratori, voci Noemi)
-   → SENZA grammature, solo il nome (es. "Pane integrale", "Pasta", "Yogurt greco").
+
+4. GRAMMATURE: SOLO per i secondi proteici di NICHOLAS (macelleria e pescheria), un tipo per voce
+   con i grammi di pranzo E cena. Es: {"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)"}.
+   Tutto il resto SENZA grammi né cottura.
+
 5. NOEMI (vegetariana): includi gli ingredienti delle sue scelte E quelli estratti dalle RICETTE
    scritte a mano. NON dimenticare la sua dieta: deve comparire roba sua.
+
 6. MERGE: alimento per ENTRAMBI (es. pasta, riso, yogurt, verdura, frutta, olio, uova, pane)
    → UNA SOLA voce con owners ["nicholas","noemi"]. Non duplicare.
+
 7. owners: solo Nicholas→["nicholas"], solo Noemi→["noemi"], entrambi→["nicholas","noemi"].
+
 8. VOCI RICORRENTI dello storico che NON derivano dalle diete (es. fieno coniglio, lettiera gatto,
    ghiaccioli, detersivi) → riproponile nella categoria giusta (owners []).
+
 9. NON includere acqua, sale, pepe, aromi.
 
 Esempio output (chiavi e voci illustrative):
-{"macelleria":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}],"pescheria":[{"t":"Pesce bianco merluzzo/orata/branzino (150g pranzo · 250g cena)","owners":["nicholas"]}],"banco":[{"t":"Tofu","owners":["noemi"]},{"t":"Uova","owners":["nicholas","noemi"]}],"latticini":[{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"panetteria":[{"t":"Pane integrale","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
+{"macelleria":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}],"pescheria":[{"t":"Pesce bianco merluzzo/orata/branzino (150g pranzo · 250g cena)","owners":["nicholas"]}],"banco":[{"t":"Tofu","owners":["noemi"]},{"t":"Uova","owners":["nicholas","noemi"]}],"latticini":[{"t":"Parmigiano","owners":["nicholas","noemi"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"panetteria":[{"t":"Pane integrale","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"verdure":[{"t":"Patate","owners":["nicholas"]},{"t":"Verdura","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
 }
