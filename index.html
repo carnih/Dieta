@@ -252,7 +252,13 @@
     .catman-close{margin-left:auto;border:none;background:#F1F5F9;color:#64748B;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
     .catman-close:active{background:#E2E8F0}
     .catman-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;padding:2px}
-    .catman-row{display:flex;align-items:center;gap:9px}
+    .catman-row{display:flex;align-items:center;gap:9px;background:#fff;border-radius:13px}
+    .catman-row.catman-dragging{box-shadow:0 10px 28px rgba(0,0,0,.18);position:relative;z-index:5;opacity:.97}
+    .catman-drag{
+      flex:none;width:24px;height:46px;display:flex;align-items:center;justify-content:center;
+      color:#C5CAD2;font-size:18px;cursor:grab;touch-action:none;user-select:none;letter-spacing:-2px;
+    }
+    .catman-drag:active{cursor:grabbing;color:var(--e)}
     .catman-emoji{
       width:46px;height:46px;flex:none;text-align:center;font-size:21px;
       border:1.5px solid #E5E7EB;border-radius:13px;background:#FAFBFC;outline:none;
@@ -1239,7 +1245,8 @@ function renderCategoryManager(){
   const items = SPESA_CATS.map(c=>{
     const [emoji, name] = splitLabel(c.label);
     return `
-    <div class="catman-row">
+    <div class="catman-row" data-key="${c.key}">
+      <span class="catman-drag" onpointerdown="catDragStart(event,'${c.key}')" title="Trascina per riordinare">⠿</span>
       <input class="catman-emoji" maxlength="2" value="${esc(emoji)}" onchange="saveCatInline('${c.key}',this.value,null)" title="Emoji">
       <input class="catman-name" value="${esc(name)}" onchange="saveCatInline('${c.key}',null,this.value)" placeholder="Nome categoria">
       ${c.custom
@@ -1278,6 +1285,63 @@ window.managerAddNewCat = () => {
   try{ set(ref(db,'spesaCategories/'+newKey), {label:'🆕 Nuova categoria', order}); }catch(e){}
   renderContent();
 };
+
+// ── DRAG-TO-REORDER categorie ──
+let _catDrag = null;
+window.catDragStart = (e, key) => {
+  e.preventDefault();
+  const row  = e.currentTarget.closest('.catman-row');
+  const list = row.parentElement;
+  _catDrag = {
+    key, row, list,
+    rows: [...list.children],
+    startY: e.clientY,
+  };
+  row.classList.add('catman-dragging');
+  document.addEventListener('pointermove', catDragMove, {passive:false});
+  document.addEventListener('pointerup', catDragEnd);
+};
+function catDragMove(e){
+  if(!_catDrag) return;
+  e.preventDefault();
+  const dy = e.clientY - _catDrag.startY;
+  _catDrag.row.style.transform = `translateY(${dy}px) scale(1.02)`;
+  // evidenzia dove cadrà
+  const others = _catDrag.rows.filter(r=>r!==_catDrag.row);
+  _catDrag.row.dataset.dropIdx = computeDropIdx(others, e.clientY);
+}
+function computeDropIdx(others, y){
+  for(let i=0;i<others.length;i++){
+    const r = others[i].getBoundingClientRect();
+    if(y < r.top + r.height/2) return i;
+  }
+  return others.length;
+}
+function catDragEnd(e){
+  if(!_catDrag) return;
+  document.removeEventListener('pointermove', catDragMove);
+  document.removeEventListener('pointerup', catDragEnd);
+  const others = _catDrag.rows.filter(r=>r!==_catDrag.row);
+  const idx = computeDropIdx(others, e.clientY);
+  const dragKey = _catDrag.key;
+  const allKeys = _catDrag.rows.map(r=>r.dataset.key);
+  const without = allKeys.filter(k=>k!==dragKey);
+  without.splice(idx, 0, dragKey);
+  _catDrag.row.style.transform = '';
+  _catDrag.row.classList.remove('catman-dragging');
+  _catDrag = null;
+  saveCatOrder(without);
+}
+function saveCatOrder(keys){
+  const cats = getSpesaCats();
+  const map = {}; cats.forEach(c=>map[c.key]=c);
+  keys.forEach((k,i)=>{
+    const c = map[k]; if(!c) return;
+    try{ set(ref(db,'spesaCategories/'+k), {label:c.label, order:i+1}); }catch(e){}
+  });
+  renderContent();
+  toast('✓ Ordine salvato');
+}
 window.managerCategories = () => { categoryManager = !categoryManager; renderContent(); };
 
 // ── EDITOR CATEGORIE ──
