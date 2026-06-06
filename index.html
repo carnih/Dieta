@@ -236,8 +236,47 @@
     .cat-editor-btn.save{background:var(--e-g);color:#fff;box-shadow:0 4px 14px rgba(219,39,119,.35)}
     .cat-editor-btn.cancel{background:#F3F4F6;color:#6B7280}
     .cat-editor-btn.delete{flex:none;background:#FEE2E2;color:#DC2626}
-    .cat-editor-overlay{position:fixed;inset:0;z-index:998;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s}
+    .cat-editor-overlay{position:fixed;inset:0;z-index:998;background:rgba(15,23,42,.45);opacity:0;pointer-events:none;transition:opacity .2s}
     .cat-editor-overlay.show{opacity:1;pointer-events:auto}
+
+    /* ── CATEGORY MANAGER (nuovo) ── */
+    .catman-modal{
+      position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;
+      width:92%;max-width:440px;max-height:80vh;display:flex;flex-direction:column;
+      background:#fff;border-radius:22px;padding:18px 16px 16px;
+      box-shadow:0 24px 70px rgba(0,0,0,.32);animation:catmanIn .22s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes catmanIn{from{opacity:0;transform:translate(-50%,-46%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+    .catman-head{display:flex;align-items:center;margin-bottom:14px}
+    .catman-title{font-size:21px;font-weight:850;letter-spacing:-.4px;color:#111827}
+    .catman-close{margin-left:auto;border:none;background:#F1F5F9;color:#64748B;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .catman-close:active{background:#E2E8F0}
+    .catman-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;padding:2px}
+    .catman-row{display:flex;align-items:center;gap:9px}
+    .catman-emoji{
+      width:46px;height:46px;flex:none;text-align:center;font-size:21px;
+      border:1.5px solid #E5E7EB;border-radius:13px;background:#FAFBFC;outline:none;
+      transition:border-color .15s,background .15s;cursor:pointer;
+    }
+    .catman-emoji:focus{border-color:var(--e);background:#fff}
+    .catman-name{
+      flex:1;min-width:0;height:46px;font-family:inherit;font-size:15px;font-weight:700;color:#1F2937;
+      padding:0 14px;border:1.5px solid #E5E7EB;border-radius:13px;background:#FAFBFC;outline:none;
+      transition:border-color .15s,background .15s;
+    }
+    .catman-name:focus{border-color:var(--e);background:#fff}
+    .catman-del{
+      width:40px;height:46px;flex:none;border:none;background:transparent;color:#CBD5E1;
+      font-size:15px;cursor:pointer;border-radius:13px;transition:all .15s;
+    }
+    .catman-del:active{background:#FEE2E2;color:#DC2626}
+    .catman-spacer{width:8px;flex:none}
+    .catman-add{
+      width:100%;border:none;border-radius:50px;padding:14px;
+      background:var(--e-g);color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+      box-shadow:0 5px 16px rgba(219,39,119,.32);transition:transform .12s;
+    }
+    .catman-add:active{transform:scale(.97)}
     .cat-manager-edit-row{display:flex;gap:8px;align-items:center}
     .cat-manager-edit-input{flex:1;padding:6px 10px;border:1px solid #E5E7EB;border-radius:6px;font-size:13px;font-family:inherit;outline:none}
     .cat-manager-edit-input:focus{border-color:var(--e)}
@@ -1200,23 +1239,22 @@ function renderCategoryManager(){
   const items = SPESA_CATS.map(c=>{
     const [emoji, name] = splitLabel(c.label);
     return `
-    <div style="padding:9px 12px;border-bottom:1px solid #F0F0F0;display:flex;align-items:center;gap:8px">
-      <input class="cat-manager-edit-input" style="width:48px;flex:none;text-align:center;font-size:18px;padding:6px 4px" maxlength="2" value="${esc(emoji)}" onchange="saveCatInline('${c.key}',this.value,null)" title="Emoji">
-      <input class="cat-manager-edit-input" style="flex:1;font-weight:700" value="${esc(name)}" onchange="saveCatInline('${c.key}',null,this.value)" placeholder="Nome categoria">
-      ${c.custom ? `<button style="border:none;background:transparent;color:#DC2626;cursor:pointer;font-size:15px;padding:4px 6px;flex-none" onclick="deleteCategoryEdit('${c.key}')" title="Elimina">🗑️</button>` : `<span style="width:28px;flex:none;font-size:9px;color:#C5CAD2;text-align:center">def</span>`}
+    <div class="catman-row">
+      <input class="catman-emoji" maxlength="2" value="${esc(emoji)}" onchange="saveCatInline('${c.key}',this.value,null)" title="Emoji">
+      <input class="catman-name" value="${esc(name)}" onchange="saveCatInline('${c.key}',null,this.value)" placeholder="Nome categoria">
+      ${c.custom
+        ? `<button class="catman-del" onclick="deleteCategoryEdit('${c.key}')" title="Elimina">✕</button>`
+        : `<span class="catman-spacer"></span>`}
     </div>`;
   }).join('');
   return `<div class="cat-editor-overlay show" onclick="managerCategories()"></div>
-    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;width:92%;max-width:460px" onclick="event.stopPropagation()">
-      <div style="background:#fff;border-radius:18px;padding:18px 14px;max-height:75vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-        <div class="cat-editor-title" style="margin-bottom:6px;font-size:18px">Gestisci Categorie</div>
-        <div style="font-size:11px;color:#9CA3AF;margin-bottom:12px">Modifica emoji e nome direttamente qui</div>
-        <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:12px;overflow-y:auto;flex:1;min-height:180px">
-          ${items}
-        </div>
-        <button class="cat-editor-btn save" style="width:100%;margin-bottom:8px;padding:11px" onclick="managerAddNewCat()">+ Aggiungi categoria</button>
-        <button class="cat-editor-btn cancel" style="width:100%;padding:11px" onclick="managerCategories()">Chiudi</button>
+    <div class="catman-modal" onclick="event.stopPropagation()">
+      <div class="catman-head">
+        <div class="catman-title">Categorie</div>
+        <button class="catman-close" onclick="managerCategories()">✕</button>
       </div>
+      <div class="catman-list">${items}</div>
+      <button class="catman-add" onclick="managerAddNewCat()">+ Aggiungi categoria</button>
     </div>`;
 }
 // salva inline: passa emoji o nome (l'altro resta invariato)
