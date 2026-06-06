@@ -1296,10 +1296,12 @@ window.catDragStart = (e, key) => {
   const list = row.parentElement;
   row.classList.add('catman-dragging');
   try{ handle.setPointerCapture(e.pointerId); }catch(_){}
-  _catDrag = { row, list, handle, startY: e.clientY };
-  handle.addEventListener('pointermove', catDragMove, {passive:false});
-  handle.addEventListener('pointerup', catDragEnd);
-  handle.addEventListener('pointercancel', catDragEnd);
+  _catDrag = { row, list, handle };
+  // baseline = differenza tra dito e posizione corrente della riga
+  _catDrag.startY = e.clientY;
+  document.addEventListener('pointermove', catDragMove, {passive:false});
+  document.addEventListener('pointerup', catDragEnd);
+  document.addEventListener('pointercancel', catDragEnd);
 };
 function catDragMove(e){
   if(!_catDrag) return;
@@ -1326,13 +1328,15 @@ function catDragMove(e){
 }
 function catDragEnd(){
   if(!_catDrag) return;
-  const { row, list, handle } = _catDrag;
-  handle.removeEventListener('pointermove', catDragMove);
-  handle.removeEventListener('pointerup', catDragEnd);
-  handle.removeEventListener('pointercancel', catDragEnd);
-  row.classList.remove('catman-dragging');
+  const { row, list } = _catDrag;
+  document.removeEventListener('pointermove', catDragMove);
+  document.removeEventListener('pointerup', catDragEnd);
+  document.removeEventListener('pointercancel', catDragEnd);
+  // assestamento dolce: la riga scivola nella sua posizione finale
+  row.style.transition = 'transform .2s cubic-bezier(.2,.8,.3,1)';
   row.style.transform = '';
   const keys = [...list.querySelectorAll('.catman-row')].map(r=>r.dataset.key);
+  setTimeout(()=>{ row.style.transition=''; row.classList.remove('catman-dragging'); }, 210);
   _catDrag = null;
   saveCatOrder(keys);
 }
