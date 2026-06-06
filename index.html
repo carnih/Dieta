@@ -1487,9 +1487,9 @@ function renderSpesaTab(){
           const rows = items.map(it=>`
             <div class="shop-row ${it.d?'done':''}">
               <button class="sp-circle ${it.d?'on':''}" onclick="toggleSpesa('${c.key}',${it.idx})"></button>
+              <button class="shop-pantry-btn" onclick="toPantry('${c.key}',${it.idx})" title="Ho già in casa">🏠</button>
               <span class="shop-name">${esc(it.t)}</span>
               ${ownerBadgesHTML(it.owners, c.key, it.idx)}
-              <button class="shop-pantry-btn" onclick="toPantry('${c.key}',${it.idx})" title="Ho già in casa">🏠</button>
               <button class="shop-x" onclick="delSpesa('${c.key}',${it.idx})">✕</button>
             </div>`).join('');
           const pantryRows = pantryItems.map(p=>`
