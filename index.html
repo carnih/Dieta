@@ -756,22 +756,31 @@ const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì
 
 // ── SPESA ──
 const SPESA_CATS_DEFAULT = [
-  {key:'cereali',     label:'🌾 Cereali',     order:1},
-  {key:'dispensa',    label:'🥫 Dispensa',    order:2},
-  {key:'proteine',    label:'🥩 Proteine',    order:3},
-  {key:'verdure',     label:'🥦 Verdure',     order:4},
-  {key:'frutta',      label:'🍓 Frutta',      order:5},
-  {key:'surgelati',   label:'❄️ Surgelati',   order:6},
-  {key:'integratori', label:'💊 Integratori', order:7},
-  {key:'casa',        label:'🧴 Casa',        order:8},
-  {key:'gatto',       label:'🐈 Gatto',       order:9},
-  {key:'coniglio',    label:'🐰 Coniglio',    order:10},
+  {key:'panetteria',  label:'🥖 Panetteria',  order:1},
+  {key:'cereali',     label:'🌾 Cereali',     order:2},
+  {key:'dispensa',    label:'🥫 Dispensa',    order:3},
+  {key:'latticini',   label:'🥛 Latticini',   order:4},
+  {key:'banco',       label:'🥚 Banco fresco',order:5},
+  {key:'macelleria',  label:'🥩 Macelleria',  order:6},
+  {key:'pescheria',   label:'🐟 Pescheria',   order:7},
+  {key:'verdure',     label:'🥦 Verdure',     order:8},
+  {key:'frutta',      label:'🍓 Frutta',      order:9},
+  {key:'surgelati',   label:'❄️ Surgelati',   order:10},
+  {key:'integratori', label:'💊 Integratori', order:11},
+  {key:'casa',        label:'🧴 Casa',        order:12},
+  {key:'gatto',       label:'🐈 Gatto',       order:13},
+  {key:'coniglio',    label:'🐰 Coniglio',    order:14},
 ];
 function getSpesaCats(){
   const all = SPESA_CATS_DEFAULT.map(c=>({...c, custom:false}));
   Object.entries(spesaCategories||{}).forEach(([k,v])=>{
     if(!all.find(x=>x.key===k)) all.push({key:k, label:v.label||k, order:v.order||100, custom:true});
     else { const idx=all.findIndex(x=>x.key===k); if(idx>=0){ if(v.label) all[idx].label=v.label; if(v.order) all[idx].order=v.order; } }
+  });
+  // safety: categorie orfane con articoli ancora presenti (es. vecchia "proteine")
+  Object.keys(spesa||{}).forEach(k=>{
+    if((spesa[k]||[]).length && !all.find(x=>x.key===k))
+      all.push({key:k, label:'📦 '+k, order:200, custom:true});
   });
   return all.sort((a,b)=>(a.order||100)-(b.order||100));
 }

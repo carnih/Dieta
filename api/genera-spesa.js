@@ -174,16 +174,23 @@ ${catLines}
 
 ═══ REGOLE ═══
 1. Leggi ENTRAMBE le diete (Nicholas E Noemi) e fai un merge intelligente in un'unica lista.
-2. GRAMMATURE: indicale SOLO per la parte proteica/secondi di NICHOLAS (le sue scelte di pranzo/cena).
-   Nicholas non sceglie: per ogni TIPO di proteina elenca una voce con i grammi di pranzo E cena.
+2. ROUTING per reparto (assegna alla chiave giusta):
+   - macelleria → carne (pollo, tacchino, carne bianca/rossa, bresaola se fresca…)
+   - pescheria → pesce e molluschi (merluzzo, orata, salmone, tonno fresco, gamberi, polpo…)
+   - latticini → yogurt, latte, formaggi, ricotta, mozzarella…
+   - banco → uova, affettati/salumi, tofu, ravioli/tortellini freschi, hummus
+   - panetteria → pane, pane integrale, focaccia
+   - cereali → pasta, riso, gallette, biscotti, fette biscottate, patate, avena
+   - dispensa → olio, marmellata, miele, passata, parmigiano (lunga conservazione), tonno in scatola, legumi in scatola, frutta secca, cioccolato, barrette
+   - integratori → creatina/BCAA/carnitina/sali/proteine in polvere (owners ["nicholas"])
+3. GRAMMATURE: indicale SOLO per la parte proteica/secondi di NICHOLAS (macelleria e pescheria),
+   per ogni TIPO con i grammi di pranzo E cena.
    Esempio: {"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}
-   Idem pesce (raggruppa: bianco, salmone, tonno, spada…), uova, legumi.
-3. Tutto il RESTO (carboidrati, frutta, verdura, latticini, condimenti, integratori, voci di Noemi)
-   → SENZA grammature, solo il nome dell'alimento (es. "Pasta", "Riso basmati", "Yogurt greco").
-4. Integratori Nicholas (creatina/BCAA/carnitina/sali) → categoria "integratori", owners ["nicholas"].
+4. Tutto il RESTO (pane, carboidrati, frutta, verdura, latticini, condimenti, integratori, voci Noemi)
+   → SENZA grammature, solo il nome (es. "Pane integrale", "Pasta", "Yogurt greco").
 5. NOEMI (vegetariana): includi gli ingredienti delle sue scelte E quelli estratti dalle RICETTE
    scritte a mano. NON dimenticare la sua dieta: deve comparire roba sua.
-6. MERGE: se un alimento serve a ENTRAMBI (es. pasta, riso, yogurt, verdura, frutta, olio)
+6. MERGE: alimento per ENTRAMBI (es. pasta, riso, yogurt, verdura, frutta, olio, uova, pane)
    → UNA SOLA voce con owners ["nicholas","noemi"]. Non duplicare.
 7. owners: solo Nicholas→["nicholas"], solo Noemi→["noemi"], entrambi→["nicholas","noemi"].
 8. VOCI RICORRENTI dello storico che NON derivano dalle diete (es. fieno coniglio, lettiera gatto,
@@ -191,5 +198,5 @@ ${catLines}
 9. NON includere acqua, sale, pepe, aromi.
 
 Esempio output (chiavi e voci illustrative):
-{"proteine":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]},{"t":"Tofu","owners":["noemi"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"verdure":[{"t":"Verdure miste di stagione","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
+{"macelleria":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}],"pescheria":[{"t":"Pesce bianco merluzzo/orata/branzino (150g pranzo · 250g cena)","owners":["nicholas"]}],"banco":[{"t":"Tofu","owners":["noemi"]},{"t":"Uova","owners":["nicholas","noemi"]}],"latticini":[{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"panetteria":[{"t":"Pane integrale","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
 }
