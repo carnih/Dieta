@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
           {key:'gatto',label:'🐈 Gatto'},{key:'coniglio',label:'🐰 Coniglio'},
         ];
 
-    const prompt = buildPrompt(nicholasData, noemiData, scheduleData, historyData || [], cats, pantryData || []);
+    const prompt = buildPrompt(nicholasData, noemiData, scheduleData, cats);
     console.log('Prompt length:', prompt.length, 'chars');
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
 // ─────────────────────────────────────────────
 //  PROMPT (ricco)
 // ─────────────────────────────────────────────
-function buildPrompt(nicholas, noemi, schedule, history, cats, pantryData) {
+function buildPrompt(nicholas, noemi, schedule, cats) {
   const DAYS = ['lun','mar','mer','gio','ven','sab','dom'];
   const DLBL = { lun:'Lun', mar:'Mar', mer:'Mer', gio:'Gio', ven:'Ven', sab:'Sab', dom:'Dom' };
   const SCHED_OPTS = [
@@ -145,27 +145,6 @@ function buildPrompt(nicholas, noemi, schedule, history, cats, pantryData) {
   const noemiBlock = [...noemiSelections].join(' / ')
     + (noemiNotes.length ? '\nRICETTE scritte a mano (estrai gli ingredienti!): '+noemiNotes.join(' ; ') : '');
 
-  // Storico — frequenza voci negli ultimi snapshot
-  let histLine = '';
-  if(history && history.length>0){
-    const baseName = s => (s||'').toLowerCase().split('(')[0].replace(/\d+\s*g\b/g,'').replace(/\s+/g,' ').trim();
-    const recent = history.slice(-8);
-    const totalShops = recent.length;
-    // conta in quante spese DISTINTE compare ogni articolo (per nome-base)
-    const freq = {}; const label = {};
-    recent.forEach(h=>{
-      const seen = new Set();
-      Object.values(h.items||{}).flat().forEach(i=>{ if(i&&i.t){ const k=baseName(i.t); if(!seen.has(k)){ seen.add(k); freq[k]=(freq[k]||0)+1; label[k]=label[k]||i.t; } } });
-    });
-    const recurring = Object.entries(freq)
-      .map(([k,n])=>({k,n,pct:n/totalShops,lbl:label[k]}))
-      .filter(x=>x.pct>0.5)                       // soglia >50% delle spese
-      .sort((a,b)=>b.pct-a.pct)
-      .slice(0,25)
-      .map(x=>`${x.lbl} (${Math.round(x.pct*100)}%)`);
-    if(recurring.length) histLine = `\nVOCI RICORRENTI nelle tue ultime ${totalShops} spese (compaiono in >50% dei casi → INCLUDILE SEMPRE nella categoria giusta, owners [] se non legate alle diete):\n`+recurring.join(', ');
-  }
-
   // Categorie valide (chiavi reali, incluse custom/rinominate)
   const catLines = cats.map(c=>`  "${c.key}" = ${c.label}`).join('\n');
 
@@ -177,7 +156,6 @@ Settimana: ${nicWeek}
 ${nicDiets}
 ═══ DIETA NOEMI (vegetariana) ═══
 ${noemiBlock}
-${histLine}
 
 ═══ CATEGORIE VALIDE (usa SOLO queste chiavi come chiavi JSON) ═══
 ${catLines}
@@ -238,11 +216,9 @@ ${catLines}
    - NON esiste più una categoria gatto/coniglio: gli articoli per animali vanno in "casa"
      (o "dispensa" se cibo a lunga conservazione) e si distinguono SOLO con l'owner.
 
-8. VOCI RICORRENTI dello storico che NON derivano dalle diete (es. fieno coniglio, lettiera gatto,
-   ghiaccioli, detersivi) → riproponile nella categoria giusta con l'owner adatto.
-
-9. NON includere acqua, sale, pepe, aromi.
+8. NON includere acqua, sale, pepe, aromi. Genera SOLO ciò che deriva dalle diete (gli extra
+   ricorrenti tipo fieno/lettiera/ghiaccioli li gestisce il sistema, non tu).
 
 Esempio output (chiavi e voci illustrative):
-{"macelleria":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}],"pescheria":[{"t":"Pesce bianco merluzzo/orata/branzino (150g pranzo · 250g cena)","owners":["nicholas"]}],"banco":[{"t":"Tofu","owners":["noemi"]},{"t":"Uova","owners":["nicholas","noemi"]}],"latticini":[{"t":"Parmigiano","owners":["nicholas","noemi"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"panetteria":[{"t":"Pane integrale","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"verdure":[{"t":"Patate","owners":["nicholas"]},{"t":"Verdura","owners":["nicholas","noemi"]}],"casa":[{"t":"Fieno","owners":["coniglio"]},{"t":"Lettiera","owners":["gatto"]}]}`;
+{"macelleria":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}],"pescheria":[{"t":"Pesce bianco merluzzo/orata/branzino (150g pranzo · 250g cena)","owners":["nicholas"]}],"banco":[{"t":"Tofu","owners":["noemi"]},{"t":"Uova","owners":["nicholas","noemi"]}],"latticini":[{"t":"Parmigiano","owners":["nicholas","noemi"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"panetteria":[{"t":"Pane integrale","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"verdure":[{"t":"Patate","owners":["nicholas"]},{"t":"Verdura","owners":["nicholas","noemi"]}]}`;
 }

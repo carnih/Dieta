@@ -790,63 +790,70 @@ function getSpesaCats(){
   });
   return all.sort((a,b)=>(a.order||100)-(b.order||100));
 }
-// regole estrazione ingredienti: [regex, categoria, etichetta pulita]
+// ROUTER deterministico: [regex, reparto]. L'ORDINE conta: regole specifiche PRIMA delle generiche.
 const ING_MAP = [
-  [/pasta/i,'cereali','Pasta'],
-  [/gnocch/i,'cereali','Gnocchi'],
-  [/\briso\b|basmati|venere/i,'cereali','Riso'],
-  [/cous/i,'cereali','Cous cous'],
-  [/\bfarro\b/i,'cereali','Farro'],
-  [/avena|fiocchi d|fiocchi di mais|porridge/i,'cereali',"Avena / fiocchi"],
-  [/pancake|farina d.?avena/i,'cereali',"Farina d'avena"],
-  [/\bcereali\b/i,'cereali','Cereali integrali'],
-  [/ravioli/i,'cereali','Ravioli'],
-  [/patate/i,'cereali','Patate'],
-  [/pane/i,'dispensa','Pane integrale'],
-  [/crackers|grissini/i,'dispensa','Crackers / grissini'],
-  [/gallett/i,'dispensa','Gallette mais/riso'],
-  [/biscott/i,'dispensa','Biscotti / fette biscottate'],
-  [/marmellata/i,'dispensa','Marmellata s.z.'],
-  [/\bmiele\b/i,'dispensa','Miele'],
-  [/parmigian|grana/i,'dispensa','Parmigiano'],
-  [/passata|\bsugo\b/i,'dispensa','Passata / sugo'],
-  [/cioccolat|ciok/i,'dispensa','Cioccolato fondente'],
-  [/frutta secca/i,'dispensa','Frutta secca'],
-  [/barretta/i,'dispensa','Barrette'],
-  [/cacao|cannella/i,'dispensa','Cacao / cannella'],
-  [/burro d.?arachid|arachid/i,'dispensa','Burro di arachidi'],
-  [/olio evo|olio extra|\bolio\b/i,'dispensa','Olio EVO'],
-  [/insalat|lattuga|rucola/i,'verdure','Insalata'],
-  [/pomodor/i,'verdure','Pomodori'],
-  [/zucchin/i,'verdure','Zucchine'],
-  [/\bzucca\b/i,'verdure','Zucca'],
-  [/carciof/i,'verdure','Carciofi'],
-  [/finocch/i,'verdure','Finocchi'],
-  [/carot/i,'verdure','Carote'],
-  [/spinac/i,'verdure','Spinaci'],
-  [/fagiolin/i,'verdure','Fagiolini'],
-  [/cetriol/i,'verdure','Cetrioli'],
-  [/broccol/i,'verdure','Broccoli'],
-  [/melanzan/i,'verdure','Melanzane'],
-  [/peperon/i,'verdure','Peperoni'],
-  [/pisell/i,'verdure','Piselli'],
-  [/verdur/i,'verdure','Verdure miste'],
-  [/banan/i,'frutta','Banane'],
-  [/succo|spremut/i,'frutta','Succo / spremuta'],
-  [/frutto|frutta di stagione|\bfrutta\b/i,'frutta','Frutta di stagione'],
-  [/pesce|salmon|tonno|merluzz|orata|branzin|nasell|triglia|sgombro|spada|baccal|platess|sogliol|\btrota\b/i,'proteine','Pesce'],
-  [/gamber|seppie|polipo|vongole|cozze|crostace|mollusch|calamar|totani|astice|moscardin/i,'proteine','Crostacei / molluschi'],
-  [/\buov|albume|frittata/i,'proteine','Uova'],
-  [/carne bianca|\bpollo\b|tacchino/i,'proteine','Carne bianca / pollo'],
-  [/carne rossa|vitello|lonza|maiale|\bmanzo\b/i,'proteine','Carne rossa'],
-  [/bresaola|prosciutt|affettato/i,'proteine','Affettati magri'],
-  [/\btofu\b/i,'proteine','Tofu'],
-  [/formagg|ricotta|mozzarell|\bfeta\b|stracchin|robiola|crescenza|philadelphia|primosale/i,'proteine','Formaggio'],
-  [/yogurt|skyr|kefir/i,'proteine','Yogurt greco / magro'],
-  [/\blatte\b/i,'proteine','Latte'],
-  [/budino/i,'proteine','Budino proteico / soia'],
-  [/legum|\bcec|fagiol|lentic|\bfave\b|\bsoia\b|tofu/i,'proteine','Legumi'],
+  // integratori (prima di tutto: parole molto specifiche)
+  [/creatina|\bbcaa\b|carnitina|maltodestrin|sali minerali|proteine in polvere|whey|\bgel\b/i,'integratori'],
+  // surgelati
+  [/surgelat/i,'surgelati'],
+  // panetteria
+  [/\bpane\b|pane integrale|pane di segale|focacc|\bpagnott/i,'panetteria'],
+  // verdure (PRIMA dei cereali, così "patate" non finisce in pasta)
+  [/patate|patata/i,'verdure'],
+  [/insalat|lattuga|rucola|pomodor|zucchin|\bzucca\b|carciof|finocch|carot|spinac|fagiolin|cetriol|broccol|melanzan|peperon|\bpisell|\bsedano\b|cavol|verz|bietol|radicch|\bverdur/i,'verdure'],
+  // frutta
+  [/banan|\bmela\b|mele\b|pera|pere\b|kiwi|arance|arancia|fragol|pesca|albicocc|melone|anguria|ananas|ciliegi|\buva\b|mirtill|\bfrutto\b|frutta di stagione|\bfrutta\b/i,'frutta'],
+  [/succo|spremut/i,'frutta'],
+  // pescheria
+  [/pesce|salmon|tonno|merluzz|orata|branzin|nasell|triglia|sgombro|\bspada\b|baccal|platess|sogliol|\btrota\b|persico|\brombo\b/i,'pescheria'],
+  [/gamber|seppie|polip|vongole|cozze|crostace|mollusch|calamar|totani|astice|moscardin/i,'pescheria'],
+  // macelleria
+  [/carne bianca|\bpollo\b|tacchino|carne rossa|vitello|\blonza\b|maiale|\bmanzo\b|bresaola/i,'macelleria'],
+  // banco fresco
+  [/\buov|albume|frittata/i,'banco'],
+  [/prosciutt|affettat|\bsalum/i,'banco'],
+  [/\btofu\b|seitan|tempeh/i,'banco'],
+  [/ravioli|tortellin|gnocch/i,'banco'],
+  [/hummus/i,'banco'],
+  // latticini
+  [/parmigian|grana/i,'latticini'],
+  [/formagg|ricotta|mozzarell|\bfeta\b|stracchin|robiola|crescenza|philadelphia|primosale|fiocchi di latte/i,'latticini'],
+  [/yogurt|skyr|kefir/i,'latticini'],
+  [/\blatte\b/i,'latticini'],
+  [/\bburro\b(?!.*arachid)/i,'latticini'],
+  // cereali
+  [/\bpasta\b/i,'cereali'],
+  [/\briso\b|basmati|venere/i,'cereali'],
+  [/cous/i,'cereali'],
+  [/\bfarro\b|\borzo\b|quinoa/i,'cereali'],
+  [/avena|fiocchi d|fiocchi di mais|porridge/i,'cereali'],
+  [/gallett/i,'cereali'],
+  [/biscott|fette biscottate/i,'cereali'],
+  [/crackers|grissini/i,'cereali'],
+  [/\bcereali\b/i,'cereali'],
+  // dispensa (lunga conservazione)
+  [/marmellata/i,'dispensa'],
+  [/\bmiele\b/i,'dispensa'],
+  [/passata|\bsugo\b|pelati/i,'dispensa'],
+  [/cioccolat|ciok/i,'dispensa'],
+  [/frutta secca|mandorl|noci|nocciol/i,'dispensa'],
+  [/barretta/i,'dispensa'],
+  [/cacao|cannella/i,'dispensa'],
+  [/burro d.?arachid|arachid/i,'dispensa'],
+  [/olio evo|olio extra|\bolio\b/i,'dispensa'],
+  [/budino/i,'dispensa'],
+  [/legum|\bcec|fagiol|lentic|\bfave\b|\bsoia\b/i,'dispensa'],
+  // animali (vanno in casa; l'owner gatto/coniglio li distingue)
+  [/fieno|mangime|croccantin|crocchett|lettiera|cibo gatt|cibo conigl/i,'casa'],
+  // casa
+  [/detersiv|detergent|sapone|shampoo|carta igienica|scottex|spazzol|dentifric/i,'casa'],
 ];
+// restituisce il reparto (catKey) per un testo, o null se nessun match
+function routeItem(text){
+  const t = (text||'').toLowerCase();
+  for(const [re,cat] of ING_MAP){ if(re.test(t)) return cat; }
+  return null;
+}
 
 // ══════════════════════════════════════════
 //  STATE
@@ -1733,11 +1740,6 @@ window.generaSpesaAI = async ()=>{
 
   try{
     const SPESA_CATS = getSpesaCats();
-    // Storico: ultimi 8 snapshot ordinati per data
-    const historyArr = Object.entries(spesaHistory)
-      .sort((a,b)=>Number(a[0])-Number(b[0]))
-      .slice(-8)
-      .map(([,h])=>h);
 
     const res = await fetch('/api/genera-spesa',{
       method:'POST',
@@ -1746,7 +1748,6 @@ window.generaSpesaAI = async ()=>{
         nicholasData:   NICHOLAS,
         noemiData:      { plan: noemiPlan, base: NOEMI_BASE },
         scheduleData:   schedule,
-        historyData:    historyArr,
         categoriesData: SPESA_CATS.map(c=>({key:c.key, label:c.label}))
       })
     });
@@ -1762,36 +1763,61 @@ window.generaSpesaAI = async ()=>{
     // nome-base: ignora parentesi e grammature (es. "BCAA (6g post...)" → "bcaa")
     const baseName = s => (s||'').toLowerCase().split('(')[0].replace(/\d+\s*g\b/g,'').replace(/\s+/g,' ').trim();
 
-    // basi generate su tutte le categorie
-    const genBases = new Set();
-    Object.values(result||{}).forEach(arr=>(arr||[]).forEach(it=>{ if(it&&it.t) genBases.add(baseName(it.t)); }));
+    // 1) FLATTEN + RE-ROUTING deterministico: ING_MAP ha priorità sulla categoria scelta dall'AI
+    const aiItems = [];
+    Object.entries(result||{}).forEach(([aiKey, arr])=>{
+      (arr||[]).forEach(it=>{
+        if(!it || !it.t) return;
+        aiItems.push({ t: it.t, owners: it.owners||[], cat: routeItem(it.t) || aiKey });
+      });
+    });
 
-    // RICONCILIA dispensa: se ancora rigenerata → riattiva (mostra sbiadita); altrimenti scade
+    // basi "dieta" (ciò che l'AI ha prodotto): serve a riconoscere extra non-dieta e dispensa
+    const genBases = new Set(aiItems.map(i=>baseName(i.t)));
+
+    // 2) RICONCILIA dispensa: se ancora rigenerata → riattiva (sbiadita); altrimenti scade
     pantry = pantry.map(p=> genBases.has(baseName(p.t)) ? {...p, active:true} : null).filter(Boolean);
     savePantry();
     const pantryBases = new Set(pantry.map(p=>baseName(p.t)));
 
-    // aggiungi le voci generate NON in dispensa e NON già in lista
-    const keys = new Set([...SPESA_CATS.map(c=>c.key), ...Object.keys(result||{})]);
-    keys.forEach(key=>{
-      const newItems = result[key]||[];
-      if(!Array.isArray(newItems) || !newItems.length) return;
-      const list = (spesa[key]||[]).slice();
-      const have = new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase()));
-      newItems.filter(it=>it&&it.t).forEach(it=>{
-        const t = it.t.toLowerCase();
-        if(!have.has(t) && !pantryBases.has(baseName(it.t))){
-          list.push({t:it.t, d:false, owners:it.owners||[]});
-          have.add(t);
-          added++;
-        }
+    // helper: aggiunge in coda a una categoria se non duplicato e non in dispensa
+    const addTo = (cat, t, owners)=>{
+      const list=(spesa[cat]||[]).slice();
+      const have=new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase()));
+      if(have.has(t.toLowerCase()) || pantryBases.has(baseName(t))) return false;
+      list.push({t, d:false, owners:owners||[]}); spesa[cat]=list; return true;
+    };
+
+    // 3) AGGIUNGI le voci dell'AI (per categoria finale)
+    aiItems.forEach(it=>{ if(addTo(it.cat, it.t, it.owners)) added++; });
+
+    // 4) EXTRA RICORRENTI dallo storico (verbatim) — solo voci NON-dieta, >50% delle ultime ≤8 spese
+    const recent = Object.entries(spesaHistory||{}).sort((a,b)=>Number(a[0])-Number(b[0])).slice(-8).map(([,h])=>h);
+    const totalShops = recent.length;
+    if(totalShops){
+      const freq={}, lastSeen={};
+      recent.forEach(h=>{
+        const seen=new Set();
+        Object.entries(h.items||{}).forEach(([cat,arr])=>(arr||[]).forEach(i=>{
+          if(!i||!i.t) return; const b=baseName(i.t);
+          if(!seen.has(b)){ seen.add(b); freq[b]=(freq[b]||0)+1; }
+          lastSeen[b]={t:i.t, owners:i.owners||[], cat};   // l'ultimo snapshot vince (categoria/owner aggiornati)
+        }));
       });
-      spesa[key]=list;
-      saveSpesaCat(key);
-    });
+      Object.keys(freq).forEach(b=>{
+        if(freq[b]/totalShops <= 0.5) return;              // soglia >50%
+        if(genBases.has(b) || pantryBases.has(b)) return;   // già dieta o in dispensa
+        const info=lastSeen[b];
+        const cat = routeItem(info.t) || info.cat || 'dispensa';
+        if(addTo(cat, info.t, info.owners)) added++;
+      });
+    }
+
+    // 5) salva tutte le categorie (incluse eventuali orfane create dagli extra)
+    getSpesaCats().forEach(c=>saveSpesaCat(c.key));
 
     renderContent();
-    toast(added ? `✨ ${added} voci aggiunte dall'AI` : 'Nessuna novità da aggiungere');
+    toast(added ? `✨ ${added} voci in lista` : 'Nessuna novità da aggiungere');
 
   }catch(e){
     renderContent();
