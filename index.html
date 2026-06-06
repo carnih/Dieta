@@ -202,9 +202,12 @@
     .shop-pantry-btn{flex-shrink:0;border:none;background:transparent;font-size:15px;cursor:pointer;padding:3px 5px;border-radius:8px;opacity:.35;filter:grayscale(1);transition:all .15s}
     .shop-row:hover .shop-pantry-btn{opacity:.7}
     .shop-pantry-btn:active{transform:scale(.85)}
-    .shop-pantry-btn.on{opacity:1;filter:none;background:#FEF3C7}
-    .shop-row.pantry-row .shop-name{font-style:italic;color:#B6BCC6;font-size:14px}
-    .shop-row.pantry-row{background:#FCFCFD}
+    .shop-pantry-btn.on{opacity:1;filter:none;background:#FDE68A;border:1.5px solid #F59E0B;padding:4px 7px}
+    .shop-row.pantry-row .shop-name{font-style:italic;color:#9CA3AF;font-size:14px}
+    .shop-row.pantry-row{background:#FFFDF5}
+    /* cerchio "in dispensa": flaggato grigio, non cliccabile */
+    .pantry-check{flex-shrink:0;width:25px;height:25px;border-radius:50%;border:2px solid #D1D5DB;background:#D1D5DB;position:relative;cursor:default}
+    .pantry-check::after{content:'';position:absolute;left:7px;top:3.5px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
 
     /* lista (stile Listonic): un'unica superficie, sezioni leggere */
     .shop{background:#fff;border-radius:var(--r);box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;padding:4px 0}
@@ -1491,9 +1494,10 @@ function renderSpesaTab(){
             </div>`).join('');
           const pantryRows = pantryItems.map(p=>`
             <div class="shop-row pantry-row">
+              <span class="pantry-check" title="In dispensa"></span>
+              <button class="shop-pantry-btn on" onclick="fromPantry(${p.pi})" title="Rimetti in lista">🏠</button>
               <span class="shop-name">${esc(p.t)}</span>
               ${ownerBadgesHTML(p.owners, '__pantry', p.pi)}
-              <button class="shop-pantry-btn on" onclick="fromPantry(${p.pi})" title="Rimetti in lista">🏠</button>
             </div>`).join('');
           if(isEmpty) return `<div class="shop-sec">
             <div class="shop-sec-h" style="color:#CDD1D9">
@@ -1613,9 +1617,6 @@ window.salvaSpesa = ()=>{
     set(ref(db,'spesa'), Object.keys(newSpesa).length ? newSpesa : null);
   }catch(e){}
   spesa = newSpesa;
-  // nascondi la dispensa: riapparirà al prossimo Genera se ancora rilevante
-  pantry = pantry.map(p=>({...p, active:false}));
-  savePantry();
   renderContent();
   toast(`💾 ${bought} salvati · ${kept} rimasti`);
 };
@@ -1734,28 +1735,19 @@ window.generaSpesaAI = async ()=>{
     const result = await res.json();
     let added = 0;
 
-    // nomi generati (lowercase) su tutte le categorie
-    const genNames = new Set();
-    Object.values(result||{}).forEach(arr=>(arr||[]).forEach(it=>{ if(it&&it.t) genNames.add(it.t.toLowerCase()); }));
-    const matchGen = name=>{
-      const n=(name||'').toLowerCase(); if(!n) return false;
-      if(genNames.has(n)) return true;
-      for(const g of genNames){ if(g===n || g.startsWith(n) || n.startsWith(g)) return true; }
-      return false;
-    };
+    // nome-base: ignora parentesi e grammature (es. "BCAA (6g post...)" → "bcaa")
+    const baseName = s => (s||'').toLowerCase().split('(')[0].replace(/\d+\s*g\b/g,'').replace(/\s+/g,' ').trim();
 
-    // RICONCILIA dispensa:
-    //  - rigenerata → riattiva (mostra sbiadita, non ricomprare)
-    //  - inattiva e NON più rigenerata → dimentica (scade)
-    //  - attiva (appena marcata) ma non rigenerata → tieni
-    pantry = pantry.filter(p=>{
-      if(matchGen(p.t)){ p.active=true; return true; }
-      return p.active!==false;
-    });
+    // basi generate su tutte le categorie
+    const genBases = new Set();
+    Object.values(result||{}).forEach(arr=>(arr||[]).forEach(it=>{ if(it&&it.t) genBases.add(baseName(it.t)); }));
+
+    // RICONCILIA dispensa: sopravvive solo se ancora rigenerata (altrimenti scade)
+    pantry = pantry.filter(p=> genBases.has(baseName(p.t)));
     savePantry();
-    const pantryNames = new Set(pantry.map(p=>p.t.toLowerCase()));
+    const pantryBases = new Set(pantry.map(p=>baseName(p.t)));
 
-    // aggiungi le voci generate non in dispensa e non già in lista
+    // aggiungi le voci generate NON in dispensa e NON già in lista
     const keys = new Set([...SPESA_CATS.map(c=>c.key), ...Object.keys(result||{})]);
     keys.forEach(key=>{
       const newItems = result[key]||[];
@@ -1764,7 +1756,7 @@ window.generaSpesaAI = async ()=>{
       const have = new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase()));
       newItems.filter(it=>it&&it.t).forEach(it=>{
         const t = it.t.toLowerCase();
-        if(!have.has(t) && !pantryNames.has(t)){
+        if(!have.has(t) && !pantryBases.has(baseName(it.t))){
           list.push({t:it.t, d:false, owners:it.owners||[]});
           have.add(t);
           added++;

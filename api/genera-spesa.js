@@ -174,15 +174,22 @@ ${catLines}
 
 ═══ REGOLE ═══
 1. Leggi ENTRAMBE le diete (Nicholas E Noemi) e fai un merge intelligente in un'unica lista.
-2. ROUTING per reparto (assegna alla chiave giusta):
-   - macelleria → carne (pollo, tacchino, carne bianca/rossa, bresaola se fresca…)
+2. ROUTING per reparto: ragiona su DOVE si trova fisicamente l'alimento al supermercato,
+   non sulla sua funzione nutrizionale. Es: le PATATE/zucca/legumi freschi stanno nell'ortofrutta
+   → "verdure", NON tra i cereali. Linee guida:
+   - macelleria → carne (pollo, tacchino, carne bianca/rossa, bresaola fresca…)
    - pescheria → pesce e molluschi (merluzzo, orata, salmone, tonno fresco, gamberi, polpo…)
-   - latticini → yogurt, latte, formaggi, ricotta, mozzarella…
+   - latticini → yogurt, latte, formaggi, ricotta, mozzarella, burro…
    - banco → uova, affettati/salumi, tofu, ravioli/tortellini freschi, hummus
-   - panetteria → pane, pane integrale, focaccia
-   - cereali → pasta, riso, gallette, biscotti, fette biscottate, patate, avena
-   - dispensa → olio, marmellata, miele, passata, parmigiano (lunga conservazione), tonno in scatola, legumi in scatola, frutta secca, cioccolato, barrette
-   - integratori → creatina/BCAA/carnitina/sali/proteine in polvere (owners ["nicholas"])
+   - panetteria → pane, pane integrale, focaccia, pane di segale
+   - cereali → pasta, riso, gallette, biscotti, fette biscottate, avena, cous cous
+   - verdure → TUTTO l'ortofrutta verdura: insalata, pomodori, zucchine, PATATE, patate dolci, zucca, carote…
+   - frutta → frutta fresca, banane, spremute
+   - dispensa → SOLO lunga conservazione: olio, marmellata, miele, passata, parmigiano, tonno/legumi
+     in scatola, frutta secca, cioccolato, barrette, cacao
+   - integratori → creatina/BCAA/carnitina/sali/maltodestrine/proteine in polvere (owners ["nicholas"])
+   - surgelati → solo se esplicitamente surgelato
+   Se un alimento è ambiguo, scegli il reparto dove lo prenderesti davvero al supermercato.
 3. GRAMMATURE: indicale SOLO per la parte proteica/secondi di NICHOLAS (macelleria e pescheria),
    per ogni TIPO con i grammi di pranzo E cena.
    Esempio: {"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]}
