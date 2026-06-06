@@ -1457,8 +1457,8 @@ function renderSpesaTab(){
           items.sort((a,b)=>(a.d?1:0)-(b.d?1:0));   // i presi vanno in fondo
           const allc  = items.length>0 && items.every(i=>i.d);
           const toBuy = items.filter(i=>!i.d).length;
-          // voci in dispensa appartenenti a questa categoria (in coda, sbiadite)
-          let pantryItems = pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key);
+          // voci in dispensa ATTIVE appartenenti a questa categoria (in coda, sbiadite)
+          let pantryItems = pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key && p.active!==false);
           if(ownerFilter) pantryItems = pantryItems.filter(p=>(p.owners||[]).includes(ownerFilter));
           const isEmpty = items.length===0 && pantryItems.length===0;
           // sotto filtro owner: salto le categorie senza nulla
@@ -1564,19 +1564,28 @@ window.toggleSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); if(!list[i]
 window.delSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); list.splice(i,1); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.toggleCatAll = (cat)=>{ const list=(spesa[cat]||[]).slice(); if(!list.length)return; const all=list.every(i=>i.d); list.forEach(i=>i.d=!all); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 
-// ── Salva spesa: archivia nello storico E svuota ──
+// ── Salva spesa: archivia i FLAGGATI nello storico, tiene i non presi ──
 window.salvaSpesa = ()=>{
   const SPESA_CATS = getSpesaCats();
-  const hasItems = SPESA_CATS.some(c=>(spesa[c.key]||[]).length>0);
-  if(!hasItems) return toast('La lista è vuota, niente da salvare');
-  if(!confirm('Salvare la spesa fatta nello storico e svuotare la lista?')) return;
-  const ts = Date.now();
   const snap = { date: new Date().toLocaleDateString('it-IT'), items:{} };
-  SPESA_CATS.forEach(c=>{ if((spesa[c.key]||[]).length) snap.items[c.key]=spesa[c.key]; });
+  let bought = 0, kept = 0;
+  SPESA_CATS.forEach(c=>{
+    const list = spesa[c.key]||[];
+    const taken   = list.filter(i=>i.d);
+    const leftover= list.filter(i=>!i.d);
+    if(taken.length){ snap.items[c.key]=taken; bought += taken.length; }
+    spesa[c.key]=leftover; kept += leftover.length;
+  });
+  if(!bought) return toast('Nessun articolo preso (flaggato) da salvare');
+  if(!confirm(`Salvare ${bought} articoli presi nello storico?\nRestano in lista ${kept} articoli non presi.`)) return;
+  const ts = Date.now();
   try{ set(ref(db,'spesaHistory/'+ts), snap); }catch(e){}
-  SPESA_CATS.forEach(c=>{ spesa[c.key]=[]; try{ set(ref(db,'spesa/'+c.key), null); }catch(e){} });
+  SPESA_CATS.forEach(c=>saveSpesaCat(c.key));
+  // nascondi la dispensa: riapparirà al prossimo Genera se ancora rilevante
+  pantry = pantry.map(p=>({...p, active:false}));
+  savePantry();
   renderContent();
-  toast('💾 Spesa salvata e lista svuotata');
+  toast(`💾 ${bought} salvati · ${kept} rimasti`);
 };
 
 // ── Svuota lista senza salvare ──
@@ -1596,7 +1605,8 @@ window.toPantry = (cat, idx)=>{
   const list = (spesa[cat]||[]).slice();
   const it = list[idx]; if(!it) return;
   list.splice(idx,1); spesa[cat]=list; saveSpesaCat(cat);
-  if(!pantry.some(p=>p.t.toLowerCase()===it.t.toLowerCase())) pantry.push({t:it.t, owners:it.owners||[], cat});
+  if(!pantry.some(p=>p.t.toLowerCase()===it.t.toLowerCase())) pantry.push({t:it.t, owners:it.owners||[], cat, active:true});
+  else pantry = pantry.map(p=> p.t.toLowerCase()===it.t.toLowerCase() ? {...p, active:true, cat} : p);
   savePantry(); renderContent();
   toast('🏠 In dispensa');
 };
@@ -1614,7 +1624,7 @@ window.fromPantry = (i)=>{
 window.removePantry = (i)=>{ pantry.splice(i,1); savePantry(); renderContent(); };
 window.addPantryManual = ()=>{
   const el = document.getElementById('pantry-in'); const v=(el?el.value:'').trim(); if(!v) return;
-  if(!pantry.some(p=>p.t.toLowerCase()===v.toLowerCase())) pantry.push({t:v, owners:[], cat:'dispensa'});
+  if(!pantry.some(p=>p.t.toLowerCase()===v.toLowerCase())) pantry.push({t:v, owners:[], cat:'dispensa', active:true});
   savePantry(); renderContent();
 };
 window.managerPantry = ()=>{ pantryManager = !pantryManager; renderContent(); };
@@ -1676,8 +1686,7 @@ window.generaSpesaAI = async ()=>{
         noemiData:      { plan: noemiPlan, base: NOEMI_BASE },
         scheduleData:   schedule,
         historyData:    historyArr,
-        categoriesData: SPESA_CATS.map(c=>({key:c.key, label:c.label})),
-        pantryData:     pantry.map(p=>({t:p.t}))
+        categoriesData: SPESA_CATS.map(c=>({key:c.key, label:c.label}))
       })
     });
 
@@ -1688,10 +1697,29 @@ window.generaSpesaAI = async ()=>{
 
     const result = await res.json();
     let added = 0;
-    // set dei nomi già in dispensa (guardia: non riaggiungerli)
-    const pantrySet = new Set(pantry.map(p=>p.t.toLowerCase()));
 
-    // itera su TUTTE le chiavi restituite (categorie dinamiche/custom incluse)
+    // nomi generati (lowercase) su tutte le categorie
+    const genNames = new Set();
+    Object.values(result||{}).forEach(arr=>(arr||[]).forEach(it=>{ if(it&&it.t) genNames.add(it.t.toLowerCase()); }));
+    const matchGen = name=>{
+      const n=(name||'').toLowerCase(); if(!n) return false;
+      if(genNames.has(n)) return true;
+      for(const g of genNames){ if(g===n || g.startsWith(n) || n.startsWith(g)) return true; }
+      return false;
+    };
+
+    // RICONCILIA dispensa:
+    //  - rigenerata → riattiva (mostra sbiadita, non ricomprare)
+    //  - inattiva e NON più rigenerata → dimentica (scade)
+    //  - attiva (appena marcata) ma non rigenerata → tieni
+    pantry = pantry.filter(p=>{
+      if(matchGen(p.t)){ p.active=true; return true; }
+      return p.active!==false;
+    });
+    savePantry();
+    const pantryNames = new Set(pantry.map(p=>p.t.toLowerCase()));
+
+    // aggiungi le voci generate non in dispensa e non già in lista
     const keys = new Set([...SPESA_CATS.map(c=>c.key), ...Object.keys(result||{})]);
     keys.forEach(key=>{
       const newItems = result[key]||[];
@@ -1700,7 +1728,7 @@ window.generaSpesaAI = async ()=>{
       const have = new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase()));
       newItems.filter(it=>it&&it.t).forEach(it=>{
         const t = it.t.toLowerCase();
-        if(!have.has(t) && !pantrySet.has(t)){
+        if(!have.has(t) && !pantryNames.has(t)){
           list.push({t:it.t, d:false, owners:it.owners||[]});
           have.add(t);
           added++;

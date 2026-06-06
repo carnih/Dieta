@@ -159,12 +159,7 @@ function buildPrompt(nicholas, noemi, schedule, history, cats, pantryData) {
   // Categorie valide (chiavi reali, incluse custom/rinominate)
   const catLines = cats.map(c=>`  "${c.key}" = ${c.label}`).join('\n');
 
-  // Dispensa di casa
-  const pantryLine = (pantryData && pantryData.length)
-    ? '\nGIÀ IN CASA (NON includere questi): '+pantryData.map(p=>p.t).join(', ')
-    : '';
-
-  return `Sei l'assistente spesa di Nicholas e Noemi. Genera la lista della spesa settimanale.
+  return `Sei l'assistente spesa di Nicholas e Noemi. Genera la lista della spesa settimanale COMPLETA.
 Rispondi SOLO con JSON valido: un oggetto con le chiavi categoria, ogni valore è un array di {"t":"...","owners":[...]}.
 
 ═══ DIETA NICHOLAS ═══
@@ -173,7 +168,6 @@ ${nicDiets}
 ═══ DIETA NOEMI (vegetariana) ═══
 ${noemiBlock}
 ${histLine}
-${pantryLine}
 
 ═══ CATEGORIE VALIDE (usa SOLO queste chiavi come chiavi JSON) ═══
 ${catLines}
@@ -194,7 +188,7 @@ ${catLines}
 7. owners: solo Nicholas→["nicholas"], solo Noemi→["noemi"], entrambi→["nicholas","noemi"].
 8. VOCI RICORRENTI dello storico che NON derivano dalle diete (es. fieno coniglio, lettiera gatto,
    ghiaccioli, detersivi) → riproponile nella categoria giusta (owners []).
-9. NON includere acqua, sale, pepe, aromi. NON includere ciò che è "GIÀ IN CASA".
+9. NON includere acqua, sale, pepe, aromi.
 
 Esempio output (chiavi e voci illustrative):
 {"proteine":[{"t":"Carne bianca / pollo / tacchino (150g pranzo · 250g cena)","owners":["nicholas"]},{"t":"Tofu","owners":["noemi"]},{"t":"Yogurt greco","owners":["nicholas","noemi"]}],"cereali":[{"t":"Pasta","owners":["nicholas","noemi"]}],"verdure":[{"t":"Verdure miste di stagione","owners":["nicholas","noemi"]}],"coniglio":[{"t":"Fieno","owners":[]}]}`;
