@@ -1276,8 +1276,8 @@ function ownerBadgesHTML(owners, cat, idx){
   return '<span class="owner-badges">'
     + b('nicholas','n','N','Nicholas')
     + b('noemi','e','N','Noemi')
-    + b('gatto','g','🐈','Gatto')
-    + b('coniglio','c','🐰','Coniglio')
+    + b('gatto','g','🐈','Mia')
+    + b('coniglio','c','🐰','Ginger')
     + '</span>';
 }
 // ── CATEGORY MANAGER ──
@@ -1487,14 +1487,16 @@ function renderSpesaTab(){
     ? renderPantryInline()
     : `<div class="shop">${masterRow}${
         SPESA_CATS.map(c=>{
+          const alpha = (a,b)=>(a.t||'').localeCompare(b.t||'', 'it', {sensitivity:'base'});
           let items = (spesa[c.key]||[]).map((it,idx)=>({...it, idx}));
           if(ownerFilter) items = items.filter(matchOwner);
-          items.sort((a,b)=>(a.d?1:0)-(b.d?1:0));   // i presi vanno in fondo
+          items.sort(alpha);                        // alfabetico
           const allc  = items.length>0 && items.every(i=>i.d);
           const toBuy = items.filter(i=>!i.d).length;
-          // voci in dispensa ATTIVE appartenenti a questa categoria (in coda, sbiadite)
+          // voci in dispensa ATTIVE appartenenti a questa categoria (in coda, sbiadite, alfabetiche)
           let pantryItems = pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key && p.active!==false);
           if(ownerFilter) pantryItems = pantryItems.filter(matchOwner);
+          pantryItems.sort(alpha);
           const isEmpty = items.length===0 && pantryItems.length===0;
           // sotto filtro owner: salto le categorie senza nulla
           if(ownerFilter && isEmpty) return '';
@@ -1545,16 +1547,14 @@ function renderSpesaTab(){
       <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="shop-actions">
-      <button class="shop-tool gen" id="btn-genera" onclick="generaSpesaAI()">✨ Genera lista</button>
-      <button class="shop-tool icon" onclick="salvaSpesa()" title="Salva spesa fatta (archivia e svuota)">💾</button>
-      <button class="shop-tool icon danger" onclick="svuotaSpesa()" title="Svuota lista (senza salvare)">🗑</button>
+      <button class="shop-tool gen" onclick="spesaFatta()">✓ Spesa fatta</button>
       <button class="shop-tool icon" onclick="managerCategories()" title="Categorie">⚙️</button>
     </div>
     <div class="shop-filters">
       <button class="shop-filter f-nicholas ${spesaOwners.includes('nicholas')?'on':''}" onclick="toggleOwnerFilter('nicholas')">🔵 Nicholas</button>
       <button class="shop-filter f-noemi ${spesaOwners.includes('noemi')?'on':''}" onclick="toggleOwnerFilter('noemi')">🩷 Noemi</button>
-      <button class="shop-filter f-gatto ${spesaOwners.includes('gatto')?'on':''}" onclick="toggleOwnerFilter('gatto')">🐈 Gatto</button>
-      <button class="shop-filter f-coniglio ${spesaOwners.includes('coniglio')?'on':''}" onclick="toggleOwnerFilter('coniglio')">🐰 Coniglio</button>
+      <button class="shop-filter f-gatto ${spesaOwners.includes('gatto')?'on':''}" onclick="toggleOwnerFilter('gatto')">🐈 Mia</button>
+      <button class="shop-filter f-coniglio ${spesaOwners.includes('coniglio')?'on':''}" onclick="toggleOwnerFilter('coniglio')">🐰 Ginger</button>
       <button class="shop-filter f-pantry ${pantryView?'on':''}" onclick="togglePantryView()">🏠 Dispensa</button>
     </div>
     ${body}
@@ -1623,48 +1623,37 @@ window.toggleAllSpesa = ()=>{
   renderContent();
 };
 
-// ── Salva spesa: archivia i FLAGGATI nello storico, tiene i non presi ──
-window.salvaSpesa = ()=>{
+// ── Spesa fatta: i FLAGGATI passano in dispensa; i non spuntati restano "da comprare" ──
+window.spesaFatta = ()=>{
   const SPESA_CATS = getSpesaCats();
   const snap = { date: new Date().toLocaleDateString('it-IT'), items:{} };
   const newSpesa = {};
-  let bought = 0, kept = 0;
+  let moved = 0;
   SPESA_CATS.forEach(c=>{
     const list = spesa[c.key]||[];
     const taken    = list.filter(i=>i.d);
     const leftover = list.filter(i=>!i.d);
-    if(taken.length){ snap.items[c.key]=taken; bought += taken.length; }
-    if(leftover.length){ newSpesa[c.key]=leftover; kept += leftover.length; }
+    if(taken.length){ snap.items[c.key]=taken; }   // snapshot per consultazione
+    // i flaggati → dispensa (verbatim, attivi); i non flaggati restano in lista
+    taken.forEach(it=>{
+      if(!pantry.some(p=>p.t.toLowerCase()===it.t.toLowerCase())){
+        pantry.push({t:it.t, owners:it.owners||[], cat:c.key, active:true});
+      }
+      moved++;
+    });
+    if(leftover.length) newSpesa[c.key]=leftover;
   });
-  if(!bought) return toast('Nessun articolo preso (flaggato) da salvare');
-  if(!confirm(`Salvare ${bought} articoli presi nello storico?\nRestano in lista ${kept} articoli non presi.`)) return;
+  if(!moved) return toast('Spunta gli articoli comprati prima di premere Spesa fatta');
+  if(!confirm(`Segnare ${moved} articoli come comprati (vanno in dispensa)?`)) return;
+  spesa = newSpesa;
   const ts = Date.now();
   try{
     set(ref(db,'spesaHistory/'+ts), snap);
-    // scrittura ATOMICA dell'intero nodo spesa (evita race tra categorie)
     set(ref(db,'spesa'), Object.keys(newSpesa).length ? newSpesa : null);
   }catch(e){}
-  spesa = newSpesa;
-  // la dispensa diventa dormiente: sparisce dalla lista, riappare al prossimo Genera se ancora rilevante
-  pantry = pantry.map(p=>({...p, active:false}));
   savePantry();
   renderContent();
-  toast(`💾 ${bought} salvati · ${kept} rimasti`);
-};
-
-// ── Svuota lista senza salvare ──
-window.svuotaSpesa = ()=>{
-  const SPESA_CATS = getSpesaCats();
-  const hasItems = SPESA_CATS.some(c=>(spesa[c.key]||[]).length>0);
-  if(!hasItems && !pantry.length) return toast('La lista è già vuota');
-  if(hasItems && !confirm('Svuotare la lista SENZA salvarla nello storico?')) return;
-  if(hasItems){ try{ set(ref(db,'spesa'), null); }catch(e){} spesa = {}; }
-  // chiede se svuotare anche la dispensa
-  if(pantry.length && confirm('Svuotare anche la DISPENSA di casa?')){
-    pantry = []; savePantry();
-  }
-  renderContent();
-  toast('🗑 Svuotato');
+  toast(`✓ ${moved} in dispensa`);
 };
 
 // ── DISPENSA DI CASA (pantry) ──
@@ -1731,57 +1720,6 @@ window.toggleOwner = (cat, idx, owner) => {
   spesa[cat] = list;
   saveSpesaCat(cat);
   renderContent();
-};
-
-// ── Genera dalle abitudini: ripopola le voci usate in >50% delle spese passate ──
-window.generaSpesaAI = ()=>{
-  // nome-base: ignora parentesi e grammature (es. "BCAA (6g post...)" → "bcaa")
-  const baseName = s => (s||'').toLowerCase().split('(')[0].replace(/\d+\s*g\b/g,'').replace(/\s+/g,' ').trim();
-
-  const recent = Object.entries(spesaHistory||{}).sort((a,b)=>Number(a[0])-Number(b[0])).slice(-8).map(([,h])=>h);
-  const totalShops = recent.length;
-  if(!totalShops){ toast('Nessuno storico: fai una spesa e premi 💾 Salva'); return; }
-
-  // conta in quante spese DISTINTE compare ogni articolo (per nome-base); l'ultimo snapshot vince
-  const freq={}, lastSeen={};
-  recent.forEach(h=>{
-    const seen=new Set();
-    Object.entries(h.items||{}).forEach(([cat,arr])=>(arr||[]).forEach(i=>{
-      if(!i||!i.t) return; const b=baseName(i.t);
-      if(!seen.has(b)){ seen.add(b); freq[b]=(freq[b]||0)+1; }
-      lastSeen[b]={t:i.t, owners:i.owners||[], cat};
-    }));
-  });
-  const recurringBases = new Set(Object.keys(freq).filter(b=>freq[b]/totalShops>0.5));
-
-  // dispensa: riattiva (sbiadita) le voci ancora ricorrenti; le altre restano com'erano
-  pantry = pantry.map(p=> recurringBases.has(baseName(p.t)) ? {...p, active:true} : p);
-  savePantry();
-  const pantryBases = new Set(pantry.map(p=>baseName(p.t)));
-
-  const addTo = (cat, t, owners)=>{
-    const list=(spesa[cat]||[]).slice();
-    const have=new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase()));
-    if(have.has(t.toLowerCase()) || pantryBases.has(baseName(t))) return false;
-    list.push({t, d:false, owners:owners||[]}); spesa[cat]=list; return true;
-  };
-
-  let added=0;
-  recurringBases.forEach(b=>{
-    if(pantryBases.has(b)) return;                 // ce l'ho già in dispensa
-    const info=lastSeen[b];
-    const cat = routeItem(info.t) || info.cat || 'dispensa';
-    if(addTo(cat, info.t, info.owners)) added++;
-  });
-
-  // scrittura ATOMICA dell'intero nodo spesa (evita race col listener)
-  const clean={};
-  Object.keys(spesa).forEach(k=>{ if((spesa[k]||[]).length) clean[k]=spesa[k]; });
-  spesa = clean;
-  try{ set(ref(db,'spesa'), Object.keys(clean).length ? clean : null); }catch(e){}
-
-  renderContent();
-  toast(added ? `✨ ${added} voci dalle tue abitudini` : 'Niente da riproporre (nessuna voce >50%)');
 };
 
 // ── ACTIONS ──
