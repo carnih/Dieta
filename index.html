@@ -201,6 +201,7 @@
     .shop-filter.on.f-noemi{background:#FCE7F3;color:var(--e)}
     .shop-filter.on.f-gatto{background:#FEF3C7;color:#92400E}
     .shop-filter.on.f-coniglio{background:#E0E7FF;color:#4338CA}
+    .shop-filter.on.f-tobuy{background:#DCFCE7;color:#15803D}
 
     /* toggle dispensa 🏠 su voce */
     .shop-pantry-btn{flex-shrink:0;border:none;background:transparent;font-size:15px;cursor:pointer;padding:3px 5px;border-radius:8px;opacity:.35;filter:grayscale(1);transition:all .15s}
@@ -860,7 +861,7 @@ function routeItem(text){
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], pantryView=false;
+let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], listView=null;
 
 onValue(ref(db,'noemiPlan'), snap => {
   noemiPlan = snap.val() || {};
@@ -1476,6 +1477,8 @@ function renderSpesaTab(){
   const matchOwner = it => ownerFilters.some(o => (it.owners||[]).includes(o));
   const histCount = Object.keys(spesaHistory||{}).length;
 
+  const pantryView = listView==='dispensa';        // solo dispensa
+  const toBuyView  = listView==='tocomprare';       // solo da comprare (nasconde dispensa)
   const filtered = ownerFilter || pantryView;     // viste filtrate: niente add-row / master / categorie vuote
   const masterRow = (total>0 && !filtered)
     ? `<div class="shop-sec" style="border-bottom:2px solid #EEF0F3">
@@ -1496,7 +1499,7 @@ function renderSpesaTab(){
           const allc  = items.length>0 && items.every(i=>i.d);
           const toBuy = items.filter(i=>!i.d).length;
           // voci in dispensa: nella vista Dispensa le mostro tutte, altrove solo le attive
-          let pantryItems = pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key && (pantryView || p.active!==false));
+          let pantryItems = toBuyView ? [] : pantry.map((p,pi)=>({...p, pi})).filter(p=>(p.cat||'dispensa')===c.key && (pantryView || p.active!==false));
           if(ownerFilter) pantryItems = pantryItems.filter(matchOwner);
           pantryItems.sort(alpha);
           const isEmpty = items.length===0 && pantryItems.length===0;
@@ -1558,7 +1561,10 @@ function renderSpesaTab(){
       <button class="shop-filter f-noemi ${spesaOwners.includes('noemi')?'on':''}" onclick="toggleOwnerFilter('noemi')">🩷 Noemi</button>
       <button class="shop-filter f-gatto ${spesaOwners.includes('gatto')?'on':''}" onclick="toggleOwnerFilter('gatto')">🐈 Mia</button>
       <button class="shop-filter f-coniglio ${spesaOwners.includes('coniglio')?'on':''}" onclick="toggleOwnerFilter('coniglio')">🐰 Ginger</button>
-      <button class="shop-filter f-pantry ${pantryView?'on':''}" onclick="togglePantryView()">🏠 Dispensa</button>
+    </div>
+    <div class="shop-filters" style="margin-top:-4px">
+      <button class="shop-filter f-tobuy ${listView==='tocomprare'?'on':''}" onclick="setListView('tocomprare')">🛒 Da comprare</button>
+      <button class="shop-filter f-pantry ${listView==='dispensa'?'on':''}" onclick="setListView('dispensa')">🏠 Dispensa</button>
     </div>
     ${body}
     ${histCount ? `<div style="text-align:center;padding:14px 0 4px;display:flex;gap:18px;justify-content:center;flex-wrap:wrap">
@@ -1571,12 +1577,12 @@ function renderSpesaTab(){
 }
 
 window.toggleOwnerFilter = (o) => {
-  pantryView = false;                              // gli owner e la dispensa si escludono
+  listView = null;                                 // gli owner azzerano la vista dispensa/da-comprare
   const i = spesaOwners.indexOf(o);
   if(i>=0) spesaOwners.splice(i,1); else spesaOwners.push(o);
   renderContent();
 };
-window.togglePantryView = () => { pantryView = !pantryView; if(pantryView) spesaOwners=[]; renderContent(); };
+window.setListView = (v) => { listView = (listView===v) ? null : v; if(listView) spesaOwners=[]; renderContent(); };
 window.clearHistory = () => {
   const n = Object.keys(spesaHistory||{}).length;
   if(!confirm('Svuotare la cronologia delle '+n+' spese memorizzate? L\'AI non imparerà più dal pregresso.')) return;
@@ -1743,6 +1749,14 @@ window.pantryDel = (i)=>{ pantry.splice(i,1); savePantry(); renderContent(); };
 
 // ── Toggle owner su voce ──
 window.toggleOwner = (cat, idx, owner) => {
+  // articoli in dispensa: toggle owner direttamente sul pantry
+  if (cat === '__pantry') {
+    const p = pantry[idx]; if(!p) return;
+    if(!p.owners) p.owners = [];
+    const pos = p.owners.indexOf(owner);
+    if(pos>=0) p.owners.splice(pos,1); else p.owners.push(owner);
+    savePantry(); renderContent(); return;
+  }
   const list = (spesa[cat]||[]).slice();
   if (!list[idx]) return;
   if (!list[idx].owners) list[idx].owners = [];
