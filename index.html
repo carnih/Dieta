@@ -166,9 +166,13 @@
     .pl-note{font-size:12.5px;color:#4B5563;line-height:1.45}
     .pl-ref{font-size:12px;color:#6B7280;line-height:1.5}
     .pl-ref b{color:#374151}
-    .pl-recipe{width:100%;margin-top:6px;font-family:inherit;font-size:13px;padding:9px 11px;border:1.5px dashed #E5C5D5;border-radius:10px;background:#FFF9FC;color:#374151;outline:none}
+    .pl-recipe{width:100%;margin-bottom:8px;font-family:inherit;font-size:13px;padding:9px 11px;border:1.5px dashed #E5C5D5;border-radius:10px;background:#FFF9FC;color:#374151;outline:none}
     .pl-recipe:focus{border-style:solid;border-color:var(--e);background:#fff}
     .pl-recipe::placeholder{color:#C9A6BA}
+    .pl-recipe.has{border-style:solid;border-color:var(--e);background:#FFF1F7;font-weight:700;color:#9D2D63}
+    .pl-choices.dim{opacity:.45;transition:opacity .15s}
+    .pl-choices.dim:focus-within{opacity:1}
+    .pl-altlbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#C9A6BA;margin:2px 0 6px}
     .recipe-note{margin-top:2px;font-size:12px;color:#9D5577;background:#FDF2F8;border-radius:8px;padding:6px 9px;line-height:1.4;font-style:italic}
 
     /* ── EDITOR DIETA BASE ── */
@@ -1184,8 +1188,11 @@ function renderNoemiTab(){
     }).join('');
     const fixed = (m.fixed||[]).map(f=>`<div class="pl-fixed">+ ${esc(f.v)}</div>`).join('');
     const note = noteFor(noemiDay, mk);
-    const recipe = `<input class="pl-recipe" value="${esc(note)}" placeholder="📝 Ricetta / note (facoltativo)" onchange="setPlan('${noemiDay}','${mk}_note',this.value)">`;
-    const body = mfree ? `<div class="pl-free">🎉 Pasto libero</div>` : `${slots}${fixed}${recipe}`;
+    const hasNote = !!note;
+    const recipe = `<input class="pl-recipe ${hasNote?'has':''}" value="${esc(note)}" placeholder="📝 Ricetta / note (facoltativo)" onchange="setPlan('${noemiDay}','${mk}_note',this.value)">`;
+    // ricetta SOPRA; se compilata, le scelte sotto sono sbiadite (alternative secondarie)
+    const choices = `<div class="pl-choices ${hasNote?'dim':''}">${hasNote?'<div class="pl-altlbl">in alternativa</div>':''}${slots}${fixed}</div>`;
+    const body = mfree ? `<div class="pl-free">🎉 Pasto libero</div>` : `${recipe}${choices}`;
     return `<div class="day-card" style="padding:13px 14px 12px">
       <div class="meal-sec-head" style="padding:0 0 10px">
         <span class="meal-sec-icon">${m.icon}</span><span class="meal-sec-title">${m.nome}</span>
@@ -1239,7 +1246,11 @@ function renderNoemiBaseEdit(){
           <button class="ed-x" onclick="beNoemiOptDel('${mk}',${si},${oi})">✕</button>
         </div>`).join('');
       return `<div class="be-slot">
-        <div class="be-slot-h">${esc(s.label)} ${catPill(s.cat)}</div>
+        <div class="be-slot-h" style="gap:7px;flex-wrap:wrap">
+          <input class="be-in" style="flex:1 1 80px" value="${esc(s.label)}" placeholder="Nome" onchange="beNoemiSlotLabel('${mk}',${si},this.value)">
+          <select class="ed-cat" style="flex:1 1 110px" onchange="beNoemiSlotCat('${mk}',${si},this.value)">${catOptions(s.cat)}</select>
+          <button class="ed-x" onclick="beNoemiSlotDel('${mk}',${si})" title="Elimina categoria">🗑</button>
+        </div>
         ${opts}
         <button class="ed-add-opt" onclick="beNoemiOptAdd('${mk}',${si})">+ opzione</button>
       </div>`;
@@ -1247,6 +1258,7 @@ function renderNoemiBaseEdit(){
     return `<div class="pl-meal">
       <div class="meal-sec-head" style="padding:0 0 9px"><span class="meal-sec-icon">${m.icon}</span><span class="meal-sec-title">${m.nome}</span></div>
       ${slots}
+      <button class="ed-add" onclick="beNoemiSlotAdd('${mk}')">+ aggiungi categoria a ${esc(m.nome)}</button>
     </div>`;
   }).join('');
   return `
@@ -1259,6 +1271,14 @@ function renderNoemiBaseEdit(){
 window.beNoemiOpt    = (mk,si,oi,v)=>{ NOEMI_BASE[mk].slots[si].opts[oi]=v; saveNoemiBase(); toast('✓ Salvato'); };
 window.beNoemiOptAdd = (mk,si)=>{ NOEMI_BASE[mk].slots[si].opts.push('nuova opzione'); saveNoemiBase(); renderContent(); };
 window.beNoemiOptDel = (mk,si,oi)=>{ const a=NOEMI_BASE[mk].slots[si].opts; a.splice(oi,1); if(!a.length)a.push(''); saveNoemiBase(); renderContent(); };
+// opzioni categoria per i <select> dell'editor base
+function catOptions(sel){
+  return Object.keys(CAT).map(k=>`<option value="${k}" ${sel===k?'selected':''}>${esc(CAT[k].pill)}</option>`).join('');
+}
+window.beNoemiSlotLabel = (mk,si,v)=>{ NOEMI_BASE[mk].slots[si].label=(v||'').trim()||'Voce'; saveNoemiBase(); toast('✓ Salvato'); };
+window.beNoemiSlotCat   = (mk,si,v)=>{ NOEMI_BASE[mk].slots[si].cat=v; saveNoemiBase(); renderContent(); };
+window.beNoemiSlotDel   = (mk,si)=>{ if(!confirm('Eliminare questa categoria dal pasto?'))return; NOEMI_BASE[mk].slots.splice(si,1); saveNoemiBase(); renderContent(); };
+window.beNoemiSlotAdd   = (mk)=>{ NOEMI_BASE[mk].slots.push({key:'cust_'+Date.now(), cat:'verdura', label:'Nuova', opts:['nuova opzione']}); saveNoemiBase(); renderContent(); };
 
 function renderNicBaseEdit(){
   const d = NICHOLAS.days.find(x=>x.id===baseNicDay) || NICHOLAS.days[0];
