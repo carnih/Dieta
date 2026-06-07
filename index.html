@@ -173,7 +173,7 @@
     .pl-choices.dim{opacity:.45;transition:opacity .15s}
     .pl-choices.dim:focus-within{opacity:1}
     .pl-altlbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#C9A6BA;margin:2px 0 6px}
-    .recipe-note{margin-top:2px;font-size:12px;color:#9D5577;background:#FDF2F8;border-radius:8px;padding:6px 9px;line-height:1.4;font-style:italic}
+    .recipe-note{font-size:14.5px;font-weight:800;color:#9D2D63;background:#FCE7F3;border:1px solid #F5C6DD;border-radius:11px;padding:11px 13px;line-height:1.35}
 
     /* ── EDITOR DIETA BASE ── */
     .be-open{display:inline-flex;align-items:center;gap:5px;border:1.5px solid #F0D9E4;background:#FDF2F8;color:var(--e);font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 14px;border-radius:50px;margin-bottom:4px}
@@ -486,6 +486,21 @@
     .ed-cat{flex:1;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13px;font-weight:700;color:#374151;min-height:42px;padding:9px 30px 9px 11px;border:1.5px solid #E5E7EB;border-radius:10px;background:#fff;outline:none;cursor:pointer;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
     .ed-cat:focus{border-color:var(--e)}
+    /* ── EDITOR DIETA BASE — unificato (Noemi + Nicholas) ── */
+    .be-meal{margin-bottom:18px}
+    .be-meal-h{display:flex;align-items:center;gap:9px;font-family:var(--font-head);font-weight:800;font-size:15px;color:#374151;margin:0 0 10px}
+    .be-meal-h .em{font-size:18px}
+    .be-group{background:#FAFBFC;border:1.5px solid #EEF0F3;border-radius:14px;padding:11px;margin-bottom:9px}
+    .be-grouphead{display:flex;gap:7px;align-items:center;margin-bottom:9px}
+    .be-name{flex:1 1 70px;min-width:0;height:42px}
+    .be-optrow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+    .be-optrow .be-in{flex:1;height:40px}
+    .be-iconbtn{width:40px;height:40px;flex:none;border:none;border-radius:10px;background:#F1F3F6;color:#9CA3AF;font-size:13px;cursor:pointer;transition:all .12s var(--ease)}
+    .be-iconbtn:active{transform:scale(.9)}
+    .be-iconbtn.del:active{background:#FEE2E2;color:#DC2626}
+    .be-addopt{border:none;background:transparent;color:var(--e);font-weight:800;font-size:12.5px;cursor:pointer;padding:4px 2px}
+    .be-add{width:100%;border:1.5px dashed #CDE6D9;background:#F4FBF7;color:#059669;font-weight:800;font-size:13.5px;padding:12px;border-radius:12px;cursor:pointer;margin:2px 0 4px}
+    .be-add:active{background:#E7F6EE}
     .ed-opt-row{display:flex;gap:6px;align-items:center}
     .ed-opt{flex:1;font-family:inherit;font-size:13.5px;padding:9px 11px;border:1.5px solid #E5E7EB;border-radius:9px;background:#fff;outline:none;transition:border-color .15s}
     .ed-opt:focus{border-color:var(--e)}
@@ -1037,8 +1052,8 @@ function noemiSideHTML(wd, mealKey){
   const items = noemiMealItems(wd, mealKey);
   const choices = items.length ? items.map(it=>foodRow(it.cat, it.v)).join('') : dash();
   const note = noteFor(wd, mealKey);
-  // se c'è una ricetta scritta: è il PRIMO box, le scelte sotto sbiadite (alternative)
-  if(note) return `<div class="recipe-note">📝 ${esc(note)}</div><div class="pl-choices dim">${choices}</div>`;
+  // se c'è una ricetta scritta: mostra SOLO quella, ben visibile
+  if(note) return `<div class="recipe-note">📝 ${esc(note)}</div>`;
   return choices;
 }
 
@@ -1241,33 +1256,33 @@ function saveNicBase(){ try{ set(ref(db,'nicBase'), NICHOLAS); }catch(e){} }
 function renderNoemiBaseEdit(){
   const meals = NOEMI_MEALS.map(mk=>{
     const m = NOEMI_BASE[mk];
-    const slots = m.slots.map((s,si)=>{
+    const groups = m.slots.map((s,si)=>{
       const opts = s.opts.map((o,oi)=>`
-        <div class="be-opt">
+        <div class="be-optrow">
           <input class="be-in" value="${esc(o)}" onchange="beNoemiOpt('${mk}',${si},${oi},this.value)">
-          <button class="ed-x" onclick="beNoemiOptDel('${mk}',${si},${oi})">✕</button>
+          <button class="be-iconbtn" onclick="beNoemiOptDel('${mk}',${si},${oi})" title="Rimuovi opzione">✕</button>
         </div>`).join('');
-      return `<div class="be-slot">
-        <div class="be-slot-h" style="gap:7px;flex-wrap:wrap">
-          <input class="be-in" style="flex:1 1 80px" value="${esc(s.label)}" placeholder="Nome" onchange="beNoemiSlotLabel('${mk}',${si},this.value)">
-          <select class="ed-cat" style="flex:1 1 110px" onchange="beNoemiSlotCat('${mk}',${si},this.value)">${catOptions(s.cat)}</select>
-          <button class="ed-x" onclick="beNoemiSlotDel('${mk}',${si})" title="Elimina categoria">🗑</button>
+      return `<div class="be-group">
+        <div class="be-grouphead">
+          <input class="be-in be-name" value="${esc(s.label)}" placeholder="Nome" onchange="beNoemiSlotLabel('${mk}',${si},this.value)">
+          <select class="ed-cat" onchange="beNoemiSlotCat('${mk}',${si},this.value)">${catOptions(s.cat)}</select>
+          <button class="be-iconbtn del" onclick="beNoemiSlotDel('${mk}',${si})" title="Elimina categoria">🗑</button>
         </div>
         ${opts}
-        <button class="ed-add-opt" onclick="beNoemiOptAdd('${mk}',${si})">+ opzione</button>
+        <button class="be-addopt" onclick="beNoemiOptAdd('${mk}',${si})">+ opzione</button>
       </div>`;
     }).join('');
-    return `<div class="pl-meal">
-      <div class="meal-sec-head" style="padding:0 0 9px"><span class="meal-sec-icon">${m.icon}</span><span class="meal-sec-title">${m.nome}</span></div>
-      ${slots}
-      <button class="ed-add" onclick="beNoemiSlotAdd('${mk}')">+ aggiungi categoria a ${esc(m.nome)}</button>
+    return `<div class="be-meal">
+      <div class="be-meal-h"><span class="em">${m.icon}</span>${esc(m.nome)}</div>
+      ${groups}
+      <button class="be-add" onclick="beNoemiSlotAdd('${mk}')">+ aggiungi categoria</button>
     </div>`;
   }).join('');
   return `
-    <div class="page-title">Dieta base · Noemi</div>
-    <div class="page-sub">Modifica le opzioni del nutrizionista</div>
+    <div class="page-title e">Dieta base · Noemi</div>
+    <div class="page-sub">Modifica voci e categorie</div>
     <button class="be-done" onclick="closeBase()">✓ Fatto</button>
-    <div class="day-card" style="padding:14px 14px 6px">${meals}</div>
+    <div class="day-card" style="padding:16px 14px 8px">${meals}</div>
     ${renderCatEditor()}`;
 }
 window.beNoemiOpt    = (mk,si,oi,v)=>{ NOEMI_BASE[mk].slots[si].opts[oi]=v; saveNoemiBase(); toast('✓ Salvato'); };
@@ -1285,34 +1300,36 @@ window.beNoemiSlotAdd   = (mk)=>{ NOEMI_BASE[mk].slots.push({key:'cust_'+Date.no
 function renderNicBaseEdit(){
   const d = NICHOLAS.days.find(x=>x.id===baseNicDay) || NICHOLAS.days[0];
   const pasti = d.pasti.map((p,pi)=>{
-    const items = p.items.map((it,ii)=>{
-      const catSel = `<select class="ed-cat" style="flex:1 1 110px" onchange="beNicItemCat(${pi},${ii},this.value)">${catOptions(it.cat)}</select>`;
+    const groups = p.items.map((it,ii)=>{
+      const head = `<div class="be-grouphead">
+        <select class="ed-cat" onchange="beNicItemCat(${pi},${ii},this.value)">${catOptions(it.cat)}</select>
+        <button class="be-iconbtn del" onclick="beNicItemDel(${pi},${ii})" title="Elimina voce">🗑</button>
+      </div>`;
       if(it.alts){
         const alts = it.alts.map((a,ai)=>`
-          <div class="be-opt">
+          <div class="be-optrow">
             <input class="be-in" value="${esc(a)}" onchange="beNicAlt(${pi},${ii},${ai},this.value)">
-            <button class="ed-x" onclick="beNicAltDel(${pi},${ii},${ai})">✕</button>
+            <button class="be-iconbtn" onclick="beNicAltDel(${pi},${ii},${ai})" title="Rimuovi opzione">✕</button>
           </div>`).join('');
-        return `<div class="be-slot">
-          <div class="be-slot-h" style="gap:7px">${catSel}<button class="ed-x" onclick="beNicItemDel(${pi},${ii})" title="Elimina voce">🗑</button></div>
-          ${alts}
-          <button class="ed-add-opt" onclick="beNicAltAdd(${pi},${ii})">+ opzione</button>
-        </div>`;
+        return `<div class="be-group">${head}${alts}<button class="be-addopt" onclick="beNicAltAdd(${pi},${ii})">+ opzione</button></div>`;
       }
-      return `<div class="be-opt" style="gap:7px">${catSel}<input class="be-in" value="${esc(it.v)}" onchange="beNicVal(${pi},${ii},this.value)"><button class="ed-x" onclick="beNicItemDel(${pi},${ii})">✕</button></div>`;
+      return `<div class="be-group">${head}
+        <div class="be-optrow"><input class="be-in" value="${esc(it.v)}" onchange="beNicVal(${pi},${ii},this.value)"></div>
+        <button class="be-addopt" onclick="beNicMakeAlts(${pi},${ii})">+ opzione</button>
+      </div>`;
     }).join('');
-    return `<div class="pl-meal">
-      <div class="meal-sec-head" style="padding:0 0 9px"><span class="meal-sec-icon">${p.icon}</span><span class="meal-sec-title">${esc(p.nome)}</span></div>
-      ${items}
-      <button class="ed-add" onclick="beNicItemAdd(${pi})">+ aggiungi voce a ${esc(p.nome)}</button>
+    return `<div class="be-meal">
+      <div class="be-meal-h"><span class="em">${p.icon}</span>${esc(p.nome)}</div>
+      ${groups}
+      <button class="be-add" onclick="beNicItemAdd(${pi})">+ aggiungi voce</button>
     </div>`;
   }).join('');
   return `
-    <div class="page-title">Dieta base · Nicholas</div>
-    <div class="page-sub">Modifica le opzioni del nutrizionista</div>
+    <div class="page-title n">Dieta base · Nicholas</div>
+    <div class="page-sub">Modifica voci e categorie</div>
     <button class="be-done" onclick="closeBase()">✓ Fatto</button>
     ${nicChips(baseNicDay,'setBaseNicDay')}
-    <div class="day-card" style="padding:14px 14px 6px">${pasti}</div>
+    <div class="day-card" style="padding:16px 14px 8px">${pasti}</div>
     ${renderCatEditor()}`;
 }
 function nicBaseDay(){ return NICHOLAS.days.find(x=>x.id===baseNicDay) || NICHOLAS.days[0]; }
@@ -1324,6 +1341,7 @@ window.beNicAltDel = (pi,ii,ai)=>{ const a=nicBaseDay().pasti[pi].items[ii].alts
 window.beNicItemCat = (pi,ii,v)=>{ nicBaseDay().pasti[pi].items[ii].cat=v; saveNicBase(); renderContent(); };
 window.beNicItemDel = (pi,ii)=>{ if(!confirm('Eliminare questa voce?'))return; nicBaseDay().pasti[pi].items.splice(ii,1); saveNicBase(); renderContent(); };
 window.beNicItemAdd = (pi)=>{ nicBaseDay().pasti[pi].items.push({cat:'carbo', v:'nuova voce'}); saveNicBase(); renderContent(); };
+window.beNicMakeAlts = (pi,ii)=>{ const it=nicBaseDay().pasti[pi].items[ii]; it.alts=[it.v||'', 'nuova opzione']; delete it.v; saveNicBase(); renderContent(); };
 
 window.openBase  = p=>{ editBase=p; renderContent(); window.scrollTo(0,0); };
 window.closeBase = ()=>{ editBase=null; renderContent(); window.scrollTo(0,0); };
