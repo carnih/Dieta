@@ -483,7 +483,9 @@
     /* structured editor */
     .ed-comp{border:1.5px solid #EEF0F3;border-radius:12px;padding:9px;margin-bottom:9px;display:flex;flex-direction:column;gap:6px;background:#FCFCFD}
     .ed-comp-top{display:flex;gap:8px}
-    .ed-cat{flex:1;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13px;font-weight:600;color:#374151;padding:9px 10px;border:1.5px solid #E5E7EB;border-radius:9px;background:#fff;outline:none}
+    .ed-cat{flex:1;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13px;font-weight:700;color:#374151;min-height:42px;padding:9px 30px 9px 11px;border:1.5px solid #E5E7EB;border-radius:10px;background:#fff;outline:none;cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+    .ed-cat:focus{border-color:var(--e)}
     .ed-opt-row{display:flex;gap:6px;align-items:center}
     .ed-opt{flex:1;font-family:inherit;font-size:13.5px;padding:9px 11px;border:1.5px solid #E5E7EB;border-radius:9px;background:#fff;outline:none;transition:border-color .15s}
     .ed-opt:focus{border-color:var(--e)}
@@ -1033,10 +1035,11 @@ function isMealFree(wd, mealKey){ return !!(((noemiPlan && noemiPlan[wd]) || {})
 function noemiSideHTML(wd, mealKey){
   if(isMealFree(wd, mealKey)) return `<div class="free-chip">🎉 Pasto libero</div>`;
   const items = noemiMealItems(wd, mealKey);
-  let html = items.length ? items.map(it=>foodRow(it.cat, it.v)).join('') : dash();
+  const choices = items.length ? items.map(it=>foodRow(it.cat, it.v)).join('') : dash();
   const note = noteFor(wd, mealKey);
-  if(note) html += `<div class="recipe-note">📝 ${esc(note)}</div>`;
-  return html;
+  // se c'è una ricetta scritta: è il PRIMO box, le scelte sotto sbiadite (alternative)
+  if(note) return `<div class="recipe-note">📝 ${esc(note)}</div><div class="pl-choices dim">${choices}</div>`;
+  return choices;
 }
 
 // ══════════════════════════════════════════
@@ -1190,9 +1193,8 @@ function renderNoemiTab(){
     const note = noteFor(noemiDay, mk);
     const hasNote = !!note;
     const recipe = `<input class="pl-recipe ${hasNote?'has':''}" value="${esc(note)}" placeholder="📝 Ricetta / note (facoltativo)" onchange="setPlan('${noemiDay}','${mk}_note',this.value)">`;
-    // ricetta SOPRA; se compilata, le scelte sotto sono sbiadite (alternative secondarie)
-    const choices = `<div class="pl-choices ${hasNote?'dim':''}">${hasNote?'<div class="pl-altlbl">in alternativa</div>':''}${slots}${fixed}</div>`;
-    const body = mfree ? `<div class="pl-free">🎉 Pasto libero</div>` : `${recipe}${choices}`;
+    // ricetta come PRIMO box; le scelte restano normali (invariate)
+    const body = mfree ? `<div class="pl-free">🎉 Pasto libero</div>` : `${recipe}${slots}${fixed}`;
     return `<div class="day-card" style="padding:13px 14px 12px">
       <div class="meal-sec-head" style="padding:0 0 10px">
         <span class="meal-sec-icon">${m.icon}</span><span class="meal-sec-title">${m.nome}</span>
@@ -1284,6 +1286,7 @@ function renderNicBaseEdit(){
   const d = NICHOLAS.days.find(x=>x.id===baseNicDay) || NICHOLAS.days[0];
   const pasti = d.pasti.map((p,pi)=>{
     const items = p.items.map((it,ii)=>{
+      const catSel = `<select class="ed-cat" style="flex:1 1 110px" onchange="beNicItemCat(${pi},${ii},this.value)">${catOptions(it.cat)}</select>`;
       if(it.alts){
         const alts = it.alts.map((a,ai)=>`
           <div class="be-opt">
@@ -1291,16 +1294,17 @@ function renderNicBaseEdit(){
             <button class="ed-x" onclick="beNicAltDel(${pi},${ii},${ai})">✕</button>
           </div>`).join('');
         return `<div class="be-slot">
-          <div class="be-slot-h">${catPill(it.cat)}</div>
+          <div class="be-slot-h" style="gap:7px">${catSel}<button class="ed-x" onclick="beNicItemDel(${pi},${ii})" title="Elimina voce">🗑</button></div>
           ${alts}
           <button class="ed-add-opt" onclick="beNicAltAdd(${pi},${ii})">+ opzione</button>
         </div>`;
       }
-      return `<div class="be-opt">${catPill(it.cat)}<input class="be-in" value="${esc(it.v)}" onchange="beNicVal(${pi},${ii},this.value)"></div>`;
+      return `<div class="be-opt" style="gap:7px">${catSel}<input class="be-in" value="${esc(it.v)}" onchange="beNicVal(${pi},${ii},this.value)"><button class="ed-x" onclick="beNicItemDel(${pi},${ii})">✕</button></div>`;
     }).join('');
     return `<div class="pl-meal">
       <div class="meal-sec-head" style="padding:0 0 9px"><span class="meal-sec-icon">${p.icon}</span><span class="meal-sec-title">${esc(p.nome)}</span></div>
       ${items}
+      <button class="ed-add" onclick="beNicItemAdd(${pi})">+ aggiungi voce a ${esc(p.nome)}</button>
     </div>`;
   }).join('');
   return `
@@ -1317,6 +1321,9 @@ window.beNicVal    = (pi,ii,v)=>{ nicBaseDay().pasti[pi].items[ii].v=v; saveNicB
 window.beNicAlt    = (pi,ii,ai,v)=>{ nicBaseDay().pasti[pi].items[ii].alts[ai]=v; saveNicBase(); toast('✓ Salvato'); };
 window.beNicAltAdd = (pi,ii)=>{ nicBaseDay().pasti[pi].items[ii].alts.push('nuova opzione'); saveNicBase(); renderContent(); };
 window.beNicAltDel = (pi,ii,ai)=>{ const a=nicBaseDay().pasti[pi].items[ii].alts; a.splice(ai,1); if(!a.length)a.push(''); saveNicBase(); renderContent(); };
+window.beNicItemCat = (pi,ii,v)=>{ nicBaseDay().pasti[pi].items[ii].cat=v; saveNicBase(); renderContent(); };
+window.beNicItemDel = (pi,ii)=>{ if(!confirm('Eliminare questa voce?'))return; nicBaseDay().pasti[pi].items.splice(ii,1); saveNicBase(); renderContent(); };
+window.beNicItemAdd = (pi)=>{ nicBaseDay().pasti[pi].items.push({cat:'carbo', v:'nuova voce'}); saveNicBase(); renderContent(); };
 
 window.openBase  = p=>{ editBase=p; renderContent(); window.scrollTo(0,0); };
 window.closeBase = ()=>{ editBase=null; renderContent(); window.scrollTo(0,0); };
