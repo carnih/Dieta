@@ -349,6 +349,21 @@
     .cat-manager-edit-input{flex:1;padding:6px 10px;border:1px solid #E5E7EB;border-radius:6px;font-size:13px;font-family:inherit;outline:none}
     .cat-manager-edit-input:focus{border-color:var(--e)}
     .pl-hello{font-size:13.5px;color:var(--e);font-weight:600;line-height:1.45;padding:2px 2px 8px;font-style:italic}
+    /* ── NOEMI vista settimanale (scrittura libera) ── */
+    .nw-day{background:var(--card);border-radius:16px;box-shadow:var(--sh-1);margin-bottom:11px;overflow:hidden}
+    .nw-day.oggi{box-shadow:0 0 0 2px var(--e),0 8px 22px rgba(219,39,119,.16)}
+    .nw-day-h{display:flex;align-items:center;gap:9px;padding:13px 15px;cursor:pointer;font-family:var(--font-head);font-weight:800;font-size:16px;color:#1F2937}
+    .nw-day.oggi .nw-day-h{color:var(--e)}
+    .nw-arrow{font-size:11px;color:#C2C8D0;transition:transform .22s var(--ease)}
+    .nw-arrow.open{transform:rotate(0)}.nw-arrow:not(.open){transform:rotate(-90deg)}
+    .nw-oggi{margin-left:auto;font-size:10px;font-weight:800;text-transform:uppercase;background:var(--e-l);color:var(--e);padding:3px 9px;border-radius:50px}
+    .nw-body{padding:0 13px 10px}
+    .nw-meal{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--border)}
+    .nw-lab{flex:0 0 84px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:#9CA3AF;padding-top:9px;display:flex;align-items:center;gap:5px;line-height:1.2}
+    .nw-em{font-size:14px}
+    .nw-ta{flex:1;min-width:0;border:1.5px solid #EFE3EA;border-radius:10px;background:#FFFBFD;font-family:inherit;font-size:14px;color:#374151;padding:8px 10px;outline:none;resize:none;line-height:1.4;min-height:38px;overflow:hidden}
+    .nw-ta:focus{border-color:var(--e);background:#fff}
+    .nw-ta::placeholder{color:#D7B9C8}
     .cmp-items .food-row{flex-direction:column;align-items:flex-start;gap:3px}
     .cmp-items .cat-pill{padding:2px 8px 2px 6px;font-size:9px}
     .cmp-items .food-text{font-size:13px;line-height:1.45;overflow-wrap:anywhere;width:100%}
@@ -793,6 +808,15 @@ let NOEMI_BASE = {
   ], fixed:[]},
 };
 const NOEMI_MEALS = ['colazione','spuntino','pranzo','merenda','cena'];
+// pasti della pagina Noemi (scrittura libera) — icone coerenti con dieta base/Nicholas
+const NOEMI_PAGE_MEALS = [
+  ['colazione','☀️','Colazione'],
+  ['spuntino','🍎','Spuntino'],
+  ['pranzo','🍽️','Pranzo'],
+  ['merenda','🍊','Merenda'],
+  ['cena','🌙','Cena'],
+  ['dolcetto','🍫','Dolcetto'],
+];
 
 const NOEMI_NOTES = [
   '🍝 5 pranzi “primo piatto” + 1–2 “secondo + contorno” a settimana',
@@ -911,7 +935,12 @@ function routeItem(text){
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], listView=null;
+let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={};
+
+onValue(ref(db,'noemiSettimana'), snap => {
+  noemiSettimana = snap.val() || {};
+  if(!editBase && (tab==='noemi' || tab==='oggi') && !document.activeElement?.classList?.contains('nw-ta')) renderContent();
+});
 
 onValue(ref(db,'noemiPlan'), snap => {
   noemiPlan = snap.val() || {};
@@ -1048,13 +1077,12 @@ function noemiMealItems(wd, mealKey){
 function noteFor(wd, mealKey){ return ((noemiPlan && noemiPlan[wd]) || {})[mealKey+'_note'] || ''; }
 function isMealFree(wd, mealKey){ return !!(((noemiPlan && noemiPlan[wd]) || {})[mealKey+'_free']); }
 function noemiSideHTML(wd, mealKey){
-  if(isMealFree(wd, mealKey)) return `<div class="free-chip">🎉 Pasto libero</div>`;
-  const items = noemiMealItems(wd, mealKey);
-  const choices = items.length ? items.map(it=>foodRow(it.cat, it.v)).join('') : dash();
-  const note = noteFor(wd, mealKey);
-  // se c'è una ricetta scritta: mostra SOLO quella, ben visibile
-  if(note) return `<div class="recipe-note">📝 ${esc(note)}</div>`;
-  return choices;
+  const wkd = noemiSettimana[wd] || {};
+  let txt = (wkd[mealKey]||'').trim();
+  // alla cena aggiungo il dolcetto post-cena, se scritto
+  if(mealKey==='cena' && (wkd.dolcetto||'').trim()) txt += (txt?'\n':'') + '🍫 ' + wkd.dolcetto.trim();
+  if(!txt) return dash();
+  return `<div class="recipe-note">${esc(txt).replace(/\n/g,'<br>')}</div>`;
 }
 
 // ══════════════════════════════════════════
@@ -1191,51 +1219,41 @@ function renderNicholasTab(){
   `;
 }
 
-// ── NOEMI (pianificatore) ──
+// ── NOEMI (vista settimanale a scrittura libera) ──
 function renderNoemiTab(){
-  const dp = getDayPlan(noemiDay);
-  const meals = NOEMI_MEALS.map(mk=>{
-    const m = NOEMI_BASE[mk];
-    const mfree = isMealFree(noemiDay, mk);
-    const slots = m.slots.map(s=>{
-      const opts = s.opts.map(o=>`<option ${dp[s.key]===o?'selected':''}>${esc(o)}</option>`).join('');
-      return `<div class="pl-slot">
-        ${catPill(s.cat)}
-        <div class="sched-selwrap"><select class="sched-sel" onchange="setPlan('${noemiDay}','${s.key}',this.value)">${opts}</select></div>
+  const days = NOEMI_DAYS.map(wd=>{
+    const open = noemiOpen[wd] !== false;     // di default aperto
+    const meals = open ? NOEMI_PAGE_MEALS.map(([mk,em,lab])=>{
+      const v = (noemiSettimana[wd]||{})[mk] || '';
+      return `<div class="nw-meal">
+        <div class="nw-lab"><span class="nw-em">${em}</span>${lab}</div>
+        <textarea class="nw-ta" rows="1" placeholder="…" oninput="nwGrow(this)" onchange="saveNoemiWeek('${wd}','${mk}',this.value)">${esc(v)}</textarea>
       </div>`;
-    }).join('');
-    const fixed = (m.fixed||[]).map(f=>`<div class="pl-fixed">+ ${esc(f.v)}</div>`).join('');
-    const note = noteFor(noemiDay, mk);
-    const hasNote = !!note;
-    const recipe = `<input class="pl-recipe ${hasNote?'has':''}" value="${esc(note)}" placeholder="📝 Ricetta / note (facoltativo)" onchange="setPlan('${noemiDay}','${mk}_note',this.value)">`;
-    // ricetta come PRIMO box; le scelte restano normali (invariate)
-    const body = mfree ? `<div class="pl-free">🎉 Pasto libero</div>` : `${recipe}${slots}${fixed}`;
-    return `<div class="day-card" style="padding:13px 14px 12px">
-      <div class="meal-sec-head" style="padding:0 0 10px">
-        <span class="meal-sec-icon">${m.icon}</span><span class="meal-sec-title">${m.nome}</span>
-        <button class="meal-free ${mfree?'on':''}" onclick="toggleMealFree('${noemiDay}','${mk}')">🎉 libero</button>
+    }).join('') : '';
+    return `<div class="nw-day">
+      <div class="nw-day-h" onclick="toggleNoemiDay('${wd}')">
+        <span class="nw-arrow ${open?'open':''}">▾</span>
+        <span class="nw-day-name">${NOEMI_FULL[wd]}</span>
       </div>
-      ${body}
+      ${open?`<div class="nw-body">${meals}</div>`:''}
     </div>`;
   }).join('');
-  const notes = NOEMI_NOTES.map(n=>`<div class="pl-note">${esc(n)}</div>`).join('');
-  const ref   = NOEMI_REF.map(([t,d])=>`<div class="pl-ref"><b>${esc(t)}</b> ${esc(d)}</div>`).join('');
   return `
     <div class="page-title e">Noemi</div>
-    <div class="pl-hello">😅 Spoiler: la risposta NON è «non lo so»</div>
-    <button class="be-open" onclick="openBase('noemi')">⚙︎ Modifica dieta base</button>
-    ${noemiChips(noemiDay,'setNoemiDay')}
-    <div class="reset-row">
-      <button class="reset-btn" onclick="resetNoemiDay('${noemiDay}')">↺ Reset ${NOEMI_FULL[noemiDay]}</button>
-      <button class="reset-btn" onclick="resetNoemiWeek()">↺ Reset settimana</button>
-    </div>
-    ${meals}
-    <div class="sec-title e" style="margin-top:6px">📋 Promemoria settimana</div>
-    <div class="pl-notes">${notes}</div>
-    <div class="sec-title e" style="margin-top:6px">🔎 Alimenti ammessi</div>
-    <div class="pl-notes">${ref}</div>
+    <div class="pl-hello">📝 Scrivi la settimana a mano, come sulle note — una volta al mese</div>
+    <button class="be-open" onclick="openBase('noemi')">📖 Dieta base</button>
+    ${days}
   `;
 }
+window.toggleNoemiDay = wd=>{ const open = noemiOpen[wd]!==false; noemiOpen[wd]=!open; renderContent(); };
+window.saveNoemiWeek  = (wd,mk,v)=>{
+  v=(v||'').replace(/\s+$/,'');
+  if(!noemiSettimana[wd]) noemiSettimana[wd]={};
+  noemiSettimana[wd][mk]=v;
+  try{ set(ref(db,'noemiSettimana/'+wd+'/'+mk), v||null); }catch(e){}
+  toast('✓ Salvato');
+};
+window.nwGrow = el=>{ el.style.height='auto'; el.style.height=Math.max(38, el.scrollHeight)+'px'; };
 
 // ── EDITOR DIETA BASE ──
 const CAT_EDIT = ['carbo','prot','frutta','verdura','latte','grasso','sfizio','bevanda','olio'];
@@ -1278,12 +1296,18 @@ function renderNoemiBaseEdit(){
       <button class="be-add" onclick="beNoemiSlotAdd('${mk}')">+ aggiungi categoria</button>
     </div>`;
   }).join('');
+  const notes = NOEMI_NOTES.map(n=>`<div class="pl-note">${esc(n)}</div>`).join('');
+  const refz  = NOEMI_REF.map(([t,d])=>`<div class="pl-ref"><b>${esc(t)}</b> ${esc(d)}</div>`).join('');
   return `
     <div class="page-title e">Dieta base · Noemi</div>
-    <div class="page-sub">Modifica voci e categorie</div>
+    <div class="page-sub">Opzioni del nutrizionista — consulta e modifica</div>
     <button class="be-done" onclick="closeBase()">✓ Fatto</button>
     <div class="day-card" style="padding:16px 14px 8px">${meals}</div>
-    ${renderCatEditor()}`;
+    ${renderCatEditor()}
+    <div class="sec-title e" style="margin-top:10px">📋 Promemoria settimana</div>
+    <div class="pl-notes">${notes}</div>
+    <div class="sec-title e" style="margin-top:6px">🔎 Alimenti ammessi</div>
+    <div class="pl-notes">${refz}</div>`;
 }
 window.beNoemiOpt    = (mk,si,oi,v)=>{ NOEMI_BASE[mk].slots[si].opts[oi]=v; saveNoemiBase(); toast('✓ Salvato'); };
 window.beNoemiOptAdd = (mk,si)=>{ NOEMI_BASE[mk].slots[si].opts.push('nuova opzione'); saveNoemiBase(); renderContent(); };
@@ -1873,6 +1897,8 @@ function renderContent(animate){
                :                     renderNoemiTab();
   el.classList.remove('saving');
   if(animate){ void el.offsetWidth; el.classList.add('tab-anim'); }
+  // autosize dei campi liberi di Noemi
+  el.querySelectorAll('textarea.nw-ta').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
 }
 
 function toast(msg){
