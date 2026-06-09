@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/genera-spesa.js": {
-      "maxDuration": 30
-    }
-  }
-}

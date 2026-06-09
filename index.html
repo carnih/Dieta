@@ -75,6 +75,8 @@
     #rail button.act[data-tab="nicholas"]{color:var(--n)}
     #rail button.act[data-tab="noemi"]{color:var(--e)}
     #rail button.act[data-tab="spesa"]{color:var(--grn)}
+    #rail button.act[data-tab="allen"]{color:var(--n)}
+    #rail button[data-tab] .lbl{font-size:10.5px}
     #scrim{display:none}
 
     @media (min-width:760px){
@@ -98,6 +100,7 @@
       #rail button.act[data-tab="nicholas"]{background:var(--n-l);color:var(--n)}
       #rail button.act[data-tab="noemi"]{background:var(--e-l);color:var(--e)}
       #rail button.act[data-tab="spesa"]{background:#E9F9EE;color:var(--grn)}
+      #rail button.act[data-tab="allen"]{background:var(--n-l);color:var(--n)}
       #scrim{display:block;position:fixed;inset:0;z-index:40;background:rgba(15,23,42,.28);opacity:0;pointer-events:none;transition:opacity .2s}
       body.nav-open #scrim{opacity:1;pointer-events:auto}
     }
@@ -371,6 +374,38 @@
     .nw-ta{flex:1;min-width:0;border:1.5px solid #EFE3EA;border-radius:10px;background:#FFFBFD;font-family:inherit;font-size:14px;color:#374151;padding:8px 10px;outline:none;resize:none;line-height:1.4;min-height:38px;overflow:hidden}
     .nw-ta:focus{border-color:var(--e);background:#fff}
     .nw-ta::placeholder{color:#D7B9C8}
+    /* ── ALLENAMENTI ── */
+    .today-al{border:2px solid #3B82F6;box-shadow:0 8px 22px rgba(59,130,246,.16)}
+    .al-today-h{display:flex;align-items:center;gap:8px;padding:13px 15px;font-family:var(--font-head);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#3B82F6;border-bottom:1px solid var(--border)}
+    .al-prog-h{display:flex;align-items:center;gap:9px;padding:14px 15px 6px;font-family:var(--font-head);font-weight:800;font-size:17px}
+    .al-badge{margin-left:auto;font-size:11px;font-weight:800;background:var(--n-l);color:var(--n);padding:4px 10px;border-radius:50px}
+    .al-bar{height:6px;background:#E7EEF6;border-radius:50px;margin:0 15px 10px;overflow:hidden}
+    .al-bar>i{display:block;height:100%;background:linear-gradient(90deg,#2563EB,#60A5FA);border-radius:50px}
+    .al-ctrl{display:flex;gap:8px;align-items:center;padding:0 15px 12px;flex-wrap:wrap}
+    .al-date{font-size:12px;color:#64748B;font-weight:700;display:flex;align-items:center;gap:5px}
+    .al-date input{font-family:inherit;font-size:12px;border:1.5px solid #DCE6F5;border-radius:8px;padding:5px 7px;color:#374151;outline:none}
+    .al-btn{border:1.5px solid #DCE6F5;background:#fff;color:#2563EB;font-weight:700;font-size:12.5px;border-radius:50px;padding:7px 12px;cursor:pointer}
+    .al-btn:active{background:#EFF6FF}
+    .al-obj{font-size:12.5px;color:#3a4a63;background:#EEF4FF;border:1px solid #DCE6F5;border-radius:10px;padding:9px 11px;margin:0 15px 10px;line-height:1.45}
+    .al-wk{border-top:1px solid var(--border)}
+    .al-wk-row{display:flex;align-items:center;gap:9px;padding:11px 15px;cursor:pointer;font-weight:800;font-size:14px;color:#1F2937}
+    .al-wk.cur .al-wk-row{color:#2563EB}
+    .al-arrow{font-size:10px;color:#C2C8D0;transition:transform .2s var(--ease)}.al-arrow.cl{transform:rotate(-90deg)}
+    .al-cur{margin-left:auto;font-size:9.5px;font-weight:800;text-transform:uppercase;background:var(--n-l);color:var(--n);padding:2px 8px;border-radius:50px}
+    .al-wk-body{padding:0 15px 12px}
+    .al-sess{margin:8px 0 4px}
+    .al-sess-h{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:4px 10px;border-radius:50px;margin-bottom:7px}
+    .d-nuoto{background:#E0F2FE;color:#0369A1}.d-bici{background:#DCFCE7;color:#15803D}.d-corsa{background:#FFEDD5;color:#9A3412}.d-forza{background:#EDE9FE;color:#6D28D9}.d-brick{background:#FEE2E2;color:#B91C1C}
+    .al-blk{margin-bottom:9px}
+    .al-blk-n{font-size:11px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
+    .al-blk-r{font-size:13.5px;color:#374151;line-height:1.5;padding-left:10px;border-left:2px solid var(--border)}
+    .al-note{font-size:12px;color:#9A6B1E;background:#FEF6E7;border:1px solid #F6E2BD;border-radius:9px;padding:7px 10px;margin-top:8px;line-height:1.4}
+    /* card allenamento nella pagina Dieta */
+    .oggi-al{border-left:3px solid var(--n)}
+    .oggi-al-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-weight:800;font-size:13px;color:var(--n)}
+    .oggi-al-link{margin-left:auto;border:1.5px solid var(--n-l);background:var(--n-l);color:var(--n);font-weight:800;font-size:11.5px;border-radius:50px;padding:5px 11px;cursor:pointer}
+    .oggi-al-body{padding:11px 14px}
+    .oggi-al-more{font-size:12px;font-weight:700;color:var(--n);cursor:pointer;padding-top:4px}
     .cmp-items .food-row{flex-direction:column;align-items:flex-start;gap:3px}
     .cmp-items .cat-pill{padding:2px 8px 2px 6px;font-size:9px}
     .cmp-items .food-text{font-size:13px;line-height:1.45;overflow-wrap:anywhere;width:100%}
@@ -572,6 +607,7 @@
   <button data-tab="nicholas" onclick="setTab('nicholas')"><span class="ic">🏃</span><span class="lbl">Nicholas</span></button>
   <button data-tab="noemi"    onclick="setTab('noemi')"><span class="ic">🍓</span><span class="lbl">Noemi</span></button>
   <button data-tab="spesa"    onclick="setTab('spesa')"><span class="ic">🛒</span><span class="lbl">Spesa</span></button>
+  <button data-tab="allen"    onclick="setTab('allen')"><span class="ic">🏋️</span><span class="lbl">Allen.</span></button>
 </nav>
 <div id="toast"></div>
 
@@ -846,6 +882,91 @@ const NOEMI_DAYS  = ['lun','mar','mer','gio','ven','sab','dom'];
 const NOEMI_LABELS= {lun:'Lun',mar:'Mar',mer:'Mer',gio:'Gio',ven:'Ven',sab:'Sab',dom:'Dom'};
 const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì',ven:'Venerdì',sab:'Sabato',dom:'Domenica'};
 
+// ══════════════════════════════════════════
+//  ALLENAMENTI (schede dal preparatore — generato dai PDF, aggiornato mensilmente)
+// ══════════════════════════════════════════
+const ALLENAMENTI = {
+  forza: { nome:'Forza · S&C', coach:'Paolo Morosini', durata:8, weeks:[
+    { titolo:'Settimana 1', blocchi:[
+      {nome:"Warm-up · EMOM 10'", righe:'10 burpees · 16 affondi avanti · 8 pull ups · 5 high jump squat · 30" wall sit'},
+      {nome:'Squat', righe:"1x6 box jump (atterraggio in accosciata) · front squat ogni 3' x4 round @80% 1RM"},
+      {nome:'Spinta', righe:"Shoulder press in superset · Hip thrust 3x10 · Panca piana manubri 3x10 · rest 1'"},
+      {nome:'Posteriori', righe:'6x6 single leg deadlift con 2 kb'},
+      {nome:'Tirata', righe:'Rematore bilanciere 4x8 + 5 dips parallele + 5+5 step ups manubri · rec 90"'},
+      {nome:'Core', righe:'Tabata: hollow rocks / superman'}]},
+    { titolo:'Settimana 2', blocchi:[
+      {nome:'Warm-up 2x', righe:"1' corda · 10m affondi camminati · 8 thruster manubri · 10 face pull · 10 push ups · 20\" hollow"},
+      {nome:"Fase 1 · EMOM 10'", righe:'dispari: 6-5-4-4-3 back squat · pari: 6/8 push ups (carichi graduali)'},
+      {nome:'Fase 2 · 3\'30" x4', righe:'8 squat (2 reps dal cedimento) + 6/8 hand release push ups'},
+      {nome:"Fase 3 · EMOM 10'", righe:'dispari: 6-5-4-3-3 bench press · pari: 8/10 alzate laterali (sali)'},
+      {nome:"Fase 4 · 3' x4", righe:'8 bench press (2 reps cedim.) + 6 alzate laterali'},
+      {nome:'Fase 5/6', righe:'2\'30"x4: 12 box step ups (6+6) · 3\'x4: 6/12 pull ups + 15 rdl manubri'}]},
+    { titolo:'Settimana 3', blocchi:[
+      {nome:'Warm-up', righe:'come settimana scorsa'},
+      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat (progressioni) · 6/8 push ups'},
+      {nome:'Strength · 3\'30" x4', righe:'8 back squat (2 reps dal cedimento) + 6/8 h/r push ups'},
+      {nome:"EMOM 10'", righe:'6-5-4-3-3 bench press (progressione) · 8/10 affondi avanti manubri'},
+      {nome:"3' x4", righe:'8 shoulder press + 6 alzate laterali pesanti'},
+      {nome:"3' x4", righe:'6-12 trazioni · 15 hip thrust'}]},
+    { titolo:'Settimana 4', blocchi:[
+      {nome:'Warm-up 2x', righe:"1' corda · 10m overhead lunges · 8 thruster · 10 banded face pull · 8 box jump 50cm"},
+      {nome:"EMOM 10'", righe:'4 seated box jump · 4 lanci palla medica dal petto'},
+      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat · 6/8 push ups'},
+      {nome:'3\'30" x4', righe:'8 trap bar deadlift (2 reps riserva) · 6/8 push press manubri'},
+      {nome:"3' x4", righe:'8 bench press (2 reps riserva) · 6+6 one leg rdl manubrio'},
+      {nome:'2\'30" x4', righe:'6+6 step ups'}]},
+    { titolo:'Settimana 5', blocchi:[
+      {nome:'Warm-up 2x', righe:'corda · overhead lunges · thruster · banded face pull · box jump · 2x10+10 side plank clamshell'},
+      {nome:"EMOM 10'", righe:'4 seated box jump · 4 lat slam ball'},
+      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat (attivazione, carichi inferiori) · 6 push ups'},
+      {nome:'2\'30" x4', righe:'8 back squat (4-5 reps dal cedim.) + 8+8 rematore unilaterale manubrio'},
+      {nome:"EMOM / 3' x4", righe:'6-5-4-3-3 shoulder press · 8 bench press (4 reps cedim.) + 6 lateral raises'},
+      {nome:'2\'30" x4', righe:'6+6 step ups'}]},
+    { titolo:'Settimana 6', blocchi:[
+      {nome:'Warm-up 2x + PLYO', righe:"EMOM 10': 4 balzi ostacoli · 4 slam ball"},
+      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat · 8 push press manubri'},
+      {nome:'2\'30" x4', righe:'7 hip thrust (2 reps cedim.) + 6 chin ups'},
+      {nome:"EMOM 10'", righe:'6-5-4-3-3 shoulder press · 15 croci manubri'},
+      {nome:"3' x4", righe:'7 rematore presa prona bilanciere · 6 alzate laterali medio'},
+      {nome:'Finisher', righe:"3x10 stacco da terra – 1' rest"}]},
+    { titolo:'Settimana 7', blocchi:[
+      {nome:"Warm-up · EMOM 6'", righe:"1' row · 12 ring row · 8 squat jumps"},
+      {nome:'Back squat', righe:"10' build up · 3x: 5 back squat 70%1RM o 8 rdl + 10 push ups + 10 bent row db · 2' rest"},
+      {nome:'4x (RPE 7-8)', righe:'40m farmer carry · 10 renegade row · 10 push press · 10 curl · 10 skullcrusher · 20m affondi manubri'}]},
+    { titolo:'Settimana 8', blocchi:[
+      {nome:'Warm-up', righe:"5' easy bike · 2x(10 goblet squat, 10 back lunges, 20m farmer carry) · 5' mobility"},
+      {nome:'4x', righe:"6+6 bulgarian split squat manubri · 6+6 one leg rdl manubrio · 1'30\" rest"},
+      {nome:'6x', righe:"6 trazioni · 6 dips · 1' rest"},
+      {nome:'4x', righe:'12 hip thrust · 20 polpacci da rialzo'},
+      {nome:'Finisher 28-21-15-9', righe:'push ups · band face pulls'}]}
+  ]},
+  tri: { nome:'Triathlon · Mesociclo 9', coach:'Paolo Morosini', durata:4,
+    obiettivi:'Durabilità e resistenza specifica · ↑ tempo in sella · corsa post-bike · nutrizione gara · continuità nuoto',
+    weeks:[
+    { titolo:'Settimana 1', note:'Brick: 40-50 g CHO/h', sessioni:[
+      {disc:'nuoto', blocchi:[{nome:'Riscaldamento',righe:'300 easy · 100 tavoletta · 100 pull buoy'},{nome:'Tecnica',righe:'4x50 con pinnette · 20" rest'},{nome:'Main set',righe:'5x400 @ ritmo olimpico · rec 30-45"'},{nome:'Defaticamento',righe:'100 easy'}]},
+      {disc:'bici', blocchi:[{nome:'Sessione',righe:"20' facili · 3x15' PE7 (rec attivo 5') · 20' continui PE6 · 10' defaticamento"}]},
+      {disc:'brick', blocchi:[{nome:"Bici 1h45'",righe:"60' PE6 · 30' PE7 · 15' PE7-8"},{nome:"→ Corsa 40' (transiz. immediata)",righe:"15'@5'55 · 15'@5'50 · 10'@5'45"}]},
+      {disc:'corsa', blocchi:[{nome:"Corsa aggiuntiva 50'",righe:"facile · 6'05-6'20/km"}]}]},
+    { titolo:'Settimana 2', note:'Brick: 50-60 g CHO/h', sessioni:[
+      {disc:'nuoto', blocchi:[{nome:'Riscaldamento',righe:'300 easy · 100 tavoletta · 100 pull'},{nome:'Main set',righe:"2x1000 m @ ritmo gara olimpico · rec 1'/2'"}]},
+      {disc:'bici', blocchi:[{nome:'Sessione',righe:"25' easy · 2x20' PE7 (rec attivo 5') · 25' PE6"}]},
+      {disc:'brick', blocchi:[{nome:"Bici 2h",righe:'PE6-7'},{nome:"→ Corsa 45'",righe:"20'@5'55 · 15'@5'50 · 10'@5'45"}]},
+      {disc:'corsa', blocchi:[{nome:"Corsa aggiuntiva 45'",righe:"facile · ultimi 5': 30\" allungando / 30\" lenti"}]}]},
+    { titolo:'Settimana 3 · chiave', note:'Brick: 60 g CHO/h', sessioni:[
+      {disc:'nuoto', blocchi:[{nome:'Riscaldamento',righe:'400 easy · 100 tavoletta · 100 pull'},{nome:'Main set',righe:'3x700 @ ritmo gara olimpico · rec 1\'/1\'30"'}]},
+      {disc:'brick', blocchi:[{nome:"Brick lungo · Bici 2h15'",righe:"75' PE6 · 45' PE7 · 15' PE7-8"},{nome:"→ Corsa 50'",righe:"20'@5'55 · 20'@5'50 · 10'@5'45"}]},
+      {disc:'corsa', blocchi:[{nome:"Corsa aggiuntiva 35'",righe:'molto facile'}]}]},
+    { titolo:'Settimana 4 · scarico', sessioni:[
+      {disc:'nuoto', blocchi:[{nome:'Sessione',righe:'1800 m molto sciolto e costante'}]},
+      {disc:'bici', blocchi:[{nome:'Sessione',righe:"75' PE5-6"}]},
+      {disc:'corsa', blocchi:[{nome:'Sessione',righe:"40' facile"}]}]}
+  ]}
+};
+const DISC = {nuoto:['🏊','Nuoto'],bici:['🚴','Bici'],corsa:['🏃','Corsa'],forza:['🏋️','Forza'],brick:['🔥','Brick']};
+// mappa tipo-giornata (schedule) → programma/sessione
+const TIPO2SESS = { palestra:['forza',null], nuoto:['tri','nuoto'], bici:['tri','bici'], corsa:['tri','corsa'], combinato:['tri','brick'] };
+
 // ── SPESA ──
 const SPESA_CATS_DEFAULT = [
   {key:'panetteria',  label:'🥖 Panetteria',  order:1},
@@ -874,84 +995,22 @@ function getSpesaCats(){
   });
   return all.sort((a,b)=>(a.order||100)-(b.order||100));
 }
-// ROUTER deterministico: [regex, reparto]. L'ORDINE conta: regole specifiche PRIMA delle generiche.
-const ING_MAP = [
-  // integratori (prima di tutto: parole molto specifiche)
-  [/creatina|\bbcaa\b|carnitina|maltodestrin|sali minerali|proteine in polvere|whey|\bgel\b/i,'integratori'],
-  // surgelati
-  [/surgelat/i,'surgelati'],
-  // panetteria
-  [/\bpane\b|pane integrale|pane di segale|focacc|\bpagnott/i,'panetteria'],
-  // verdure (PRIMA dei cereali, così "patate" non finisce in pasta)
-  [/patate|patata/i,'verdure'],
-  [/insalat|lattuga|rucola|pomodor|zucchin|\bzucca\b|carciof|finocch|carot|spinac|fagiolin|cetriol|broccol|melanzan|peperon|\bpisell|\bsedano\b|cavol|verz|bietol|radicch|\bverdur/i,'verdure'],
-  // frutta
-  [/banan|\bmela\b|mele\b|pera|pere\b|kiwi|arance|arancia|fragol|pesca|albicocc|melone|anguria|ananas|ciliegi|\buva\b|mirtill|\bfrutto\b|frutta di stagione|\bfrutta\b/i,'frutta'],
-  [/succo|spremut/i,'frutta'],
-  // pescheria
-  [/pesce|salmon|tonno|merluzz|orata|branzin|nasell|triglia|sgombro|\bspada\b|baccal|platess|sogliol|\btrota\b|persico|\brombo\b/i,'pescheria'],
-  [/gamber|seppie|polip|vongole|cozze|crostace|mollusch|calamar|totani|astice|moscardin/i,'pescheria'],
-  // macelleria
-  [/carne bianca|\bpollo\b|tacchino|carne rossa|vitello|\blonza\b|maiale|\bmanzo\b|bresaola/i,'macelleria'],
-  // banco fresco
-  [/\buov|albume|frittata/i,'banco'],
-  [/prosciutt|affettat|\bsalum/i,'banco'],
-  [/\btofu\b|seitan|tempeh/i,'banco'],
-  [/ravioli|tortellin|gnocch/i,'banco'],
-  [/hummus/i,'banco'],
-  // latticini
-  [/parmigian|grana/i,'latticini'],
-  [/formagg|ricotta|mozzarell|\bfeta\b|stracchin|robiola|crescenza|philadelphia|primosale|fiocchi di latte/i,'latticini'],
-  [/yogurt|skyr|kefir/i,'latticini'],
-  [/\blatte\b/i,'latticini'],
-  [/\bburro\b(?!.*arachid)/i,'latticini'],
-  // cereali
-  [/\bpasta\b/i,'cereali'],
-  [/\briso\b|basmati|venere/i,'cereali'],
-  [/cous/i,'cereali'],
-  [/\bfarro\b|\borzo\b|quinoa/i,'cereali'],
-  [/avena|fiocchi d|fiocchi di mais|porridge/i,'cereali'],
-  [/gallett/i,'cereali'],
-  [/biscott|fette biscottate/i,'cereali'],
-  [/crackers|grissini/i,'cereali'],
-  [/\bcereali\b/i,'cereali'],
-  // dispensa (lunga conservazione)
-  [/marmellata/i,'dispensa'],
-  [/\bmiele\b/i,'dispensa'],
-  [/passata|\bsugo\b|pelati/i,'dispensa'],
-  [/cioccolat|ciok/i,'dispensa'],
-  [/frutta secca|mandorl|noci|nocciol/i,'dispensa'],
-  [/barretta/i,'dispensa'],
-  [/cacao|cannella/i,'dispensa'],
-  [/burro d.?arachid|arachid/i,'dispensa'],
-  [/olio evo|olio extra|\bolio\b/i,'dispensa'],
-  [/budino/i,'dispensa'],
-  [/legum|\bcec|fagiol|lentic|\bfave\b|\bsoia\b/i,'dispensa'],
-  // animali (vanno in casa; l'owner gatto/coniglio li distingue)
-  [/fieno|mangime|croccantin|crocchett|lettiera|cibo gatt|cibo conigl/i,'casa'],
-  // casa
-  [/detersiv|detergent|sapone|shampoo|carta igienica|scottex|spazzol|dentifric/i,'casa'],
-];
-// restituisce il reparto (catKey) per un testo, o null se nessun match
-function routeItem(text){
-  const t = (text||'').toLowerCase();
-  for(const [re,cat] of ING_MAP){ if(re.test(t)) return cat; }
-  return null;
-}
 
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', noemiDay='lun', schedule={}, noemiPlan={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null;
+let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
+    allenamentiCfg={}, alOpen={};
+const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
 onValue(ref(db,'noemiSettimana'), snap => {
   noemiSettimana = snap.val() || {};
   if(!editBase && (tab==='noemi' || tab==='oggi') && !document.activeElement?.classList?.contains('nw-ta')) renderContent();
 });
 
-onValue(ref(db,'noemiPlan'), snap => {
-  noemiPlan = snap.val() || {};
-  if(!editBase && tab==='oggi') renderContent();   // non rirendero il pianificatore mentre lo compila
+onValue(ref(db,'allenamentiCfg'), snap => {
+  allenamentiCfg = snap.val() || {};
+  if(tab==='allen' || tab==='oggi') renderContent();
 });
 
 onValue(ref(db,'noemiBase'), snap => {
@@ -1065,24 +1124,6 @@ function renderNicholasWeek(){
 // ══════════════════════════════════════════
 //  NOEMI — piano (scelte per giorno)
 // ══════════════════════════════════════════
-function getDayPlan(wd){
-  const saved = (noemiPlan && noemiPlan[wd]) || {};
-  const dp = {};
-  NOEMI_MEALS.forEach(mk=>NOEMI_BASE[mk].slots.forEach(s=>{
-    dp[s.key] = (saved[s.key]!==undefined && saved[s.key]!=='') ? saved[s.key] : s.opts[0];
-  }));
-  return dp;
-}
-function noemiMealItems(wd, mealKey){
-  const dp = getDayPlan(wd);
-  const meal = NOEMI_BASE[mealKey];
-  const items = [];
-  meal.slots.forEach(s=>{ const v=dp[s.key]; if(v && v!=='— niente') items.push({cat:s.cat, v}); });
-  (meal.fixed||[]).forEach(f=>items.push(f));
-  return items;
-}
-function noteFor(wd, mealKey){ return ((noemiPlan && noemiPlan[wd]) || {})[mealKey+'_note'] || ''; }
-function isMealFree(wd, mealKey){ return !!(((noemiPlan && noemiPlan[wd]) || {})[mealKey+'_free']); }
 function noemiSideHTML(wd, mealKey){
   const wkd = noemiSettimana[wd] || {};
   const main = (wkd[mealKey]||'').trim();
@@ -1107,7 +1148,6 @@ function chipRow(items, sel, fn, cls){
   }</div></div>`;
 }
 const nicChips   = (sel,fn)=> chipRow(NICHOLAS.days.map(d=>({id:d.id,label:d.label})), sel, fn, 'n');
-const noemiChips = (sel,fn)=> chipRow(NOEMI_DAYS.map(id=>({id,label:NOEMI_LABELS[id]})), sel, fn, 'e');
 const loadingCard = `<div class="day-card"><div class="meal-sec"><div class="meal-sec-body"><div class="food-text">Caricamento…</div></div></div></div>`;
 
 // ── OGGI: confronto pasto per pasto ──
@@ -1193,12 +1233,24 @@ function renderOggi(){
     <div class="page-title">${isT?'Oggi':NOEMI_FULL[wd]}</div>
     <div class="page-sub">${sel?fmtFull(sel.obj):NOEMI_FULL[wd]} · ${trainLabel(wd)}</div>
     ${calendarHTML()}
+    ${renderOggiAllenamento(wd)}
     <div class="cmp-top">
       <div class="cmp-top-col e">🍓 Noemi</div>
       <div class="cmp-top-col n"><span>💪 Nicholas</span><span class="train-tag">${esc(trainLabel(wd))}</span></div>
     </div>
     ${cards}
   `;
+}
+// card "allenamento di oggi" (peek scheda + link al tab Allenamenti)
+function renderOggiAllenamento(wd){
+  const sc = schedaPerTipo(getSchedId(wd));
+  if(!sc) return '';
+  const peek = sc.blocchi.slice(0,2).map(blkHTML).join('');
+  const more = sc.blocchi.length>2 ? `<div class="oggi-al-more" onclick="setTab('allen')">+ altri ${sc.blocchi.length-2} blocchi…</div>` : '';
+  return `<div class="card oggi-al">
+    <div class="oggi-al-h"><span>💪 Allenamento · ${esc(trainLabel(wd))}</span><button class="oggi-al-link" onclick="setTab('allen')">📋 Scheda</button></div>
+    <div class="oggi-al-body">${peek}${more}</div>
+  </div>`;
 }
 
 // ── NICHOLAS (piano settimana + consultazione) ──
@@ -1217,11 +1269,14 @@ function renderNicholasTab(){
   const d = NICHOLAS.days.find(x=>x.id===nicType) || NICHOLAS.days[0];
   return `
     <div class="page-title n">Nicholas</div>
-    <div class="page-sub">I tuoi allenamenti della settimana</div>
-    <button class="be-open" onclick="openBase('nicholas')">⚙︎ Modifica dieta base</button>
+    <div class="page-sub">Pianifica la settimana e consulta la tua dieta</div>
+    <div class="sec-title n">📅 Pianifica la settimana</div>
     ${sched}
-    <div class="reset-row"><button class="reset-btn" onclick="resetNicWeek()">↺ Reset settimana</button></div>
-    <div class="sec-title n" style="margin-top:6px">Consulta una giornata</div>
+    <div class="reset-row">
+      <button class="reset-btn" onclick="resetNicWeek()">↺ Reset</button>
+      <button class="reset-btn" onclick="openBase('nicholas')">⚙︎ Modifica dieta base</button>
+    </div>
+    <div class="sec-title n" style="margin-top:10px">🍽️ La tua dieta</div>
     ${nicChips(nicType,'setNicType')}
     <div class="day-block">${renderNicholasDay(d)}</div>
   `;
@@ -1262,6 +1317,83 @@ window.saveNoemiWeek  = (wd,mk,v)=>{
   toast('✓ Salvato');
 };
 window.nwGrow = el=>{ el.style.height='auto'; el.style.height=Math.max(38, el.scrollHeight)+'px'; };
+
+// ══════════════════════════════════════════
+//  ALLENAMENTI — helper + render
+// ══════════════════════════════════════════
+function alCfg(prog){ const d=AL_CFG_DEF[prog]; const c=(allenamentiCfg&&allenamentiCfg[prog])||{}; return {start:c.start||d.start, shift:(c.shift!=null?c.shift:d.shift)}; }
+function mondayOf(d){ const x=new Date(d); const dow=(x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-dow); return x; }
+function settCorrente(prog){
+  const cfg=alCfg(prog); const dur=ALLENAMENTI[prog].durata;
+  const start=mondayOf(cfg.start+'T00:00:00'); const now=mondayOf(new Date());
+  const wk=Math.round((now-start)/(7*86400000)) - (cfg.shift||0);
+  return Math.max(0, Math.min(dur-1, wk));
+}
+function saveAlCfg(prog, patch){
+  const cur=alCfg(prog); const nv={...cur, ...patch};
+  allenamentiCfg[prog]=nv; try{ set(ref(db,'allenamentiCfg/'+prog), nv); }catch(e){}
+  renderContent();
+}
+window.skipWeek = (prog,delta)=>{ const c=alCfg(prog); saveAlCfg(prog,{shift:Math.max(0,(c.shift||0)+delta)}); };
+window.setAlStart = (prog,v)=>{ if(v) saveAlCfg(prog,{start:v}); };
+window.alToggle = k=>{ alOpen[k]=!alOpen[k]; renderContent(); };
+
+function blkHTML(b){ return `<div class="al-blk"><div class="al-blk-n">${esc(b.nome)}</div><div class="al-blk-r">${esc(b.righe)}</div></div>`; }
+function sessHTML(s){ const[em,nm]=DISC[s.disc]||['•',s.disc]; return `<div class="al-sess"><span class="al-sess-h d-${s.disc}">${em} ${nm}</span>${(s.blocchi||[]).map(blkHTML).join('')}</div>`; }
+function forzaBody(w){ return (w.blocchi||[]).map(blkHTML).join(''); }
+function triBody(w){ return (w.sessioni||[]).map(sessHTML).join('') + (w.note?`<div class="al-note">🍬 ${esc(w.note)}</div>`:''); }
+
+// scheda della sessione per un tipo-giornata + settimana corrente del programma
+function schedaPerTipo(tipo){
+  const map=TIPO2SESS[tipo]; if(!map) return null;
+  const [prog,disc]=map; const wk=ALLENAMENTI[prog].weeks[settCorrente(prog)]; if(!wk) return null;
+  if(prog==='forza') return {prog, titolo:ALLENAMENTI.forza.nome+' · '+wk.titolo, blocchi:wk.blocchi};
+  const s=(wk.sessioni||[]).find(x=>x.disc===disc); if(!s) return null;
+  return {prog, disc, titolo:ALLENAMENTI.tri.nome+' · '+wk.titolo, blocchi:s.blocchi};
+}
+
+function progCard(prog, bodyFn){
+  const P=ALLENAMENTI[prog], cur=settCorrente(prog), cfg=alCfg(prog);
+  const icon = prog==='forza'?'🏋️':'🔱';
+  const weeks = P.weeks.map((w,i)=>{
+    const op = alOpen[prog+i]!==undefined ? alOpen[prog+i] : (i===cur);
+    return `<div class="al-wk ${i===cur?'cur':''}">
+      <div class="al-wk-row" onclick="alToggle('${prog}${i}')">
+        <span class="al-arrow ${op?'op':'cl'}">▾</span>${esc(w.titolo)}${i===cur?'<span class="al-cur">corrente</span>':''}
+      </div>${op?`<div class="al-wk-body">${bodyFn(w)}</div>`:''}</div>`;
+  }).join('');
+  const dStr=(cfg.start||'').split('-').reverse().join('/');
+  return `<div class="card">
+    <div class="al-prog-h">${icon} ${esc(P.nome.split(' · ')[0])}<span class="al-badge">Sett. ${cur+1} / ${P.durata}</span></div>
+    <div class="al-bar"><i style="width:${(cur+1)/P.durata*100}%"></i></div>
+    <div class="al-ctrl">
+      <label class="al-date">📅 <input type="date" value="${cfg.start||''}" onchange="setAlStart('${prog}',this.value)"></label>
+      <button class="al-btn" onclick="skipWeek('${prog}',1)">⏭️ Salta</button>
+      ${cfg.shift?`<button class="al-btn" onclick="skipWeek('${prog}',-1)">↩︎ (-${cfg.shift})</button>`:''}
+    </div>
+    ${prog==='tri'&&P.obiettivi?`<div class="al-obj">🎯 ${esc(P.obiettivi)}</div>`:''}
+    ${weeks}
+  </div>`;
+}
+
+function renderAllenamentiTab(){
+  const t = todayId();
+  const tipo = getSchedId(t);          // tipo allenamento di oggi
+  const sc = schedaPerTipo(tipo);
+  const tlabel = trainLabel(t);
+  const oggi = `<div class="card today-al">
+    <div class="al-today-h">📋 Scheda di oggi · ${esc(tlabel)}</div>
+    ${sc ? `<div style="padding:10px 15px 13px"><div class="al-cur" style="display:inline-block;margin:0 0 8px">${esc(sc.titolo)}</div>${sc.blocchi.map(blkHTML).join('')}</div>`
+         : `<div style="padding:14px 15px;color:#9CA3AF;font-size:13.5px">Oggi nessuna scheda (${esc(tlabel)}). Imposta il tipo di giornata nella tab Nicholas.</div>`}
+  </div>`;
+  return `
+    <div class="page-title n">Allenamenti</div>
+    <div class="page-sub">🏊🚴🏃 Verso IM 70.3 · ${esc(ALLENAMENTI.forza.coach)}</div>
+    ${oggi}
+    ${progCard('forza', forzaBody)}
+    ${progCard('tri', triBody)}
+  `;
+}
 
 // ── EDITOR DIETA BASE ──
 const CAT_EDIT = ['carbo','prot','frutta','verdura','latte','grasso','sfizio','bevanda','olio'];
@@ -1909,19 +2041,14 @@ window.toggleOwner = (cat, idx, owner) => {
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editMode=false; editBase=null; baseView=null; closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editMode=false; editBase=null; baseView=null; if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
 window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
 window.setOggiDay = id => { oggiDay=id; renderContent(); };
-window.setNoemiDay= id => { noemiDay=id; renderContent(); };
 window.setSchedule= (wd,id) => { schedule[wd]=id; try{ set(ref(db,'schedule/'+wd), id); }catch(e){} renderContent(); };
-window.setPlan    = (wd,key,val) => { if(!noemiPlan[wd]) noemiPlan[wd]={}; noemiPlan[wd][key]=val; try{ set(ref(db,'noemiPlan/'+wd+'/'+key), val); }catch(e){} toast('✓ Salvato'); };
-window.toggleMealFree = (wd,mk) => { const nv=!isMealFree(wd,mk); if(!noemiPlan[wd]) noemiPlan[wd]={}; noemiPlan[wd][mk+'_free']=nv; try{ set(ref(db,'noemiPlan/'+wd+'/'+mk+'_free'), nv); }catch(e){} renderContent(); };
 
 window.resetNicWeek   = () => { if(!confirm('Azzerare il piano allenamenti della settimana?')) return; schedule={}; try{ set(ref(db,'schedule'), null); }catch(e){} renderContent(); toast('Settimana azzerata'); };
-window.resetNoemiWeek = () => { if(!confirm('Azzerare tutte le scelte della settimana di Noemi?')) return; noemiPlan={}; try{ set(ref(db,'noemiPlan'), null); }catch(e){} renderContent(); toast('Settimana azzerata'); };
-window.resetNoemiDay  = wd => { if(!confirm('Azzerare le scelte di '+NOEMI_FULL[wd]+'?')) return; if(noemiPlan) delete noemiPlan[wd]; try{ set(ref(db,'noemiPlan/'+wd), null); }catch(e){} renderContent(); toast(NOEMI_FULL[wd]+' azzerato'); };
 
 function updateTabbar(){
   document.querySelectorAll('#rail button[data-tab]').forEach(b=>b.classList.toggle('act', b.dataset.tab===tab));
@@ -1936,6 +2063,7 @@ function renderContent(animate){
                : tab==='oggi'      ? renderOggi()
                : tab==='nicholas'  ? renderNicholasTab()
                : tab==='spesa'     ? renderSpesaTab()
+               : tab==='allen'     ? renderAllenamentiTab()
                :                     renderNoemiTab();
   el.classList.remove('saving');
   if(animate){ void el.offsetWidth; el.classList.add('tab-anim'); }
@@ -1949,7 +2077,7 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-oggiDay = todayId(); noemiDay = todayId();
+oggiDay = todayId();
 updateTabbar();
 renderContent();
 </script>
