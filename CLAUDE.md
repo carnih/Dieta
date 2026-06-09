@@ -37,6 +37,23 @@ Navigazione: `setTab(id)`. Render globale: `renderContent()`.
 I default (costanti `NICHOLAS`, `NOEMI_BASE`, `ALLENAMENTI`, ecc.) sono hardcoded nel JS
 e scritti su Firebase al primo avvio se il nodo è vuoto.
 
+## Sicurezza (login + regole Firebase)
+- L'app richiede **login** (Firebase Auth, email/password) prima di partire. Account condiviso tra i 2 utenti.
+  Login persistente: si digita una volta per dispositivo. Gate in fondo allo `<script>` (`onAuthStateChanged`).
+- Provider da abilitare in console: **Authentication › Sign-in method › Email/Password**.
+- Le regole del Realtime Database DEVONO restare chiuse all'email in allowlist (NON `".read":true`):
+  ```json
+  {
+    "rules": {
+      ".read":  "auth != null && auth.token.email == 'EMAIL@esempio.it'",
+      ".write": "auth != null && auth.token.email == 'EMAIL@esempio.it'"
+    }
+  }
+  ```
+  (Per due account separati: `auth.token.email == 'a@x' || auth.token.email == 'b@y'`.)
+  Nota: `auth != null` da solo NON basta — con la apiKey pubblica chiunque può crearsi un account;
+  per questo si vincola all'email specifica.
+
 ## Helper chiave (da riusare, non reinventare)
 - `dbSet(path, val)` — **unico** modo per scrivere su Firebase. Gestisce gli errori (toast).
   NON usare `set(ref(db,...))` diretto: il `set()` async non va in try/catch sincrono.

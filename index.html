@@ -518,9 +518,35 @@
     .content.tab-anim > *:nth-child(3){animation-delay:.06s}
     .content.tab-anim > *:nth-child(4){animation-delay:.09s}
     .content.tab-anim > *:nth-child(n+5){animation-delay:.12s}
+
+    /* ── LOGIN (accesso riservato) ── */
+    #login{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:var(--bg);padding:24px}
+    .login-card{background:#fff;border-radius:22px;box-shadow:var(--sh-2);padding:30px 24px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:11px;text-align:center}
+    .login-emoji{font-size:44px;line-height:1}
+    .login-title{font-family:var(--font-head);font-size:26px;font-weight:850;color:#111827}
+    .login-sub{font-size:13px;color:var(--muted);margin-bottom:6px}
+    #login input{font-family:inherit;font-size:15px;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:#FAFAFA;color:var(--text);outline:none}
+    #login input:focus{border-color:var(--n)}
+    .login-btn{margin-top:4px;border:none;border-radius:50px;padding:13px;background:var(--n-g);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+    .login-btn:active{opacity:.9}
+    .login-err{font-size:12.5px;color:#DC2626;min-height:16px}
+    body.logged-out #rail{display:none}
+    .logout-link{display:block;margin:18px auto 4px;border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline}
   </style>
 </head>
-<body>
+<body class="logged-out">
+
+<div id="login">
+  <div class="login-card">
+    <div class="login-emoji">🍽️</div>
+    <div class="login-title">Dieta</div>
+    <div class="login-sub">Accesso riservato</div>
+    <input id="login-email" type="email" autocomplete="username" inputmode="email" placeholder="Email">
+    <input id="login-pwd" type="password" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Entra</button>
+    <div id="login-err" class="login-err"></div>
+  </div>
+</div>
 
 <div class="content" id="content"></div>
 
@@ -538,6 +564,7 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js';
 import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
 
 const app = initializeApp({
   apiKey:"AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4",
@@ -549,6 +576,7 @@ const app = initializeApp({
   appId:"1:1079631832344:web:bc10f2b24f49d55c26aa6d"
 });
 const db = getDatabase(app);
+const auth = getAuth(app);
 
 // Scrittura su Firebase con gestione errori reale.
 // set() ritorna una Promise: il vecchio try/catch sincrono NON catturava i
@@ -961,9 +989,11 @@ const SUBS = [
   ['schedule',        v => schedule = v||{},
     () => !editBase && (tab==='oggi'||tab==='nicholas')],
 ];
-SUBS.forEach(([path, assign, shouldRender]) => {
-  onValue(ref(db, path), snap => { assign(snap.val()); if(shouldRender()) renderContent(); });
-});
+function initFirebaseSubs(){
+  SUBS.forEach(([path, assign, shouldRender]) => {
+    onValue(ref(db, path), snap => { assign(snap.val()); if(shouldRender()) renderContent(); });
+  });
+}
 
 // ══════════════════════════════════════════
 //  RENDER HELPERS
@@ -1908,6 +1938,7 @@ function renderContent(animate){
   if(animate){ void el.offsetWidth; el.classList.add('tab-anim'); }
   // autosize dei campi liberi di Noemi
   el.querySelectorAll('textarea.nw-ta').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
+  el.insertAdjacentHTML('beforeend', '<button class="logout-link" onclick="doLogout()">🔒 Esci</button>');
 }
 
 function toast(msg){
@@ -1916,9 +1947,40 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-oggiDay = todayId();
-updateTabbar();
-renderContent();
+// ── AUTENTICAZIONE (accesso riservato) ──
+// Le regole del Realtime Database accettano SOLO l'account in allowlist:
+// chiunque altro riceve "permission denied". Il login si fa una volta per
+// dispositivo e resta memorizzato (browserLocalPersistence).
+let _appStarted = false;
+function startApp(){
+  if(_appStarted) return; _appStarted = true;
+  initFirebaseSubs();
+  oggiDay = todayId();
+  updateTabbar();
+  renderContent();
+}
+window.doLogin = () => {
+  const email = (document.getElementById('login-email').value||'').trim();
+  const pwd   = document.getElementById('login-pwd').value||'';
+  document.getElementById('login-err').textContent = '';
+  signInWithEmailAndPassword(auth, email, pwd).catch(e=>{
+    document.getElementById('login-err').textContent = 'Accesso non riuscito — controlla email e password.';
+    console.warn('login error:', e.code);
+  });
+};
+window.doLogout = () => { if(confirm('Uscire da Dieta?')) signOut(auth); };
+setPersistence(auth, browserLocalPersistence).finally(()=>{
+  onAuthStateChanged(auth, user => {
+    if(user){
+      document.getElementById('login').style.display = 'none';
+      document.body.classList.remove('logged-out');
+      startApp();
+    } else {
+      document.getElementById('login').style.display = 'flex';
+      document.body.classList.add('logged-out');
+    }
+  });
+});
 </script>
 </body>
 </html>

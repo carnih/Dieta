@@ -3,6 +3,13 @@
 Storico delle modifiche significative all'app. Le voci più recenti in alto.
 Formato libero: data — cosa è cambiato e perché.
 
+## 2026-06-09 — Sicurezza (login)
+- Aggiunto **gate di autenticazione** (Firebase Auth, email/password). L'app non parte finché
+  non si è loggati; login persistente per dispositivo (`browserLocalPersistence`). Schermata `#login`,
+  funzioni `doLogin`/`doLogout`, sottoscrizioni Firebase avviate solo dopo l'accesso (`initFirebaseSubs`/`startApp`).
+  Motivo: chiudere il Realtime Database, che aveva regole aperte a tutti (avviso di sicurezza Firebase).
+  Va accompagnato dalle regole DB che limitano l'accesso all'email in allowlist (vedi CLAUDE.md › Sicurezza).
+
 ## 2026-06-09
 - **Refactor & pulizia `index.html`** (−169 righe nette). Verificato in browser: tutte le tab,
   category manager ed editor base renderizzano, zero errori in console.
