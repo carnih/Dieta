@@ -400,12 +400,9 @@
     .al-blk-n{font-size:11px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
     .al-blk-r{font-size:13.5px;color:#374151;line-height:1.5;padding-left:10px;border-left:2px solid var(--border)}
     .al-note{font-size:12px;color:#9A6B1E;background:#FEF6E7;border:1px solid #F6E2BD;border-radius:9px;padding:7px 10px;margin-top:8px;line-height:1.4}
-    /* card allenamento nella pagina Dieta */
-    .oggi-al{border-left:3px solid var(--n)}
-    .oggi-al-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-weight:800;font-size:13px;color:var(--n)}
-    .oggi-al-link{margin-left:auto;border:1.5px solid var(--n-l);background:var(--n-l);color:var(--n);font-weight:800;font-size:11.5px;border-radius:50px;padding:5px 11px;cursor:pointer}
-    .oggi-al-body{padding:11px 14px}
-    .oggi-al-more{font-size:12px;font-weight:700;color:var(--n);cursor:pointer;padding-top:4px}
+    /* link scheda accanto al tag allenamento (colonna Nicholas, tab Dieta) */
+    .train-scheda{border:1.5px solid var(--n);background:#fff;color:var(--n);font-weight:800;font-size:10px;border-radius:20px;padding:2px 9px;cursor:pointer;text-transform:none;letter-spacing:0}
+    .train-scheda:active{background:var(--n-l)}
     .cmp-items .food-row{flex-direction:column;align-items:flex-start;gap:3px}
     .cmp-items .cat-pill{padding:2px 8px 2px 6px;font-size:9px}
     .cmp-items .food-text{font-size:13px;line-height:1.45;overflow-wrap:anywhere;width:100%}
@@ -964,8 +961,6 @@ const ALLENAMENTI = {
   ]}
 };
 const DISC = {nuoto:['🏊','Nuoto'],bici:['🚴','Bici'],corsa:['🏃','Corsa'],forza:['🏋️','Forza'],brick:['🔥','Brick']};
-// mappa tipo-giornata (schedule) → programma/sessione
-const TIPO2SESS = { palestra:['forza',null], nuoto:['tri','nuoto'], bici:['tri','bici'], corsa:['tri','corsa'], combinato:['tri','brick'] };
 
 // ── SPESA ──
 const SPESA_CATS_DEFAULT = [
@@ -1162,18 +1157,52 @@ function nicMealBy(day, kind){
   return null;
 }
 const SCHED_OPTS = [
-  {id:'corsa',     label:'🏃 Corsa',     diet:'corsa'},
-  {id:'bici',      label:'🚴 Bici',      diet:'bici'},
-  {id:'palestra',  label:'🏋️ Palestra',  diet:'palestra'},
-  {id:'nuoto',     label:'🏊 Nuoto',     diet:'palestra'},
-  {id:'padel',     label:'🏓 Padel',     diet:'palestra'},
-  {id:'combinato', label:'🔥 Combinato', diet:'combinato'},
-  {id:'riposo',    label:'😴 Riposo',    diet:'riposo'},
+  {id:'corsa',     label:'🏃 Corsa',     diet:'corsa',     sess:['tri','corsa']},
+  {id:'bici',      label:'🚴 Bici',      diet:'bici',      sess:['tri','bici']},
+  {id:'palestra',  label:'🏋️ Palestra',  diet:'palestra',  sess:['forza',null]},
+  {id:'nuoto',     label:'🏊 Nuoto',     diet:'palestra',  sess:['tri','nuoto']},
+  {id:'padel',     label:'🏓 Padel',     diet:'palestra',  sess:null},
+  {id:'brick',     label:'🔥 Brick',     diet:'combinato', sess:['tri','brick']},
+  {id:'riposo',    label:'😴 Riposo',    diet:'riposo',    sess:null},
 ];
 function schedOpt(id){ return SCHED_OPTS.find(o=>o.id===id) || SCHED_OPTS.find(o=>o.id==='riposo'); }
-function getSchedId(wd){ return (schedule && schedule[wd]) || 'riposo'; }
-function getTrain(wd){ return schedOpt(getSchedId(wd)).diet; }
-function trainLabel(wd){ return schedOpt(getSchedId(wd)).label; }
+// schedule[wd] può essere: stringa (legacy), array di id, o vuoto → normalizzo ad array (senza riposo)
+function getSchedDays(wd){
+  let v = schedule && schedule[wd];
+  if(!v) return [];
+  if(typeof v==='string') v=[v];
+  // migrazione legacy: vecchio "combinato" → "brick"
+  return v.map(x=> x==='combinato' ? 'brick' : x).filter(x=>x && x!=='riposo');
+}
+function getSchedId(wd){ const a=getSchedDays(wd); return a[0]||'riposo'; }   // compat
+// dieta del giorno: 2+ attività → combinato; brick → combinato; 1 → quella; 0 → riposo
+function getTrain(wd){
+  const a=getSchedDays(wd);
+  if(a.length>=2) return 'combinato';
+  if(a.length===1) return schedOpt(a[0]).diet;
+  return 'riposo';
+}
+function trainLabel(wd){
+  const a=getSchedDays(wd);
+  if(!a.length) return '😴 Riposo';
+  return a.map(id=>schedOpt(id).label).join(' + ');
+}
+// sessioni di allenamento del giorno (una o più), pronte da mostrare
+function schedeOggi(wd){
+  const out=[];
+  getSchedDays(wd).forEach(id=>{
+    const o=schedOpt(id); if(!o.sess) return;
+    const [prog,disc]=o.sess; const wk=ALLENAMENTI[prog].weeks[settCorrente(prog)]; if(!wk) return;
+    if(prog==='forza'){
+      const ss = wk.sessioni || [{disc:'forza', blocchi:wk.blocchi}];
+      out.push({prog, cap:ALLENAMENTI.forza.nome.split(' · ')[0]+' · '+wk.titolo, sessioni:ss});
+    } else {
+      const s=(wk.sessioni||[]).find(x=>x.disc===disc);
+      if(s) out.push({prog, cap:ALLENAMENTI.tri.nome.split(' · ')[0]+' · '+wk.titolo, sessioni:[s]});
+    }
+  });
+  return out;
+}
 function integCompact(integ){
   if(!integ) return dash();
   if(integ.multi) return integ.multi.map(r=>`<div class="food-row"><span class="cat-pill integra">${esc(r.tag)}</span><span class="food-text">${esc(r.v)}</span></div>`).join('');
@@ -1233,38 +1262,27 @@ function renderOggi(){
     <div class="page-title">${isT?'Oggi':NOEMI_FULL[wd]}</div>
     <div class="page-sub">${sel?fmtFull(sel.obj):NOEMI_FULL[wd]} · ${trainLabel(wd)}</div>
     ${calendarHTML()}
-    ${renderOggiAllenamento(wd)}
     <div class="cmp-top">
       <div class="cmp-top-col e">🍓 Noemi</div>
-      <div class="cmp-top-col n"><span>💪 Nicholas</span><span class="train-tag">${esc(trainLabel(wd))}</span></div>
+      <div class="cmp-top-col n"><span>💪 Nicholas</span><span class="train-tag">${esc(trainLabel(wd))}</span>${schedeOggi(wd).length?`<button class="train-scheda" onclick="setTab('allen')">📋 Scheda</button>`:''}</div>
     </div>
     ${cards}
   `;
-}
-// card "allenamento di oggi" (peek scheda + link al tab Allenamenti)
-function renderOggiAllenamento(wd){
-  const sc = schedaPerTipo(getSchedId(wd));
-  if(!sc) return '';
-  const peek = sc.blocchi.slice(0,2).map(blkHTML).join('');
-  const more = sc.blocchi.length>2 ? `<div class="oggi-al-more" onclick="setTab('allen')">+ altri ${sc.blocchi.length-2} blocchi…</div>` : '';
-  return `<div class="card oggi-al">
-    <div class="oggi-al-h"><span>💪 Allenamento · ${esc(trainLabel(wd))}</span><button class="oggi-al-link" onclick="setTab('allen')">📋 Scheda</button></div>
-    <div class="oggi-al-body">${peek}${more}</div>
-  </div>`;
 }
 
 // ── NICHOLAS (piano settimana + consultazione) ──
 function renderNicholasTab(){
   const sched = `<div class="sched">${
-    NOEMI_DAYS.map(wd=>`
-      <div class="sched-row">
+    NOEMI_DAYS.map(wd=>{
+      const days=getSchedDays(wd); const p=days[0]||'riposo'; const s2=days[1]||'';
+      const optsP = SCHED_OPTS.map(o=>`<option value="${o.id}" ${p===o.id?'selected':''}>${esc(o.label)}</option>`).join('');
+      const optsS = `<option value="">+ 2°…</option>`+SCHED_OPTS.filter(o=>o.id!=='riposo'&&o.id!==p).map(o=>`<option value="${o.id}" ${s2===o.id?'selected':''}>${esc(o.label)}</option>`).join('');
+      return `<div class="sched-row">
         <span class="sched-day">${NOEMI_LABELS[wd]}${wd===todayId()?' •':''}</span>
-        <div class="sched-selwrap">
-          <select class="sched-sel" onchange="setSchedule('${wd}',this.value)">
-            ${SCHED_OPTS.map(o=>`<option value="${o.id}" ${getSchedId(wd)===o.id?'selected':''}>${esc(o.label)}</option>`).join('')}
-          </select>
-        </div>
-      </div>`).join('')
+        <div class="sched-selwrap"><select class="sched-sel" onchange="setSchedDay('${wd}',0,this.value)">${optsP}</select></div>
+        ${p!=='riposo'?`<div class="sched-selwrap"><select class="sched-sel" onchange="setSchedDay('${wd}',1,this.value)">${optsS}</select></div>`:''}
+      </div>`;
+    }).join('')
   }</div>`;
   const d = NICHOLAS.days.find(x=>x.id===nicType) || NICHOLAS.days[0];
   return `
@@ -1339,18 +1357,10 @@ window.setAlStart = (prog,v)=>{ if(v) saveAlCfg(prog,{start:v}); };
 window.alToggle = k=>{ alOpen[k]=!alOpen[k]; renderContent(); };
 
 function blkHTML(b){ return `<div class="al-blk"><div class="al-blk-n">${esc(b.nome)}</div><div class="al-blk-r">${esc(b.righe)}</div></div>`; }
-function sessHTML(s){ const[em,nm]=DISC[s.disc]||['•',s.disc]; return `<div class="al-sess"><span class="al-sess-h d-${s.disc}">${em} ${nm}</span>${(s.blocchi||[]).map(blkHTML).join('')}</div>`; }
-function forzaBody(w){ return (w.blocchi||[]).map(blkHTML).join(''); }
+function sessHTML(s){ const[em,nm]=DISC[s.disc]||['•',s.disc]; const lab=s.nome||nm; return `<div class="al-sess"><span class="al-sess-h d-${s.disc}">${em} ${esc(lab)}</span>${(s.blocchi||[]).map(blkHTML).join('')}</div>`; }
+// forza: supporta più sessioni/settimana (sessioni[]) o singola (blocchi)
+function forzaBody(w){ const ss=w.sessioni||[{disc:'forza',blocchi:w.blocchi}]; return ss.map(sessHTML).join(''); }
 function triBody(w){ return (w.sessioni||[]).map(sessHTML).join('') + (w.note?`<div class="al-note">🍬 ${esc(w.note)}</div>`:''); }
-
-// scheda della sessione per un tipo-giornata + settimana corrente del programma
-function schedaPerTipo(tipo){
-  const map=TIPO2SESS[tipo]; if(!map) return null;
-  const [prog,disc]=map; const wk=ALLENAMENTI[prog].weeks[settCorrente(prog)]; if(!wk) return null;
-  if(prog==='forza') return {prog, titolo:ALLENAMENTI.forza.nome+' · '+wk.titolo, blocchi:wk.blocchi};
-  const s=(wk.sessioni||[]).find(x=>x.disc===disc); if(!s) return null;
-  return {prog, disc, titolo:ALLENAMENTI.tri.nome+' · '+wk.titolo, blocchi:s.blocchi};
-}
 
 function progCard(prog, bodyFn){
   const P=ALLENAMENTI[prog], cur=settCorrente(prog), cfg=alCfg(prog);
@@ -1378,13 +1388,14 @@ function progCard(prog, bodyFn){
 
 function renderAllenamentiTab(){
   const t = todayId();
-  const tipo = getSchedId(t);          // tipo allenamento di oggi
-  const sc = schedaPerTipo(tipo);
   const tlabel = trainLabel(t);
+  const sched = schedeOggi(t);
+  const body = sched.length
+    ? sched.map(g=>`<div style="padding:10px 15px 4px"><div class="al-cur" style="display:inline-block;margin:0 0 8px">${esc(g.cap)}</div>${g.sessioni.map(sessHTML).join('')}</div>`).join('')
+    : `<div style="padding:14px 15px;color:#9CA3AF;font-size:13.5px">Oggi nessuna scheda (${esc(tlabel)}). Imposta gli allenamenti nella tab Nicholas.</div>`;
   const oggi = `<div class="card today-al">
     <div class="al-today-h">📋 Scheda di oggi · ${esc(tlabel)}</div>
-    ${sc ? `<div style="padding:10px 15px 13px"><div class="al-cur" style="display:inline-block;margin:0 0 8px">${esc(sc.titolo)}</div>${sc.blocchi.map(blkHTML).join('')}</div>`
-         : `<div style="padding:14px 15px;color:#9CA3AF;font-size:13.5px">Oggi nessuna scheda (${esc(tlabel)}). Imposta il tipo di giornata nella tab Nicholas.</div>`}
+    ${body}
   </div>`;
   return `
     <div class="page-title n">Allenamenti</div>
@@ -2046,7 +2057,20 @@ window.toggleNav  = () => { const r=document.getElementById('rail'); const open=
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
 window.setOggiDay = id => { oggiDay=id; renderContent(); };
-window.setSchedule= (wd,id) => { schedule[wd]=id; try{ set(ref(db,'schedule/'+wd), id); }catch(e){} renderContent(); };
+window.setSchedDay = (wd, idx, val) => {
+  let days = getSchedDays(wd);                 // array senza riposo
+  if(idx===0){
+    if(val==='riposo' || !val) days = [];
+    else days[0] = val;
+  } else {
+    if(!val) days = days.slice(0,1);
+    else days[1] = val;
+  }
+  days = [...new Set(days.filter(Boolean))].slice(0,2);
+  schedule[wd] = days.length ? days : [];
+  try{ set(ref(db,'schedule/'+wd), days.length ? days : null); }catch(e){}
+  renderContent();
+};
 
 window.resetNicWeek   = () => { if(!confirm('Azzerare il piano allenamenti della settimana?')) return; schedule={}; try{ set(ref(db,'schedule'), null); }catch(e){} renderContent(); toast('Settimana azzerata'); };
 
