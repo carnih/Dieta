@@ -1114,16 +1114,9 @@ function renderNicholasDay(day){
   if(day.pastoLibero) html += `<div class="banner yellow">${esc(day.pastoLibero)}</div>`;
   return html;
 }
-function renderNicholasWeek(){
-  return NICHOLAS.days.map(day=>`
-    <div class="day-block" id="d-${day.id}">
-      <div class="day-head"><span class="day-name">${esc(day.label)}</span></div>
-      ${renderNicholasDay(day)}
-    </div>`).join('');
-}
 
 // ══════════════════════════════════════════
-//  NOEMI — piano (scelte per giorno)
+//  NOEMI — colonna Oggi
 // ══════════════════════════════════════════
 function noemiSideHTML(wd, mealKey){
   const wkd = noemiSettimana[wd] || {};
@@ -1139,9 +1132,6 @@ function noemiSideHTML(wd, mealKey){
 //  ACTIONS
 // ══════════════════════════════════════════
 function todayId(){ const wd=new Date().getDay(); return NOEMI_DAYS[(wd+6)%7]; }
-function todayLabel(){ const s=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); }
-
-const EDIT_SVG = '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 
 function chipRow(items, sel, fn, cls){
   return `<div class="chips-wrap"><div class="chips">${
@@ -1149,7 +1139,6 @@ function chipRow(items, sel, fn, cls){
   }</div></div>`;
 }
 const nicChips   = (sel,fn)=> chipRow(NICHOLAS.days.map(d=>({id:d.id,label:d.label})), sel, fn, 'n');
-const loadingCard = `<div class="day-card"><div class="meal-sec"><div class="meal-sec-body"><div class="food-text">Caricamento…</div></div></div></div>`;
 
 // ── OGGI: confronto pasto per pasto ──
 function dash(){ return '<div class="food-text" style="color:#C9D0D9">—</div>'; }
@@ -1180,7 +1169,6 @@ function getSchedDays(wd){
   // migrazione legacy: vecchio "combinato" → "brick"
   return v.map(x=> x==='combinato' ? 'brick' : x).filter(x=>x && x!=='riposo');
 }
-function getSchedId(wd){ const a=getSchedDays(wd); return a[0]||'riposo'; }   // compat
 // dieta del giorno: 2+ attività → combinato; brick → combinato; 1 → quella; 0 → riposo
 function getTrain(wd){
   const a=getSchedDays(wd);
@@ -1889,28 +1877,6 @@ window.clearHistory = () => {
   renderContent();
   toast('🧹 Cronologia svuotata');
 };
-
-// vista dispensa inline (quando filtro = pantry)
-function renderPantryInline(){
-  if(!pantry.length) return `<div class="shop"><div class="shop-empty">🏠<div>Dispensa vuota<span>Usa 🏠 su una voce per spostarla qui</span></div></div></div>`;
-  const rows = pantry.map((p,i)=>`
-    <div class="shop-row">
-      <span class="shop-name">${esc(p.t)}</span>
-      ${ownerBadgesHTML(p.owners, '__pantry', i)}
-      <button class="shop-pantry-btn on" onclick="fromPantry(${i})" title="Rimetti in lista">🏠</button>
-      <button class="shop-x" style="opacity:1" onclick="removePantry(${i})" title="Elimina dalla dispensa">✕</button>
-    </div>`).join('');
-  return `<div class="shop">
-    <div class="shop-sec">
-      <div class="shop-sec-h"><span class="shop-sec-name">🏠 Dispensa di casa</span><span class="shop-sec-n">${pantry.length}</span></div>
-      ${rows}
-      <div class="shop-addrow">
-        <span class="shop-plus">+</span>
-        <input class="shop-in" id="pantry-in" placeholder="aggiungi alla dispensa…" onkeydown="if(event.key==='Enter'){addPantryManual();return false}">
-      </div>
-    </div>
-  </div>`;
-}
 
 function saveSpesaCat(cat){ try{ const l=spesa[cat]; set(ref(db,'spesa/'+cat), (l&&l.length)?l:null); }catch(e){} }
 window.addSpesa = (cat)=>{ const el=document.getElementById('spin-'+cat); const v=(el?el.value:'').trim(); if(!v) return; const list=(spesa[cat]||[]).slice(); list.push({t:v,d:false}); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
