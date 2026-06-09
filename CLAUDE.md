@@ -37,6 +37,14 @@ Navigazione: `setTab(id)`. Render globale: `renderContent()`.
 I default (costanti `NICHOLAS`, `NOEMI_BASE`, `ALLENAMENTI`, ecc.) sono hardcoded nel JS
 e scritti su Firebase al primo avvio se il nodo è vuoto.
 
+## Helper chiave (da riusare, non reinventare)
+- `dbSet(path, val)` — **unico** modo per scrivere su Firebase. Gestisce gli errori (toast).
+  NON usare `set(ref(db,...))` diretto: il `set()` async non va in try/catch sincrono.
+- `esc(s)` — escaping per HTML, copre anche `"` e `'`. Usarlo SEMPRE su dati utente nei template literal.
+- `addSpesaItem(cat, t, owners)` — aggiunge una voce spesa con dedup case-insensitive.
+- `SUBS` (vicino all'init) — tabella dichiarativa delle sottoscrizioni Firebase: per aggiungere
+  un nodo basta una riga `[path, assegna(value), quando-rirenderizzare()]`.
+
 ## Categorie alimenti
 Definite in `const CAT` (~riga 635): carbo, prot, frutta, latte, grasso, sfizio,
 verdura, bevanda, olio, integra, scegli, altro. Etichette personalizzabili via `catLabels`.

@@ -37,7 +37,7 @@
       -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
     }
     /* titoli con Rubik */
-    .page-title,.day-name,.cmp-card .cmp-head,.catman-title,.shop-empty,.edit-title,.cat-editor-title{font-family:var(--font-head)}
+    .page-title,.cmp-card .cmp-head,.catman-title,.shop-empty{font-family:var(--font-head)}
     /* feedback tattile globale + focus accessibili */
     button{font-family:inherit}
     button:active{transition:transform .08s var(--ease)}
@@ -166,23 +166,12 @@
     .sched-chip button{border:none;background:transparent;color:var(--n);font-weight:800;font-size:13px;cursor:pointer;padding:0;line-height:1;opacity:.7}
     .sched-chip button:active{opacity:1}
 
-    /* ── PIANIFICATORE NOEMI ── */
-    .pl-meal{padding:11px 0;border-bottom:1px solid var(--border)}
-    .pl-meal:last-child{border-bottom:none}
-    .pl-slot{display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+    /* ── NOEMI — note & riferimenti dieta base ── */
     .pl-fixed{font-size:12px;color:#9CA3AF;padding:1px 0 3px 2px}
     .pl-notes{background:#fff;border-radius:14px;padding:12px 14px;box-shadow:var(--sh-1);display:flex;flex-direction:column;gap:7px}
     .pl-note{font-size:12.5px;color:#4B5563;line-height:1.45}
     .pl-ref{font-size:12px;color:#6B7280;line-height:1.5}
     .pl-ref b{color:#374151}
-    .pl-recipe{width:100%;margin-bottom:8px;font-family:inherit;font-size:13px;padding:9px 11px;border:1.5px dashed #E5C5D5;border-radius:10px;background:#FFF9FC;color:#374151;outline:none}
-    .pl-recipe:focus{border-style:solid;border-color:var(--e);background:#fff}
-    .pl-recipe::placeholder{color:#C9A6BA}
-    .pl-recipe.has{border-style:solid;border-color:var(--e);background:#FFF1F7;font-weight:700;color:#9D2D63}
-    .pl-choices.dim{opacity:.45;transition:opacity .15s}
-    .pl-choices.dim:focus-within{opacity:1}
-    .pl-altlbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#C9A6BA;margin:2px 0 6px}
-    .recipe-note{font-size:14.5px;font-weight:800;color:#9D2D63;background:#FCE7F3;border:1px solid #F5C6DD;border-radius:11px;padding:11px 13px;line-height:1.35}
     /* colonna Noemi nella tab Dieta: righe leggere ed eleganti */
     .nm-line{font-size:13.5px;font-weight:600;color:#4B5563;line-height:1.4;background:#FFF5FA;border-left:3px solid #F0A9C8;border-radius:8px;padding:7px 10px;margin-bottom:5px;overflow-wrap:anywhere}
     .nm-line.dolce{background:#F6F0FF;border-left-color:#C4A7E7;color:#5B4670}
@@ -202,12 +191,6 @@
     .be-in{flex:1;min-width:0;font-family:inherit;font-size:13px;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:9px;background:#fff;outline:none}
     .be-in:focus{border-color:var(--n)}
 
-    /* ── PASTO LIBERO ── */
-    .meal-free{margin-left:auto;border:1.5px solid #F0D9E4;background:#fff;color:var(--e);border-radius:50px;padding:4px 11px;font-size:11px;font-weight:800;cursor:pointer}
-    .meal-free.on{background:var(--e-g);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(219,39,119,.3)}
-    .pl-free{font-size:13.5px;font-weight:700;color:var(--e);background:#FDF2F8;border-radius:10px;padding:10px 13px}
-    .free-chip{display:inline-block;background:#FDF2F8;color:var(--e);font-size:12.5px;font-weight:800;padding:5px 12px;border-radius:20px}
-
     /* ── RESET ── */
     .reset-row{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 2px}
     .reset-btn{border:1.5px solid #EBE3E7;background:#fff;color:#B6BCC6;font-size:12px;font-weight:700;padding:6px 13px;border-radius:50px;cursor:pointer}
@@ -222,8 +205,6 @@
     }
     .sp-circle.on{background:var(--grn);border-color:var(--grn)}
     .sp-circle.on::after{content:'';position:absolute;left:7px;top:3.5px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
-    .sp-circle.big{width:30px;height:30px}
-    .sp-circle.big.on::after{left:9px;top:5px;width:7px;height:13px}
 
     /* toolbar */
     .shop-prog{margin-bottom:10px}
@@ -297,23 +278,7 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .shop-tool.loading .spin{display:inline-block;animation:spin .8s linear infinite}
 
-    /* ── EDITOR CATEGORIE ── */
-    .shop-sec-edit{border:none;background:transparent;color:#9CA3AF;cursor:pointer;padding:0;font-size:12px;margin-left:auto;opacity:.6;transition:opacity .15s}
-    .shop-sec-edit:hover{opacity:1}
-    .cat-editor{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;animation:fadeIn .18s ease}
-    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    .cat-editor-panel{background:#fff;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:600px;margin:0 auto}
-    .cat-editor-title{font-size:18px;font-weight:800;margin-bottom:16px}
-    .cat-editor-field{margin-bottom:12px}
-    .cat-editor-label{font-size:11px;font-weight:800;text-transform:uppercase;color:#9CA3AF;display:block;margin-bottom:6px}
-    .cat-editor-input{width:100%;padding:10px 12px;border:1.5px solid #E5E7EB;border-radius:9px;font-size:14px;font-family:inherit;outline:none}
-    .cat-editor-input:focus{border-color:var(--e)}
-    .cat-editor-buttons{display:flex;gap:10px;margin-top:18px}
-    .cat-editor-btn{flex:1;padding:12px;border:none;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer}
-    .cat-editor-btn.save{background:var(--e-g);color:#fff;box-shadow:0 4px 14px rgba(219,39,119,.35)}
-    .cat-editor-btn.cancel{background:#F3F4F6;color:#6B7280}
-    .cat-editor-btn.delete{flex:none;background:#FEE2E2;color:#DC2626}
+    /* ── overlay modale (category manager) ── */
     .cat-editor-overlay{position:fixed;inset:0;z-index:998;background:rgba(15,23,42,.45);opacity:0;pointer-events:none;transition:opacity .2s}
     .cat-editor-overlay.show{opacity:1;pointer-events:auto}
 
@@ -361,9 +326,6 @@
       box-shadow:0 5px 16px rgba(219,39,119,.32);transition:transform .12s;
     }
     .catman-add:active{transform:scale(.97)}
-    .cat-manager-edit-row{display:flex;gap:8px;align-items:center}
-    .cat-manager-edit-input{flex:1;padding:6px 10px;border:1px solid #E5E7EB;border-radius:6px;font-size:13px;font-family:inherit;outline:none}
-    .cat-manager-edit-input:focus{border-color:var(--e)}
     .pl-hello{font-size:13.5px;color:var(--e);font-weight:600;line-height:1.45;padding:2px 2px 8px;font-style:italic}
     /* ── NOEMI vista settimanale (scrittura libera) ── */
     .nw-day{background:var(--card);border-radius:16px;box-shadow:var(--sh-1);margin-bottom:11px;overflow:hidden}
@@ -451,16 +413,6 @@
       .content{margin-left:62px;padding-left:calc(14px + env(safe-area-inset-left,0px))}
     }
     .day-block{display:flex;flex-direction:column;gap:11px;scroll-margin-top:80px}
-    .day-head{display:flex;align-items:center;gap:8px;padding:0 2px}
-    .day-name{font-size:19px;font-weight:800;letter-spacing:-.4px;color:#1F2937}
-    .day-edit{
-      margin-left:auto;border:1.5px solid #F0D9E4;background:#fff;color:var(--e);
-      font-size:13px;font-weight:700;padding:7px 15px;border-radius:50px;cursor:pointer;
-      display:flex;align-items:center;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,.05);
-    }
-    .day-edit:active{background:#FDF2F8}
-    .day-edit svg{width:14px;height:14px;stroke:var(--e);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-    .edit-title{font-size:19px;font-weight:800;letter-spacing:-.4px;color:var(--e);padding:0 2px 4px}
 
     /* ── INTEGRATION BANNER ── */
     .integ-banner{border-radius:var(--r);padding:16px;color:#fff;display:flex;flex-direction:column;gap:8px}
@@ -523,26 +475,14 @@
     .banner{border-radius:var(--r);padding:13px 16px;font-size:13.5px;font-weight:500}
     .banner.yellow{background:#FEFCE8;border:1.5px solid #FDE047;color:#854D0E}
 
-    /* ── NOEMI EDIT ── */
-    .edit-section{border-bottom:1px solid var(--border)}
-    .edit-section:last-of-type{border-bottom:none}
-    .edit-section-head{display:flex;align-items:center;gap:9px;padding:13px 16px 8px}
-    .edit-section-body{padding:0 16px 14px}
-    .edit-hint{font-size:11px;color:#B6BCC6;padding:0 16px 12px;line-height:1.4}
+    /* ── NOEMI — textarea libere (vista settimanale) ── */
     textarea{
       width:100%;border:1.5px solid #E5E7EB;border-radius:12px;padding:10px 12px;
       font-size:14px;font-family:inherit;line-height:1.55;resize:vertical;min-height:54px;
       color:var(--text);background:#FAFAFA;outline:none;transition:border-color .15s,background .15s;
     }
     textarea:focus{border-color:var(--e);background:#fff}
-    .save-bar{display:flex;gap:10px;padding:14px 16px}
-    .btn-save{flex:1;padding:14px;border:none;border-radius:50px;background:var(--e-g);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(219,39,119,.35)}
-    .btn-save:active{opacity:.85}
-    .btn-cancel{padding:14px 22px;border:1.5px solid #E5E7EB;border-radius:50px;background:#fff;color:var(--muted);font-size:15px;font-weight:600;cursor:pointer}
-    .content.saving{opacity:.5;pointer-events:none}
-    /* structured editor */
-    .ed-comp{border:1.5px solid #EEF0F3;border-radius:12px;padding:9px;margin-bottom:9px;display:flex;flex-direction:column;gap:6px;background:#FCFCFD}
-    .ed-comp-top{display:flex;gap:8px}
+    /* select categoria nell'editor dieta base */
     .ed-cat{flex:1;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13px;font-weight:700;color:#374151;min-height:42px;padding:9px 30px 9px 11px;border:1.5px solid #E5E7EB;border-radius:10px;background:#fff;outline:none;cursor:pointer;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
     .ed-cat:focus{border-color:var(--e)}
@@ -561,25 +501,6 @@
     .be-addopt{border:none;background:transparent;color:var(--e);font-weight:800;font-size:12.5px;cursor:pointer;padding:4px 2px}
     .be-add{width:100%;border:1.5px dashed #CDE6D9;background:#F4FBF7;color:#059669;font-weight:800;font-size:13.5px;padding:12px;border-radius:12px;cursor:pointer;margin:2px 0 4px}
     .be-add:active{background:#E7F6EE}
-    .ed-opt-row{display:flex;gap:6px;align-items:center}
-    .ed-opt{flex:1;font-family:inherit;font-size:13.5px;padding:9px 11px;border:1.5px solid #E5E7EB;border-radius:9px;background:#fff;outline:none;transition:border-color .15s}
-    .ed-opt:focus{border-color:var(--e)}
-    .ed-x{border:none;background:#F3F4F6;color:#9CA3AF;width:34px;height:34px;border-radius:9px;font-size:13px;cursor:pointer;flex-shrink:0}
-    .ed-x:active{background:#E5E7EB}
-    .ed-add-opt{align-self:flex-start;border:none;background:transparent;color:var(--e);font-size:12.5px;font-weight:700;cursor:pointer;padding:3px 0}
-    .ed-add{width:100%;border:1.5px dashed #E5C5D5;background:#FFF5F9;color:#DB2777;font-size:13.5px;font-weight:700;padding:11px;border-radius:11px;cursor:pointer;margin-top:2px}
-    .ed-add:active{background:#FDE7F1}
-
-    /* ── FAB (modifica) ── */
-    #fab{
-      position:fixed;right:18px;bottom:24px;z-index:50;display:none;
-      align-items:center;gap:8px;padding:14px 22px 14px 18px;border:none;border-radius:50px;
-      background:var(--e-g);color:#fff;font-size:15px;font-weight:700;letter-spacing:-.2px;
-      box-shadow:0 8px 24px rgba(219,39,119,.45);cursor:pointer;
-      transition:transform .15s,box-shadow .15s;
-    }
-    #fab:active{transform:scale(.95)}
-    #fab svg{width:18px;height:18px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 
     /* ── TOAST ── */
     #toast{
@@ -628,6 +549,17 @@ const app = initializeApp({
   appId:"1:1079631832344:web:bc10f2b24f49d55c26aa6d"
 });
 const db = getDatabase(app);
+
+// Scrittura su Firebase con gestione errori reale.
+// set() ritorna una Promise: il vecchio try/catch sincrono NON catturava i
+// fallimenti async (rete assente, regole DB) → gli errori erano invisibili e
+// l'utente vedeva "✓ Salvato" anche quando il dato non era stato persistito.
+function dbSet(path, val){
+  return set(ref(db, path), val).catch(e => {
+    console.warn('Salvataggio non riuscito:', path, e);
+    toast('⚠️ Salvataggio non riuscito — controlla la connessione');
+  });
+}
 
 // ══════════════════════════════════════════
 //  CATEGORIE
@@ -1000,66 +932,43 @@ function getSpesaCats(){
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
+let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], _cid=0, editBase=null, baseNicDay='corsa', categoryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
     allenamentiCfg={}, alOpen={}, sched2Open={};
 const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
-onValue(ref(db,'noemiSettimana'), snap => {
-  noemiSettimana = snap.val() || {};
-  if(!editBase && (tab==='noemi' || tab==='oggi') && !document.activeElement?.classList?.contains('nw-ta')) renderContent();
-});
-
-onValue(ref(db,'allenamentiCfg'), snap => {
-  allenamentiCfg = snap.val() || {};
-  if(tab==='allen' || tab==='oggi') renderContent();
-});
-
-onValue(ref(db,'noemiBase'), snap => {
-  const v = snap.val();
-  if(v) NOEMI_BASE = v; else { try{ set(ref(db,'noemiBase'), NOEMI_BASE); }catch(e){} }
-  if(!editBase && (tab==='oggi' || tab==='noemi')) renderContent();
-});
-
-onValue(ref(db,'nicBase'), snap => {
-  const v = snap.val();
-  if(v) NICHOLAS = v; else { try{ set(ref(db,'nicBase'), NICHOLAS); }catch(e){} }
-  if(!editBase && (tab==='oggi' || tab==='nicholas')) renderContent();
-});
-
-onValue(ref(db,'catLabels'), snap => {
-  catLabels = snap.val() || {};
-  if(!editBase) renderContent();
-});
-
-onValue(ref(db,'spesa'), snap => {
-  spesa = snap.val() || {};
-  if(tab==='spesa') renderContent();
-});
-
-onValue(ref(db,'spesaHistory'), snap => {
-  spesaHistory = snap.val() || {};
-});
-
-onValue(ref(db,'spesaCategories'), snap => {
-  spesaCategories = snap.val() || {};
-  // non rirendero mentre il manager è aperto o durante un drag (evita flicker)
-  if(tab==='spesa' && !categoryManager && !_catDrag) renderContent();
-});
-
-onValue(ref(db,'pantry'), snap => {
-  pantry = snap.val() || [];
-  if(tab==='spesa' && !categoryManager && !_catDrag) renderContent();
-});
-
-onValue(ref(db,'schedule'), snap => {
-  schedule = snap.val() || {};
-  if(!editBase && (tab==='oggi' || tab==='nicholas')) renderContent();
+// ── SOTTOSCRIZIONI FIREBASE (dichiarative) ──
+// Ogni voce: [path, assegna(value), quando-rirenderizzare()].
+// noemiBase/nicBase fanno anche da "seed": se il nodo è vuoto scrivono il default.
+const SUBS = [
+  ['noemiSettimana',  v => noemiSettimana = v||{},
+    () => !editBase && (tab==='noemi'||tab==='oggi') && !document.activeElement?.classList?.contains('nw-ta')],
+  ['allenamentiCfg',  v => allenamentiCfg = v||{},
+    () => tab==='allen' || tab==='oggi'],
+  ['noemiBase',       v => { if(v) NOEMI_BASE = v; else dbSet('noemiBase', NOEMI_BASE); },
+    () => !editBase && (tab==='oggi'||tab==='noemi')],
+  ['nicBase',         v => { if(v) NICHOLAS = v; else dbSet('nicBase', NICHOLAS); },
+    () => !editBase && (tab==='oggi'||tab==='nicholas')],
+  ['catLabels',       v => catLabels = v||{},
+    () => !editBase],
+  ['spesa',           v => spesa = v||{},
+    () => tab==='spesa'],
+  ['spesaHistory',    v => spesaHistory = v||{},
+    () => false],                                            // aggiorna lo stato ma non forza re-render
+  ['spesaCategories', v => spesaCategories = v||{},
+    () => tab==='spesa' && !categoryManager && !_catDrag],   // niente re-render durante drag/manager (evita flicker)
+  ['pantry',          v => pantry = v||[],
+    () => tab==='spesa' && !categoryManager && !_catDrag],
+  ['schedule',        v => schedule = v||{},
+    () => !editBase && (tab==='oggi'||tab==='nicholas')],
+];
+SUBS.forEach(([path, assign, shouldRender]) => {
+  onValue(ref(db, path), snap => { assign(snap.val()); if(shouldRender()) renderContent(); });
 });
 
 // ══════════════════════════════════════════
 //  RENDER HELPERS
 // ══════════════════════════════════════════
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') }
 
 function catPill(cat){ const lbl = (catLabels && catLabels[cat]) || (CAT[cat]||CAT.altro).pill; return `<span class="cat-pill ${cat}">${esc(lbl)}</span>`; }
 
@@ -1335,7 +1244,7 @@ window.saveNoemiWeek  = (wd,mk,v)=>{
   v=(v||'').replace(/\s+$/,'');
   if(!noemiSettimana[wd]) noemiSettimana[wd]={};
   noemiSettimana[wd][mk]=v;
-  try{ set(ref(db,'noemiSettimana/'+wd+'/'+mk), v||null); }catch(e){}
+  dbSet('noemiSettimana/'+wd+'/'+mk, v||null);
   toast('✓ Salvato');
 };
 window.nwGrow = el=>{ el.style.height='auto'; el.style.height=Math.max(38, el.scrollHeight)+'px'; };
@@ -1348,12 +1257,13 @@ function mondayOf(d){ const x=new Date(d); const dow=(x.getDay()+6)%7; x.setHour
 function settCorrente(prog){
   const cfg=alCfg(prog); const dur=ALLENAMENTI[prog].durata;
   const start=mondayOf(cfg.start+'T00:00:00'); const now=mondayOf(new Date());
+  if(isNaN(start)) return 0;                       // data di partenza malformata: non rompere la settimana
   const wk=Math.round((now-start)/(7*86400000)) - (cfg.shift||0);
   return Math.max(0, Math.min(dur-1, wk));
 }
 function saveAlCfg(prog, patch){
   const cur=alCfg(prog); const nv={...cur, ...patch};
-  allenamentiCfg[prog]=nv; try{ set(ref(db,'allenamentiCfg/'+prog), nv); }catch(e){}
+  allenamentiCfg[prog]=nv; dbSet('allenamentiCfg/'+prog, nv);
   renderContent();
 }
 window.skipWeek = (prog,delta)=>{ const c=alCfg(prog); saveAlCfg(prog,{shift:Math.max(0,(c.shift||0)+delta)}); };
@@ -1421,10 +1331,10 @@ function renderCatEditor(){
   return `<div class="sec-title" style="margin-top:14px;color:#6B7280">🏷️ Rinomina categorie</div>
     <div class="day-card" style="padding:13px 14px">${rows}</div>`;
 }
-window.setCatLabel = (c,v) => { v=(v||'').trim(); if(v) catLabels[c]=v; else delete catLabels[c]; try{ set(ref(db,'catLabels/'+c), v||null); }catch(e){} toast('✓ Salvato'); };
+window.setCatLabel = (c,v) => { v=(v||'').trim(); if(v) catLabels[c]=v; else delete catLabels[c]; dbSet('catLabels/'+c, v||null); toast('✓ Salvato'); };
 
-function saveNoemiBase(){ try{ set(ref(db,'noemiBase'), NOEMI_BASE); }catch(e){} }
-function saveNicBase(){ try{ set(ref(db,'nicBase'), NICHOLAS); }catch(e){} }
+function saveNoemiBase(){ dbSet('noemiBase', NOEMI_BASE); }
+function saveNicBase(){ dbSet('nicBase', NICHOLAS); }
 
 function renderNoemiBaseEdit(){
   const meals = NOEMI_MEALS.map(mk=>{
@@ -1612,14 +1522,14 @@ window.saveCatInline = (key, newEmoji, newName) => {
   if(!name) return toast('Il nome non può essere vuoto');
   const label = (emoji ? emoji+' ' : '') + name;
   const order = c.order || 100;
-  try{ set(ref(db,'spesaCategories/'+key), {label, order}); }catch(e){}
+  dbSet('spesaCategories/'+key, {label, order});
   toast('✓ Salvato');
 };
 window.managerAddNewCat = () => {
   const newKey = 'cat_' + Date.now();
   const SPESA_CATS = getSpesaCats();
   const order = Math.max(...SPESA_CATS.map(c=>c.order||100)) + 1;
-  try{ set(ref(db,'spesaCategories/'+newKey), {label:'🆕 Nuova categoria', order}); }catch(e){}
+  dbSet('spesaCategories/'+newKey, {label:'🆕 Nuova categoria', order});
   renderContent();
 };
 
@@ -1682,67 +1592,16 @@ function saveCatOrder(keys){
   const map = {}; cats.forEach(c=>map[c.key]=c);
   keys.forEach((k,i)=>{
     const c = map[k]; if(!c) return;
-    try{ set(ref(db,'spesaCategories/'+k), {label:c.label, order:i+1}); }catch(e){}
+    dbSet('spesaCategories/'+k, {label:c.label, order:i+1});
   });
 }
 window.managerCategories = () => { categoryManager = !categoryManager; renderContent(); };
 
-// ── EDITOR CATEGORIE ──
-function renderCategoryEditor(){
-  if(editingCat===null) return '';
-  const SPESA_CATS = getSpesaCats();
-  const cat = editingCat ? SPESA_CATS.find(c=>c.key===editingCat) : null;
-  const isNew = !cat;
-  const label = cat?.label || '🆕 Nuova';
-  const [emoji, name] = label.includes(' ') ? [label.split(' ')[0], label.split(' ').slice(1).join(' ')] : ['', label];
-  return `<div class="cat-editor-overlay show"></div>
-    <div class="cat-editor" onclick="if(event.target===this)editCategory(null)">
-      <div class="cat-editor-panel">
-        <div class="cat-editor-title">${isNew ? 'Nuova categoria' : 'Modifica categoria'}</div>
-        <div class="cat-editor-field">
-          <label class="cat-editor-label">Emoji</label>
-          <input class="cat-editor-input" id="cat-emoji" style="font-size:24px;text-align:center" maxlength="2" value="${emoji}">
-        </div>
-        <div class="cat-editor-field">
-          <label class="cat-editor-label">Nome</label>
-          <input class="cat-editor-input" id="cat-name" placeholder="es. Cereali" value="${name}">
-        </div>
-        <div class="cat-editor-buttons">
-          ${!isNew ? `<button class="cat-editor-btn delete" onclick="deleteCategoryEdit('${editingCat}')">Elimina</button>` : ''}
-          <button class="cat-editor-btn cancel" onclick="editCategory(null)">Annulla</button>
-          <button class="cat-editor-btn save" onclick="saveCategoryEdit('${editingCat||''}')">Salva</button>
-        </div>
-      </div>
-    </div>`;
-}
-window.editCategory = (key) => { editingCat = key; renderContent(); };
-window.startEditCat = (key) => { editingCat = key; renderContent(); };
-window.saveCategoryEdit = (key) => {
-  const emoji = (document.getElementById('cat-emoji')?.value||'').trim();
-  const name = (document.getElementById('cat-name')?.value||'').trim();
-  if(!emoji || !name) return toast('Inserisci emoji e nome');
-  const label = emoji + ' ' + name;
-  const newKey = key || 'cat_' + Date.now();
-  const SPESA_CATS = getSpesaCats();
-  const cat = SPESA_CATS.find(c=>c.key===newKey);
-  const order = cat?.order || (Math.max(...SPESA_CATS.map(c=>c.order||100)) + 1);
-  try{
-    set(ref(db,'spesaCategories/'+newKey), {label, order});
-    spesa[newKey] = spesa[newKey] || [];
-    set(ref(db,'spesa/'+newKey), spesa[newKey].length ? spesa[newKey] : null);
-  }catch(e){}
-  editingCat = null;
-  renderContent();
-  toast('✓ Categoria salvata');
-};
 window.deleteCategoryEdit = (key) => {
   if(!confirm('Eliminare questa categoria e tutti gli articoli?')) return;
-  try{
-    set(ref(db,'spesaCategories/'+key), null);
-    set(ref(db,'spesa/'+key), null);
-    delete spesa[key];
-  }catch(e){}
-  editingCat = null;
+  dbSet('spesaCategories/'+key, null);
+  dbSet('spesa/'+key, null);
+  delete spesa[key];
   renderContent();
   toast('✓ Categoria eliminata');
 };
@@ -1858,7 +1717,6 @@ function renderSpesaTab(){
       <button onclick="clearHistory()" style="border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">🧹 Svuota cronologia (${histCount})</button>
     </div>` : ''}
     ${categoryManager ? renderCategoryManager() : ''}
-    ${editingCat!==null ? renderCategoryEditor() : ''}
   `;
 }
 
@@ -1872,13 +1730,22 @@ window.setListView = (v) => { listView = (listView===v) ? null : v; if(listView)
 window.clearHistory = () => {
   const n = Object.keys(spesaHistory||{}).length;
   if(!confirm('Svuotare la cronologia delle '+n+' spese memorizzate? L\'AI non imparerà più dal pregresso.')) return;
-  try{ set(ref(db,'spesaHistory'), null); }catch(e){}
+  dbSet('spesaHistory', null);
   spesaHistory = {};
   renderContent();
   toast('🧹 Cronologia svuotata');
 };
 
-function saveSpesaCat(cat){ try{ const l=spesa[cat]; set(ref(db,'spesa/'+cat), (l&&l.length)?l:null); }catch(e){} }
+function saveSpesaCat(cat){ const l=spesa[cat]; dbSet('spesa/'+cat, (l&&l.length)?l:null); }
+// aggiunge una voce a una categoria evitando duplicati (case-insensitive). Ritorna true se aggiunta.
+function addSpesaItem(cat, t, owners){
+  const list = (spesa[cat]||[]).slice();
+  const have = new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase()));
+  if(have.has((t||'').toLowerCase())) return false;
+  list.push({t, d:false, owners:owners||[]});
+  spesa[cat] = list;
+  return true;
+}
 window.addSpesa = (cat)=>{ const el=document.getElementById('spin-'+cat); const v=(el?el.value:'').trim(); if(!v) return; const list=(spesa[cat]||[]).slice(); list.push({t:v,d:false}); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.toggleSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); if(!list[i])return; list[i]={...list[i],d:!list[i].d}; spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
 window.delSpesa = (cat,i)=>{ const list=(spesa[cat]||[]).slice(); list.splice(i,1); spesa[cat]=list; saveSpesaCat(cat); renderContent(); };
@@ -1895,7 +1762,7 @@ window.toggleAllSpesa = ()=>{
   const newSpesa = {};
   SPESA_CATS.forEach(c=>{ const l=(spesa[c.key]||[]).map(i=>({...i, d:!allDone})); if(l.length) newSpesa[c.key]=l; });
   spesa = newSpesa;
-  try{ set(ref(db,'spesa'), Object.keys(newSpesa).length ? newSpesa : null); }catch(e){}
+  dbSet('spesa', Object.keys(newSpesa).length ? newSpesa : null);
   renderContent();
 };
 
@@ -1923,10 +1790,8 @@ window.spesaFatta = ()=>{
   if(!confirm(`Segnare ${moved} articoli come comprati (vanno in dispensa)?`)) return;
   spesa = newSpesa;
   const ts = Date.now();
-  try{
-    set(ref(db,'spesaHistory/'+ts), snap);
-    set(ref(db,'spesa'), Object.keys(newSpesa).length ? newSpesa : null);
-  }catch(e){}
+  dbSet('spesaHistory/'+ts, snap);
+  dbSet('spesa', Object.keys(newSpesa).length ? newSpesa : null);
   savePantry();
   renderContent();
   toast(`✓ ${moved} in dispensa`);
@@ -1936,11 +1801,10 @@ window.spesaFatta = ()=>{
 window.svuotaDispensa = ()=>{
   if(!pantry.length) return toast('La dispensa è già vuota');
   if(!confirm(`Rimettere in lista i ${pantry.length} articoli della dispensa?`)) return;
-  const addTo=(cat,t,owners)=>{ const list=(spesa[cat]||[]).slice(); const have=new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase())); if(have.has((t||'').toLowerCase()))return false; list.push({t,d:false,owners:owners||[]}); spesa[cat]=list; return true; };
-  pantry.forEach(p=>addTo(p.cat||'dispensa', p.t, p.owners));
+  pantry.forEach(p=>addSpesaItem(p.cat||'dispensa', p.t, p.owners));
   pantry=[];
   const clean={}; Object.keys(spesa).forEach(k=>{ if((spesa[k]||[]).length) clean[k]=spesa[k]; }); spesa=clean;
-  try{ set(ref(db,'spesa'), Object.keys(clean).length?clean:null); set(ref(db,'pantry'), null); }catch(e){}
+  dbSet('spesa', Object.keys(clean).length?clean:null); dbSet('pantry', null);
   renderContent();
   toast('↩️ Articoli rimessi in lista');
 };
@@ -1951,16 +1815,15 @@ window.recuperaStorico = ()=>{
   if(!snaps.length) return toast('Nessuna cronologia da cui recuperare');
   if(!confirm('Recuperare tutti gli articoli salvati nella cronologia e rimetterli in lista?')) return;
   let added=0;
-  const addTo=(cat,t,owners)=>{ const list=(spesa[cat]||[]).slice(); const have=new Set(list.filter(i=>i&&i.t).map(i=>i.t.toLowerCase())); if(have.has((t||'').toLowerCase()))return false; list.push({t,d:false,owners:owners||[]}); spesa[cat]=list; return true; };
-  snaps.forEach(h=>Object.entries(h.items||{}).forEach(([cat,arr])=>(arr||[]).forEach(i=>{ if(i&&i.t && addTo(cat,i.t,i.owners)) added++; })));
+  snaps.forEach(h=>Object.entries(h.items||{}).forEach(([cat,arr])=>(arr||[]).forEach(i=>{ if(i&&i.t && addSpesaItem(cat,i.t,i.owners)) added++; })));
   const clean={}; Object.keys(spesa).forEach(k=>{ if((spesa[k]||[]).length) clean[k]=spesa[k]; }); spesa=clean;
-  try{ set(ref(db,'spesa'), Object.keys(clean).length?clean:null); }catch(e){}
+  dbSet('spesa', Object.keys(clean).length?clean:null);
   renderContent();
   toast(`↩️ ${added} articoli recuperati`);
 };
 
 // ── DISPENSA DI CASA (pantry) ──
-function savePantry(){ try{ set(ref(db,'pantry'), pantry.length ? pantry : null); }catch(e){} }
+function savePantry(){ dbSet('pantry', pantry.length ? pantry : null); }
 window.toPantry = (cat, idx)=>{
   const list = (spesa[cat]||[]).slice();
   const it = list[idx]; if(!it) return;
@@ -1980,37 +1843,6 @@ window.fromPantry = (i)=>{
   pantry.splice(i,1); savePantry(); renderContent();
   toast('Rimesso in lista');
 };
-// rimuove del tutto dalla dispensa (senza rimetterla in lista)
-window.removePantry = (i)=>{ pantry.splice(i,1); savePantry(); renderContent(); };
-window.addPantryManual = ()=>{
-  const el = document.getElementById('pantry-in'); const v=(el?el.value:'').trim(); if(!v) return;
-  if(!pantry.some(p=>p.t.toLowerCase()===v.toLowerCase())) pantry.push({t:v, owners:[], cat:'dispensa', active:true});
-  savePantry(); renderContent();
-};
-window.managerPantry = ()=>{ pantryManager = !pantryManager; renderContent(); };
-function renderPantryManager(){
-  const rows = pantry.length ? pantry.map((p,i)=>`
-    <div class="catman-row">
-      <input class="catman-name" value="${esc(p.t)}" onchange="pantryRename(${i},this.value)">
-      <button class="catman-del" onclick="pantryDel(${i})" title="Rimuovi">✕</button>
-    </div>`).join('') : `<div style="padding:24px;text-align:center;color:#AEB4BE;font-size:14px">Dispensa vuota.<br><span style="font-size:12px">Usa 🏠 su una voce della lista per spostarla qui.</span></div>`;
-  return `<div class="cat-editor-overlay show" onclick="managerPantry()"></div>
-    <div class="catman-modal" onclick="event.stopPropagation()">
-      <div class="catman-head">
-        <div class="catman-title">🏠 Dispensa di casa</div>
-        <button class="catman-close" onclick="managerPantry()">✕</button>
-      </div>
-      <div style="font-size:11px;color:#9CA3AF;margin-bottom:12px">Cose che hai già: l'AI non te le riproporrà finché non le togli</div>
-      <div class="catman-list">${rows}</div>
-      <div class="shop-addrow" style="padding:8px 2px">
-        <span class="shop-plus">+</span>
-        <input class="shop-in" id="pantry-in" placeholder="aggiungi alla dispensa…" onkeydown="if(event.key==='Enter'){addPantryManual();return false}">
-      </div>
-    </div>`;
-}
-window.pantryRename = (i,v)=>{ v=(v||'').trim(); if(!v)return; pantry[i].t=v; savePantry(); toast('✓ Salvato'); };
-window.pantryDel = (i)=>{ pantry.splice(i,1); savePantry(); renderContent(); };
-
 // ── Toggle owner su voce ──
 window.toggleOwner = (cat, idx, owner) => {
   // articoli in dispensa: toggle owner direttamente sul pantry
@@ -2034,7 +1866,7 @@ window.toggleOwner = (cat, idx, owner) => {
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editMode=false; editBase=null; baseView=null; if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editBase=null; baseView=null; if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
 window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
@@ -2052,11 +1884,11 @@ window.setSchedDay = (wd, idx, val) => {
   }
   days = [...new Set(days.filter(Boolean))].slice(0,2);
   schedule[wd] = days.length ? days : [];
-  try{ set(ref(db,'schedule/'+wd), days.length ? days : null); }catch(e){}
+  dbSet('schedule/'+wd, days.length ? days : null);
   renderContent();
 };
 
-window.resetNicWeek   = () => { if(!confirm('Azzerare il piano allenamenti della settimana?')) return; schedule={}; try{ set(ref(db,'schedule'), null); }catch(e){} renderContent(); toast('Settimana azzerata'); };
+window.resetNicWeek   = () => { if(!confirm('Azzerare il piano allenamenti della settimana?')) return; schedule={}; dbSet('schedule', null); renderContent(); toast('Settimana azzerata'); };
 
 function updateTabbar(){
   document.querySelectorAll('#rail button[data-tab]').forEach(b=>b.classList.toggle('act', b.dataset.tab===tab));
@@ -2073,7 +1905,6 @@ function renderContent(animate){
                : tab==='spesa'     ? renderSpesaTab()
                : tab==='allen'     ? renderAllenamentiTab()
                :                     renderNoemiTab();
-  el.classList.remove('saving');
   if(animate){ void el.offsetWidth; el.classList.add('tab-anim'); }
   // autosize dei campi liberi di Noemi
   el.querySelectorAll('textarea.nw-ta').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
