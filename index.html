@@ -532,6 +532,15 @@
     .login-err{font-size:12.5px;color:#DC2626;min-height:16px}
     body.logged-out #rail{display:none}
     .logout-link{display:block;margin:18px auto 4px;border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline}
+
+    /* ── BENVENUTO ── */
+    #welcome{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;background:rgba(241,250,246,.97);opacity:0;pointer-events:none;transition:opacity .4s var(--ease)}
+    #welcome.show{opacity:1}
+    .welcome-inner{text-align:center;transform:scale(.92);transition:transform .5s cubic-bezier(.2,.8,.3,1)}
+    #welcome.show .welcome-inner{transform:scale(1)}
+    .welcome-emoji{font-size:66px;line-height:1}
+    .welcome-text{font-family:var(--font-head);font-size:30px;font-weight:850;letter-spacing:-.4px;color:#111827;margin-top:12px}
+    .welcome-sub{font-size:14.5px;color:var(--muted);font-weight:600;margin-top:5px}
   </style>
 </head>
 <body class="logged-out">
@@ -547,6 +556,12 @@
     <div id="login-err" class="login-err"></div>
   </div>
 </div>
+
+<div id="welcome"><div class="welcome-inner">
+  <div class="welcome-emoji">👋</div>
+  <div class="welcome-text"></div>
+  <div class="welcome-sub"></div>
+</div></div>
 
 <div class="content" id="content"></div>
 
@@ -1951,7 +1966,7 @@ function toast(msg){
 // Le regole del Realtime Database accettano SOLO l'account in allowlist:
 // chiunque altro riceve "permission denied". Il login si fa una volta per
 // dispositivo e resta memorizzato (browserLocalPersistence).
-let _appStarted = false;
+let _appStarted = false, _lastUser = null;
 function startApp(){
   if(_appStarted) return; _appStarted = true;
   initFirebaseSubs();
@@ -1969,13 +1984,32 @@ window.doLogin = () => {
   });
 };
 window.doLogout = () => { if(confirm('Uscire da Dieta?')) signOut(auth); };
+
+// chi è chi (per il saluto personalizzato) — riconosciuto dall'email
+const PEOPLE = {
+  'u1@redacted.invalid': { nome:'Nicholas', salut:'Bentornato', em:'🏃', sub:'Pronto per oggi? 💪' },
+  'u2@redacted.invalid':     { nome:'Noemi',    salut:'Bentornata', em:'🍓', sub:'Buona giornata! ✨' },
+};
+function showWelcome(email){
+  const p = PEOPLE[(email||'').toLowerCase()] || { nome:'', salut:'Benvenuto', em:'👋', sub:'' };
+  const w = document.getElementById('welcome');
+  w.querySelector('.welcome-emoji').textContent = p.em;
+  w.querySelector('.welcome-text').textContent  = (p.salut + ' ' + p.nome).trim();
+  w.querySelector('.welcome-sub').textContent   = p.sub;
+  w.style.display = 'flex';
+  requestAnimationFrame(()=> w.classList.add('show'));
+  setTimeout(()=>{ w.classList.remove('show'); setTimeout(()=>{ w.style.display='none'; }, 450); }, 1800);
+}
+
 setPersistence(auth, browserLocalPersistence).finally(()=>{
   onAuthStateChanged(auth, user => {
     if(user){
       document.getElementById('login').style.display = 'none';
       document.body.classList.remove('logged-out');
       startApp();
+      if(_lastUser !== user.uid){ _lastUser = user.uid; showWelcome(user.email); }
     } else {
+      _lastUser = null;
       document.getElementById('login').style.display = 'flex';
       document.body.classList.add('logged-out');
     }
