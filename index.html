@@ -159,6 +159,12 @@
     .sched-sel{width:100%;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13.5px;font-weight:600;color:#1F2937;padding:9px 30px 9px 12px;border:1.5px solid #E5E7EB;border-radius:10px;background:#FAFAFA;outline:none}
     .sched-sel:focus{border-color:var(--n)}
     .sched-selwrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:11px;pointer-events:none}
+    .sched-selwrap.sec{flex:0 0 46%}
+    .sched-add{flex:none;width:40px;height:40px;border:1.5px dashed #CBD5E1;background:#fff;color:#9CA3AF;font-size:18px;font-weight:700;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s var(--ease)}
+    .sched-add:active{transform:scale(.92);background:var(--n-l);border-color:var(--n);color:var(--n)}
+    .sched-chip{flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--n-l);color:var(--n);font-weight:700;font-size:13px;border-radius:10px;padding:9px 11px;border:1.5px solid #DCE6F5}
+    .sched-chip button{border:none;background:transparent;color:var(--n);font-weight:800;font-size:13px;cursor:pointer;padding:0;line-height:1;opacity:.7}
+    .sched-chip button:active{opacity:1}
 
     /* ── PIANIFICATORE NOEMI ── */
     .pl-meal{padding:11px 0;border-bottom:1px solid var(--border)}
@@ -995,7 +1001,7 @@ function getSpesaCats(){
 //  STATE
 // ══════════════════════════════════════════
 let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], editMode=false, _cid=0, editBase=null, baseNicDay='corsa', editingCat=null, categoryManager=false, pantryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
-    allenamentiCfg={}, alOpen={};
+    allenamentiCfg={}, alOpen={}, sched2Open={};
 const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
 onValue(ref(db,'noemiSettimana'), snap => {
@@ -1276,11 +1282,21 @@ function renderNicholasTab(){
     NOEMI_DAYS.map(wd=>{
       const days=getSchedDays(wd); const p=days[0]||'riposo'; const s2=days[1]||'';
       const optsP = SCHED_OPTS.map(o=>`<option value="${o.id}" ${p===o.id?'selected':''}>${esc(o.label)}</option>`).join('');
-      const optsS = `<option value="">+ 2°…</option>`+SCHED_OPTS.filter(o=>o.id!=='riposo'&&o.id!==p).map(o=>`<option value="${o.id}" ${s2===o.id?'selected':''}>${esc(o.label)}</option>`).join('');
+      let second='';
+      if(p!=='riposo'){
+        if(s2){
+          second = `<span class="sched-chip">${esc(schedOpt(s2).label)}<button onclick="setSchedDay('${wd}',1,'')" title="Rimuovi">✕</button></span>`;
+        } else if(sched2Open[wd]){
+          const optsS = `<option value="">scegli…</option>`+SCHED_OPTS.filter(o=>o.id!=='riposo'&&o.id!==p).map(o=>`<option value="${o.id}">${esc(o.label)}</option>`).join('');
+          second = `<div class="sched-selwrap sec"><select class="sched-sel" onchange="setSchedDay('${wd}',1,this.value)">${optsS}</select></div>`;
+        } else {
+          second = `<button class="sched-add" onclick="openSched2('${wd}')" title="Aggiungi 2° allenamento">＋</button>`;
+        }
+      }
       return `<div class="sched-row">
         <span class="sched-day">${NOEMI_LABELS[wd]}${wd===todayId()?' •':''}</span>
         <div class="sched-selwrap"><select class="sched-sel" onchange="setSchedDay('${wd}',0,this.value)">${optsP}</select></div>
-        ${p!=='riposo'?`<div class="sched-selwrap"><select class="sched-sel" onchange="setSchedDay('${wd}',1,this.value)">${optsS}</select></div>`:''}
+        ${second}
       </div>`;
     }).join('')
   }</div>`;
@@ -2057,7 +2073,9 @@ window.toggleNav  = () => { const r=document.getElementById('rail'); const open=
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
 window.setOggiDay = id => { oggiDay=id; renderContent(); };
+window.openSched2 = (wd) => { sched2Open[wd]=true; renderContent(); };
 window.setSchedDay = (wd, idx, val) => {
+  if(idx===1) sched2Open[wd]=false;   // chiudi il selettore 2ª attività dopo la scelta
   let days = getSchedDays(wd);                 // array senza riposo
   if(idx===0){
     if(val==='riposo' || !val) days = [];
