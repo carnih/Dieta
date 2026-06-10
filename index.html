@@ -539,8 +539,10 @@
     .dash-card.clickable:active{transform:scale(.97);box-shadow:var(--sh-2)}
     .dc-more{font-size:9.5px;color:#3B82F6;font-weight:800;margin-top:5px}
     .ddet-list{background:#fff;border-radius:16px;box-shadow:var(--sh-1);padding:4px 0;overflow:hidden}
-    .ddet-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid #F4F5F7}
+    .ddet-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border:none;border-top:1px solid #F4F5F7;width:100%;background:#fff;font-family:inherit;cursor:pointer;text-align:left}
     .ddet-row:first-child{border-top:none}
+    .ddet-row:active{background:#F8FAFC}
+    .ddet-go{flex:none;margin-left:2px;color:#CBD5E1;font-weight:800;font-size:15px}
     .ddet-date{flex:none;font-size:11px;font-weight:800;color:#94A3B8;width:42px}
     .ddet-name{flex:1;min-width:0;font-size:13px;font-weight:700;color:#1F2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .ddet-meta{flex:none;font-size:11.5px;color:#64748B;font-weight:600}
@@ -586,6 +588,20 @@
     .acct-who span{display:block;font-size:11px;font-weight:600;color:#9CA3AF;margin-top:2px}
     .acct-logout{width:100%;border:none;background:#FEF2F2;color:#DC2626;font-weight:700;font-size:13.5px;padding:10px;border-radius:10px;cursor:pointer}
     .acct-logout:active{background:#FEE2E2}
+    /* ── dettaglio attività: zone + note ── */
+    .zbar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:2px 0 8px;background:#F1F5F9}
+    .zseg{height:100%}
+    .zleg{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;font-weight:700;color:#64748B;margin-bottom:8px}
+    .zleg span{display:flex;align-items:center;gap:4px}
+    .zleg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+    .dash-note{font-size:12px;color:#94A3B8;text-align:center;padding:14px 0 4px;font-style:italic}
+    /* ── spesa: ultima modifica ── */
+    .spesa-meta{text-align:center;font-size:11.5px;color:#9CA3AF;padding:12px 0 2px}
+    /* ── dieta: pasto libero / fuori ── */
+    .meal-free-btn{margin-left:auto;border:1.5px solid var(--border);background:#fff;border-radius:50px;padding:2px 9px;font-size:13px;cursor:pointer;opacity:.45;transition:all .15s;flex:none}
+    .meal-free-btn.on{opacity:1;background:#FEF3C7;border-color:#F59E0B}
+    .meal-free-btn:active{transform:scale(.9)}
+    .cmp-free{padding:16px;text-align:center;font-weight:800;color:#854D0E;background:#FEFCE8;font-size:14px}
 
     /* ── BENVENUTO ── */
     #welcome{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;background:rgba(241,250,246,.97);opacity:0;pointer-events:none;transition:opacity .4s var(--ease)}
@@ -1038,7 +1054,7 @@ function getSpesaCats(){
 //  STATE
 // ══════════════════════════════════════════
 let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], _cid=0, editBase=null, baseNicDay='corsa', categoryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
-    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false;
+    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={};
 const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
 // ── SOTTOSCRIZIONI FIREBASE (dichiarative) ──
@@ -1067,6 +1083,8 @@ const SUBS = [
     () => !editBase && (tab==='oggi'||tab==='nicholas')],
   ['training/activities', v => training = Array.isArray(v) ? v : (v ? Object.values(v) : []),
     () => tab==='allen' && dashOpen],
+  ['spesaMeta',  v => spesaMeta = v||{},  () => tab==='spesa'],
+  ['overrides',  v => overrides = v||{},  () => tab==='oggi' && !editBase],
 ];
 function initFirebaseSubs(){
   SUBS.forEach(([path, assign, shouldRender]) => {
@@ -1253,19 +1271,27 @@ function renderOggi(){
   rows.push({icon:'🌙', title:'Cena',                e:'cena',      n:nicMealBy(nd,'cena')});
   if(nd.pastoLibero) rows.push({icon:'🍕', title:'Pasto libero', e:null, libero:nd.pastoLibero});
 
+  const sel0 = weekDates().find(x=>x.id===wd);
+  const dateKey = sel0 ? isoDate(sel0.obj) : null;
+  const dayOv = (dateKey && overrides[dateKey]) || {};
   const cards = rows.map(r=>{
+    const free = !!(r.e && dayOv[r.e]);
     const eSide = r.e ? noemiSideHTML(wd, r.e) : dash();
     let nSide;
     if(r.integ!==undefined) nSide = integCompact(r.integ);
     else if(r.n) nSide = r.n.items.map(renderItem).join('');
     else if(r.libero) nSide = `<div class="extra-item" style="background:#FEFCE8;border-color:#FDE047;color:#854D0E">${esc(r.libero)}</div>`;
     else nSide = dash();
-    return `<div class="cmp-card">
-      <div class="cmp-head"><span class="em">${r.icon}</span><span>${r.title}</span></div>
-      <div class="cmp-cols">
+    const freeBtn = (r.e && dateKey) ? `<button class="meal-free-btn ${free?'on':''}" onclick="togglePastoLibero('${dateKey}','${r.e}')" title="Segna come pasto libero / fuori">🍕</button>` : '';
+    const bodyHTML = free
+      ? `<div class="cmp-free">🍕 Pasto libero / fuori</div>`
+      : `<div class="cmp-cols">
         <div class="cmp-col"><div class="cmp-items">${eSide}</div></div>
         <div class="cmp-col"><div class="cmp-items">${nSide}</div></div>
-      </div>
+      </div>`;
+    return `<div class="cmp-card">
+      <div class="cmp-head"><span class="em">${r.icon}</span><span>${r.title}</span>${freeBtn}</div>
+      ${bodyHTML}
     </div>`;
   }).join('');
 
@@ -1443,12 +1469,14 @@ const MESI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov',
 function _n(v){ const x=parseFloat(v); return isNaN(x)?0:x; }
 function _mlabel(m){ const p=(m||'').split('-'); return (MESI[(+p[1])-1]||'')+" '"+(p[0]||'').slice(2); }
 function ALTRI_LBL(t){ return ({resort_snowboarding:'🏂 Snowboard',backcountry_snowboarding:'🏂 Snowboard',indoor_cardio:'🤸 Cardio indoor',transition_v2:'🔁 Transizioni',multi_sport:'🔀 Multisport',hiking:'🥾 Trekking',walking:'🚶 Camminata',snorkeling:'🤿 Snorkeling',other:'• Altro'})[t] || ('• '+(t||'altro').replace(/_/g,' ')); }
-let _dashData=null, _charts=[], dashDetail=null;
+let _dashData=null, _charts=[], dashDetail=null, actDetail=null;
 function _destroyCharts(){ _charts.forEach(c=>{try{c.destroy();}catch(e){}}); _charts=[]; }
-window.openDash  = ()=>{ dashOpen=true; dashDetail=null; renderContent(); window.scrollTo(0,0); };
-window.closeDash = ()=>{ dashOpen=false; dashDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
-window.openDashDetail  = d=>{ dashDetail=d; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
-window.closeDashDetail = ()=>{ dashDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+window.openDash  = ()=>{ dashOpen=true; dashDetail=null; actDetail=null; renderContent(); window.scrollTo(0,0); };
+window.closeDash = ()=>{ dashOpen=false; dashDetail=null; actDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+window.openDashDetail  = d=>{ dashDetail=d; actDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+window.closeDashDetail = ()=>{ dashDetail=null; actDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+window.openActivityDetail  = i=>{ actDetail=i; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+window.closeActivityDetail = ()=>{ actDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
 
 function computeDash(){
   const A = Array.isArray(training)?training:[];
@@ -1478,6 +1506,7 @@ function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><di
 
 function renderDashboard(){
   const D = _dashData = computeDash();
+  if(actDetail!=null) return renderActivityDetail(D);
   if(dashDetail) return renderDashDetail(D);
   const back = `<div class="dash-head"><button class="dash-back" onclick="closeDash()">←</button>
     <div><div class="page-title n" style="padding:0">Come sta andando</div><div class="page-sub" style="padding:0">verso il 70.3 · Cervia set. 2026</div></div></div>`;
@@ -1569,12 +1598,13 @@ function renderDashDetail(D){
         +st('Più lunga',Math.round(_n(longestT.durata_min))+' min',longestT.data)
         +st('FC max vista',fcmax>0?Math.round(fcmax)+' bpm':'–','');
   }
-  const recent=acts.slice(-8).reverse().map(a=>`
-    <div class="ddet-row">
+  const recent=acts.slice().reverse().map(a=>`
+    <button class="ddet-row" onclick="openActivityDetail(${training.indexOf(a)})">
       <span class="ddet-date">${(a.data||'').slice(5)}</span>
       <span class="ddet-name">${esc(a.nome||'')}</span>
       <span class="ddet-meta">${_n(a.distanza_km)>0?_n(a.distanza_km).toFixed(1)+' km · ':''}${Math.round(_n(a.durata_min))}' ${_n(a.fc_media)>0?'· ❤️'+Math.round(_n(a.fc_media)):''}</span>
-    </div>`).join('');
+      <span class="ddet-go">›</span>
+    </button>`).join('');
   return `${back}
     <div class="dash-cards">
       ${st('Sedute',acts.length,'')}${st('Ore',h.toFixed(1),'')}${km>0.5?st('Km',km.toFixed(d==='nuoto'?1:0),''):st('Carico',Math.round(load),'totale')}
@@ -1583,12 +1613,51 @@ function renderDashDetail(D){
     <div class="dash-sec-title">${d==='altri'?'Sport inclusi':'Specifiche'}</div>
     <div class="dash-cards">${spec}</div>
     ${chartCard('📈 Ore per mese','cDet','dash-wide')}
-    <div class="dash-sec-title" style="margin-top:12px">Ultime attività</div>
+    <div class="dash-sec-title" style="margin-top:12px">Tutte le attività (${acts.length})</div>
     <div class="ddet-list">${recent}</div>`;
+}
+
+// ── dettaglio singola attività ──
+function renderActivityDetail(D){
+  const a = training[actDetail];
+  const lbl = {corsa:'🏃 Corsa',bici:'🚴 Bici',nuoto:'🏊 Nuoto',padel:'🎾 Padel',forza:'🏋️ Forza'}[a&&a.disciplina] || (a?ALTRI_LBL(a.tipo_garmin):'');
+  const back=`<div class="dash-head"><button class="dash-back" onclick="closeActivityDetail()">←</button>
+    <div><div class="page-title n" style="padding:0;font-size:22px">${esc((a&&a.nome)||'Attività')}</div>
+    <div class="page-sub" style="padding:0">${a?esc((a.data||'')+' · '+(a.ora||'')+' · '+lbl):''}</div></div></div>`;
+  if(!a) return back+`<div class="dash-empty">Attività non trovata</div>`;
+  const sv=(lab,val,sub)=> val?`<div class="dash-card"><div class="dc-val" style="font-size:17px">${val}</div><div class="dc-lab">${lab}</div>${sub?`<div class="dc-sub">${sub}</div>`:''}</div>`:'';
+  const speed = a.passo_corsa_min_km?sv('Passo',a.passo_corsa_min_km+'/km')
+              : a.velocita_bici_kmh?sv('Velocità',a.velocita_bici_kmh+' km/h')
+              : a.passo_nuoto_min_100m?sv('Passo',a.passo_nuoto_min_100m+'/100m') : '';
+  const cards=[
+    sv('Durata', a.durata_min?Math.round(a.durata_min)+' min':''),
+    _n(a.distanza_km)>0?sv('Distanza',_n(a.distanza_km).toFixed(2)+' km'):'',
+    speed,
+    a.fc_media?sv('FC media',a.fc_media+' bpm', a.fc_max?'max '+a.fc_max:''):'',
+    a.carico?sv('Carico',a.carico):'',
+    a.vo2max?sv('VO₂max',a.vo2max):'',
+    _n(a.disliv_m)>0?sv('Dislivello',a.disliv_m+' m'):'',
+    a.potenza_media_w?sv('Potenza',a.potenza_media_w+' W'):'',
+    a.cadenza_corsa_spm?sv('Cadenza',a.cadenza_corsa_spm+' spm'):'',
+    a.te_aerobico?sv('Training Effect','aer '+a.te_aerobico, a.te_anaerobico?'ana '+a.te_anaerobico:''):'',
+    a.calorie?sv('Calorie',a.calorie+' kcal'):'',
+    (a.rpe||a.feel)?sv('Sensazione',((a.rpe?'RPE '+a.rpe:'')+(a.feel?(a.rpe?' · ':'')+a.feel:''))||'–'):'',
+  ].join('');
+  const zmin=[1,2,3,4,5].map(i=>_n(a['zona'+i+'_min']));
+  const ztot=zmin.reduce((x,y)=>x+y,0);
+  const ZCOL=['#94A3B8','#3B82F6','#10B981','#F59E0B','#EF4444'];
+  const zbar = ztot>1?`<div class="dash-sec-title" style="margin-top:8px">Minuti per zona FC</div>
+    <div class="zbar">${zmin.map((m,i)=>m>0?`<div class="zseg" style="flex:${m};background:${ZCOL[i]}"></div>`:'').join('')}</div>
+    <div class="zleg">${zmin.map((m,i)=>m>0?`<span><i style="background:${ZCOL[i]}"></i>Z${i+1} ${Math.round(m)}'</span>`:'').join('')}</div>`:'';
+  return `${back}
+    <div class="dash-cards">${cards}</div>
+    ${zbar}
+    <div class="dash-note">🗺️ Mappa e salite in arrivo con l'aggancio Strava.</div>`;
 }
 
 function drawDashCharts(){
   if(typeof Chart==='undefined' || !_dashData || !_dashData.A.length) return;
+  if(actDetail!=null) return;
   _destroyCharts();
   const D=_dashData;
   if(dashDetail){
@@ -2019,6 +2088,7 @@ function renderSpesaTab(){
       <button onclick="recuperaStorico()" style="border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline">↩️ Recupera spesa da cronologia</button>
       <button onclick="clearHistory()" style="border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">🧹 Svuota cronologia (${histCount})</button>
     </div>` : ''}
+    ${(spesaMeta&&spesaMeta.at)?`<div class="spesa-meta">Ultima modifica: <b>${esc(spesaMeta.by||'?')}</b> · ${fmtWhen(spesaMeta.at)}</div>`:''}
     ${categoryManager ? renderCategoryManager() : ''}
   `;
 }
@@ -2039,7 +2109,10 @@ window.clearHistory = () => {
   toast('🧹 Cronologia svuotata');
 };
 
-function saveSpesaCat(cat){ const l=spesa[cat]; dbSet('spesa/'+cat, (l&&l.length)?l:null); }
+function currentUserName(){ const e=((auth.currentUser&&auth.currentUser.email)||'').toLowerCase(); return (PEOPLE[e]&&PEOPLE[e].nome)||e||'?'; }
+function fmtWhen(ts){ try{ return new Date(ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function markSpesaEdit(){ spesaMeta={by:currentUserName(), at:Date.now()}; dbSet('spesaMeta', spesaMeta); }
+function saveSpesaCat(cat){ const l=spesa[cat]; dbSet('spesa/'+cat, (l&&l.length)?l:null); markSpesaEdit(); }
 // aggiunge una voce a una categoria evitando duplicati (case-insensitive). Ritorna true se aggiunta.
 function addSpesaItem(cat, t, owners){
   const list = (spesa[cat]||[]).slice();
@@ -2066,6 +2139,7 @@ window.toggleAllSpesa = ()=>{
   SPESA_CATS.forEach(c=>{ const l=(spesa[c.key]||[]).map(i=>({...i, d:!allDone})); if(l.length) newSpesa[c.key]=l; });
   spesa = newSpesa;
   dbSet('spesa', Object.keys(newSpesa).length ? newSpesa : null);
+  markSpesaEdit();
   renderContent();
 };
 
@@ -2108,6 +2182,7 @@ window.svuotaDispensa = ()=>{
   pantry=[];
   const clean={}; Object.keys(spesa).forEach(k=>{ if((spesa[k]||[]).length) clean[k]=spesa[k]; }); spesa=clean;
   dbSet('spesa', Object.keys(clean).length?clean:null); dbSet('pantry', null);
+  markSpesaEdit();
   renderContent();
   toast('↩️ Articoli rimessi in lista');
 };
@@ -2121,12 +2196,13 @@ window.recuperaStorico = ()=>{
   snaps.forEach(h=>Object.entries(h.items||{}).forEach(([cat,arr])=>(arr||[]).forEach(i=>{ if(i&&i.t && addSpesaItem(cat,i.t,i.owners)) added++; })));
   const clean={}; Object.keys(spesa).forEach(k=>{ if((spesa[k]||[]).length) clean[k]=spesa[k]; }); spesa=clean;
   dbSet('spesa', Object.keys(clean).length?clean:null);
+  markSpesaEdit();
   renderContent();
   toast(`↩️ ${added} articoli recuperati`);
 };
 
 // ── DISPENSA DI CASA (pantry) ──
-function savePantry(){ dbSet('pantry', pantry.length ? pantry : null); }
+function savePantry(){ dbSet('pantry', pantry.length ? pantry : null); markSpesaEdit(); }
 window.toPantry = (cat, idx)=>{
   const list = (spesa[cat]||[]).slice();
   const it = list[idx]; if(!it) return;
@@ -2169,11 +2245,21 @@ window.toggleOwner = (cat, idx, owner) => {
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editBase=null; baseView=null; dashOpen=false; dashDetail=null; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editBase=null; baseView=null; dashOpen=false; dashDetail=null; actDetail=null; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
 window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
 window.setOggiDay = id => { oggiDay=id; renderContent(); };
+function isoDate(d){ const x=new Date(d); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
+window.togglePastoLibero = (dateKey, meal)=>{
+  if(!dateKey||!meal) return;
+  if(!overrides[dateKey]) overrides[dateKey]={};
+  const now = !overrides[dateKey][meal];
+  if(now) overrides[dateKey][meal]=true; else delete overrides[dateKey][meal];
+  dbSet('overrides/'+dateKey+'/'+meal, now?true:null);
+  renderContent();
+  toast(now?'🍕 Segnato come fuori':'↩️ Ripristinato');
+};
 window.openSched2 = (wd) => { sched2Open[wd]=true; renderContent(); };
 window.setSchedDay = (wd, idx, val) => {
   if(idx===1) sched2Open[wd]=false;   // chiudi il selettore 2ª attività dopo la scelta
