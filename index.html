@@ -531,8 +531,19 @@
     .dash-head{display:flex;align-items:center;gap:12px;padding:4px 2px 10px}
     .dash-back{flex:none;width:40px;height:40px;border:none;background:#fff;box-shadow:var(--sh-1);border-radius:50%;font-size:19px;cursor:pointer;color:#1F2937}
     .dash-back:active{background:#F1F5F9}
+    .dash-sec-title{display:flex;align-items:baseline;gap:8px;font-family:var(--font-head);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#64748B;padding:6px 2px 8px}
+    .dash-sec-sum{font-size:11px;font-weight:700;color:#94A3B8;text-transform:none;letter-spacing:0}
     .dash-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}
-    .dash-card{background:#fff;border-radius:14px;padding:12px 8px;box-shadow:var(--sh-1);text-align:center}
+    .dash-card{background:#fff;border:none;font-family:inherit;border-radius:14px;padding:12px 8px;box-shadow:var(--sh-1);text-align:center}
+    .dash-card.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
+    .dash-card.clickable:active{transform:scale(.97);box-shadow:var(--sh-2)}
+    .dc-more{font-size:9.5px;color:#3B82F6;font-weight:800;margin-top:5px}
+    .ddet-list{background:#fff;border-radius:16px;box-shadow:var(--sh-1);padding:4px 0;overflow:hidden}
+    .ddet-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid #F4F5F7}
+    .ddet-row:first-child{border-top:none}
+    .ddet-date{flex:none;font-size:11px;font-weight:800;color:#94A3B8;width:42px}
+    .ddet-name{flex:1;min-width:0;font-size:13px;font-weight:700;color:#1F2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ddet-meta{flex:none;font-size:11.5px;color:#64748B;font-weight:600}
     .dc-ic{font-size:18px;line-height:1}
     .dc-val{font-family:var(--font-head);font-size:21px;font-weight:850;color:#111827;line-height:1.1;margin-top:3px}
     .dc-lab{font-size:10.5px;color:#9CA3AF;font-weight:800;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
@@ -1414,10 +1425,12 @@ const DASH_LBL = {corsa:'Corsa',bici:'Bici',nuoto:'Nuoto',forza:'Forza',padel:'P
 const MESI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
 function _n(v){ const x=parseFloat(v); return isNaN(x)?0:x; }
 function _mlabel(m){ const p=(m||'').split('-'); return (MESI[(+p[1])-1]||'')+" '"+(p[0]||'').slice(2); }
-let _dashData=null, _charts=[];
+let _dashData=null, _charts=[], dashDetail=null;
 function _destroyCharts(){ _charts.forEach(c=>{try{c.destroy();}catch(e){}}); _charts=[]; }
-window.openDash  = ()=>{ dashOpen=true;  renderContent(); window.scrollTo(0,0); };
-window.closeDash = ()=>{ dashOpen=false; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+window.openDash  = ()=>{ dashOpen=true; dashDetail=null; renderContent(); window.scrollTo(0,0); };
+window.closeDash = ()=>{ dashOpen=false; dashDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+window.openDashDetail  = d=>{ dashDetail=d; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+window.closeDashDetail = ()=>{ dashDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
 
 function computeDash(){
   const A = Array.isArray(training)?training:[];
@@ -1442,6 +1455,7 @@ function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><di
 
 function renderDashboard(){
   const D = _dashData = computeDash();
+  if(dashDetail) return renderDashDetail(D);
   const back = `<div class="dash-head"><button class="dash-back" onclick="closeDash()">←</button>
     <div><div class="page-title n" style="padding:0">Come sta andando</div><div class="page-sub" style="padding:0">verso il 70.3 · Cervia set. 2026</div></div></div>`;
   if(!D.A.length) return back + `<div class="dash-empty">Sto caricando i tuoi dati…</div>`;
@@ -1450,16 +1464,22 @@ function renderDashboard(){
   const padelH=D.tot.padel?D.tot.padel.h:0;
   const topDisc=Object.entries(D.tot).sort((a,b)=>b[1].h-a[1].h)[0][0];
   const g=(d,k)=>D.tot[d]?D.tot[d][k]:0;
-  const card=(ic,lab,val,sub)=>`<div class="dash-card"><div class="dc-ic">${ic}</div><div class="dc-val">${val}</div><div class="dc-lab">${lab}</div><div class="dc-sub">${sub||''}</div></div>`;
+  const triH=g('bici','h')+g('corsa','h')+g('nuoto','h');
+  const card=(disc,ic,lab,val,sub)=>`<button class="dash-card${disc?' clickable':''}" ${disc?`onclick="openDashDetail('${disc}')"`:''}>
+      <div class="dc-ic">${ic}</div><div class="dc-val">${val}</div><div class="dc-lab">${lab}</div><div class="dc-sub">${sub||''}</div>${disc?'<div class="dc-more">tocca per dettagli ›</div>':''}</button>`;
   return `
     ${back}
+    <div class="dash-sec-title">🏊🚴🏃 Triathlon <span class="dash-sec-sum">${triH.toFixed(0)}h totali</span></div>
     <div class="dash-cards">
-      ${card('⏱️','Ore tot',D.totH.toFixed(0),D.A.length+' sedute')}
-      ${card('🚴','Bici',g('bici','h').toFixed(0)+'h',g('bici','km').toFixed(0)+' km')}
-      ${card('🏃','Corsa',g('corsa','h').toFixed(0)+'h',g('corsa','km').toFixed(0)+' km')}
-      ${card('🏊','Nuoto',g('nuoto','h').toFixed(0)+'h',g('nuoto','km').toFixed(1)+' km')}
-      ${card('❤️','VO₂max',D.vo2||'–','stima')}
-      ${card('🎾','Padel',padelH.toFixed(0)+'h',(D.tot.padel?D.tot.padel.n:0)+' partite')}
+      ${card('bici','🚴','Bici',g('bici','h').toFixed(0)+'h',g('bici','km').toFixed(0)+' km · '+g('bici','n')+' uscite')}
+      ${card('corsa','🏃','Corsa',g('corsa','h').toFixed(0)+'h',g('corsa','km').toFixed(0)+' km · '+g('corsa','n')+' uscite')}
+      ${card('nuoto','🏊','Nuoto',g('nuoto','h').toFixed(0)+'h',g('nuoto','km').toFixed(1)+' km · '+g('nuoto','n')+' sessioni')}
+    </div>
+    <div class="dash-sec-title">💪 Altri sport <span class="dash-sec-sum">${(padelH+g('forza','h')).toFixed(0)}h totali</span></div>
+    <div class="dash-cards">
+      ${card('padel','🎾','Padel',padelH.toFixed(0)+'h',(D.tot.padel?D.tot.padel.n:0)+' partite')}
+      ${card('forza','🏋️','Forza',g('forza','h').toFixed(0)+'h',g('forza','n')+' sedute')}
+      ${card(null,'❤️','VO₂max',D.vo2||'–','stima Garmin')}
     </div>
     <div class="dash-insights">
       <div class="di-title">💡 Lettura rapida</div>
@@ -1478,10 +1498,78 @@ function renderDashboard(){
     </div>`;
 }
 
+// ── dettaglio disciplina ──
+function renderDashDetail(D){
+  const d=dashDetail;
+  const acts=D.A.filter(a=>a.disciplina===d);
+  const back=`<div class="dash-head"><button class="dash-back" onclick="closeDashDetail()">←</button>
+    <div><div class="page-title n" style="padding:0">${{corsa:'🏃 Corsa',bici:'🚴 Bici',nuoto:'🏊 Nuoto',padel:'🎾 Padel',forza:'🏋️ Forza'}[d]||d}</div>
+    <div class="page-sub" style="padding:0">${acts.length} attività negli ultimi 8 mesi</div></div></div>`;
+  if(!acts.length) return back+`<div class="dash-empty">Nessuna attività</div>`;
+  const sum=(f)=>acts.reduce((s,a)=>s+_n(a[f]),0);
+  const avg=(f,fil)=>{ const v=acts.filter(a=>_n(a[f])>0&&(!fil||fil(a))).map(a=>_n(a[f])); return v.length?v.reduce((x,y)=>x+y,0)/v.length:0; };
+  const h=sum('durata_min')/60, km=sum('distanza_km');
+  const fc=avg('fc_media'), fcmax=Math.max(...acts.map(a=>_n(a.fc_max)));
+  const durM=sum('durata_min')/acts.length;
+  const load=sum('carico');
+  const longest=acts.reduce((b,a)=>_n(a.distanza_km)>_n(b.distanza_km)?a:b,acts[0]);
+  const longestT=acts.reduce((b,a)=>_n(a.durata_min)>_n(b.durata_min)?a:b,acts[0]);
+  const mmss=x=>{const m=Math.floor(x),s=Math.round((x-m)*60);return m+':'+(s<10?'0'+s:s);};
+  const st=(lab,val,sub)=>`<div class="dash-card"><div class="dc-val" style="font-size:18px">${val}</div><div class="dc-lab">${lab}</div><div class="dc-sub">${sub||''}</div></div>`;
+  let spec='';
+  if(d==='corsa'){
+    const wp=acts.filter(a=>_n(a.distanza_km)>1&&_n(a.durata_min)>0);
+    const pace=wp.length?wp.reduce((s,a)=>s+_n(a.durata_min)/_n(a.distanza_km),0)/wp.length:0;
+    const best=wp.filter(a=>_n(a.distanza_km)>=3).reduce((b,a)=>(_n(a.durata_min)/_n(a.distanza_km))<(_n(b.durata_min)/_n(b.distanza_km))?a:b,wp[0]);
+    spec=st('Passo medio',pace?mmss(pace)+'/km':'–','su uscite >1 km')
+        +st('Miglior passo',best?mmss(_n(best.durata_min)/_n(best.distanza_km))+'/km':'–',best?best.data+' · '+_n(best.distanza_km).toFixed(1)+' km':'')
+        +st('Più lunga',_n(longest.distanza_km).toFixed(1)+' km',longest.data);
+  } else if(d==='bici'){
+    const wv=acts.filter(a=>_n(a.distanza_km)>3);
+    const vel=wv.length?wv.reduce((s,a)=>s+_n(a.distanza_km)/(_n(a.durata_min)/60),0)/wv.length:0;
+    spec=st('Velocità media',vel?vel.toFixed(1)+' km/h':'–','su uscite >3 km')
+        +st('Più lunga',_n(longest.distanza_km).toFixed(0)+' km',longest.data)
+        +st('In sella max',Math.round(_n(longestT.durata_min))+' min',longestT.data);
+  } else if(d==='nuoto'){
+    const wn=acts.filter(a=>_n(a.distanza_km)>0.1);
+    const p100=wn.length?wn.reduce((s,a)=>s+_n(a.durata_min)/(_n(a.distanza_km)*10),0)/wn.length:0;
+    spec=st('Passo medio',p100?mmss(p100)+'/100m':'–','')
+        +st('Più lunga',(_n(longest.distanza_km)*1000).toFixed(0)+' m',longest.data)
+        +st('Media/sessione',(km/acts.length*1000).toFixed(0)+' m','');
+  } else {
+    spec=st('Durata media',Math.round(durM)+' min','a seduta')
+        +st('Più lunga',Math.round(_n(longestT.durata_min))+' min',longestT.data)
+        +st('FC max vista',fcmax>0?Math.round(fcmax)+' bpm':'–','');
+  }
+  const recent=acts.slice(-8).reverse().map(a=>`
+    <div class="ddet-row">
+      <span class="ddet-date">${(a.data||'').slice(5)}</span>
+      <span class="ddet-name">${esc(a.nome||'')}</span>
+      <span class="ddet-meta">${_n(a.distanza_km)>0?_n(a.distanza_km).toFixed(1)+' km · ':''}${Math.round(_n(a.durata_min))}' ${_n(a.fc_media)>0?'· ❤️'+Math.round(_n(a.fc_media)):''}</span>
+    </div>`).join('');
+  return `${back}
+    <div class="dash-cards">
+      ${st('Sedute',acts.length,'')}${st('Ore',h.toFixed(1),'')}${km>0.5?st('Km',km.toFixed(d==='nuoto'?1:0),''):st('Carico',Math.round(load),'totale')}
+      ${st('FC media',fc?Math.round(fc)+' bpm':'–','')}${st('Durata media',Math.round(durM)+"'",'a seduta')}${st('Carico medio',acts.length?Math.round(load/acts.length):'–','a seduta')}
+    </div>
+    <div class="dash-sec-title">Specifiche</div>
+    <div class="dash-cards">${spec}</div>
+    ${chartCard('📈 Ore per mese','cDet','dash-wide')}
+    <div class="dash-sec-title" style="margin-top:12px">Ultime attività</div>
+    <div class="ddet-list">${recent}</div>`;
+}
+
 function drawDashCharts(){
   if(typeof Chart==='undefined' || !_dashData || !_dashData.A.length) return;
   _destroyCharts();
   const D=_dashData;
+  if(dashDetail){
+    const el=document.getElementById('cDet'); if(!el) return;
+    const hrs=D.months.map((m,i)=>+( (D.vol[dashDetail]||[])[i] || 0 ).toFixed(1));
+    _charts.push(new Chart(el,{type:'bar',data:{labels:D.months.map(_mlabel),datasets:[{data:hrs,backgroundColor:DASH_COL[dashDetail]||'#3B82F6',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'ore'}}}}}));
+    return;
+  }
   Chart.defaults.font.family="'Nunito Sans',sans-serif"; Chart.defaults.font.size=11;
   const mk=(id,cfg)=>{ const el=document.getElementById(id); if(el) _charts.push(new Chart(el,cfg)); };
   const noMaint={responsive:true,maintainAspectRatio:false};
@@ -2053,7 +2141,7 @@ window.toggleOwner = (cat, idx, owner) => {
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editBase=null; baseView=null; dashOpen=false; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editBase=null; baseView=null; dashOpen=false; dashDetail=null; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
 window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
