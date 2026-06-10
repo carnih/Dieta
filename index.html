@@ -596,12 +596,17 @@
     .zleg i{width:9px;height:9px;border-radius:2px;display:inline-block}
     .dash-note{font-size:12px;color:#94A3B8;text-align:center;padding:14px 0 4px;font-style:italic}
     /* ── spesa: ultima modifica ── */
-    .spesa-meta{text-align:center;font-size:11.5px;color:#9CA3AF;padding:12px 0 2px}
+    .spesa-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 0 6px;font-size:13.5px;color:#475569;font-weight:700}
+    .spesa-meta .ini{width:26px;height:26px;border-radius:50%;background:var(--n-g);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+    .spesa-meta b{color:#1F2937}
+    .shop-hist{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;padding:6px 0 2px;opacity:.5}
+    .shop-hist button{border:none;background:transparent;color:#C5CAD2;font-size:10.5px;font-weight:600;cursor:pointer}
     /* ── dieta: pasto libero / fuori ── */
-    .meal-free-btn{margin-left:auto;border:1.5px solid var(--border);background:#fff;border-radius:50px;padding:2px 9px;font-size:13px;cursor:pointer;opacity:.45;transition:all .15s;flex:none}
-    .meal-free-btn.on{opacity:1;background:#FEF3C7;border-color:#F59E0B}
-    .meal-free-btn:active{transform:scale(.9)}
-    .cmp-free{padding:16px;text-align:center;font-weight:800;color:#854D0E;background:#FEFCE8;font-size:14px}
+    .cmp-col{position:relative}
+    .col-free{position:absolute;top:5px;right:5px;z-index:1;border:1px solid var(--border);background:#fff;border-radius:50px;font-size:11px;line-height:1;padding:2px 5px;cursor:pointer;opacity:.3;transition:all .15s}
+    .col-free.on{opacity:1;background:#FEF3C7;border-color:#F59E0B}
+    .col-free:active{transform:scale(.85)}
+    .cmp-free{padding:14px 6px;text-align:center;font-weight:800;color:#854D0E;background:#FEFCE8;font-size:13px;border-radius:8px}
 
     /* ── BENVENUTO ── */
     #welcome{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;background:rgba(241,250,246,.97);opacity:0;pointer-events:none;transition:opacity .4s var(--ease)}
@@ -1275,23 +1280,24 @@ function renderOggi(){
   const dateKey = sel0 ? isoDate(sel0.obj) : null;
   const dayOv = (dateKey && overrides[dateKey]) || {};
   const cards = rows.map(r=>{
-    const free = !!(r.e && dayOv[r.e]);
+    const ov = (r.e && dayOv[r.e]) || {};
+    const freeE = ov===true || !!ov.e;   // ov===true = compat vecchio formato (entrambi)
+    const freeN = ov===true || !!ov.n;
     const eSide = r.e ? noemiSideHTML(wd, r.e) : dash();
     let nSide;
     if(r.integ!==undefined) nSide = integCompact(r.integ);
     else if(r.n) nSide = r.n.items.map(renderItem).join('');
     else if(r.libero) nSide = `<div class="extra-item" style="background:#FEFCE8;border-color:#FDE047;color:#854D0E">${esc(r.libero)}</div>`;
     else nSide = dash();
-    const freeBtn = (r.e && dateKey) ? `<button class="meal-free-btn ${free?'on':''}" onclick="togglePastoLibero('${dateKey}','${r.e}')" title="Segna come pasto libero / fuori">🍕</button>` : '';
-    const bodyHTML = free
-      ? `<div class="cmp-free">🍕 Pasto libero / fuori</div>`
-      : `<div class="cmp-cols">
-        <div class="cmp-col"><div class="cmp-items">${eSide}</div></div>
-        <div class="cmp-col"><div class="cmp-items">${nSide}</div></div>
-      </div>`;
+    const fbtn=(who,on)=> (r.e&&dateKey) ? `<button class="col-free ${on?'on':''}" onclick="togglePastoLibero('${dateKey}','${r.e}','${who}')" title="Pasto libero / fuori">🍕</button>` : '';
+    const colE = (r.e&&freeE) ? `<div class="cmp-free">🍕 Fuori</div>` : `<div class="cmp-items">${eSide}</div>`;
+    const colN = (r.e&&freeN) ? `<div class="cmp-free">🍕 Fuori</div>` : `<div class="cmp-items">${nSide}</div>`;
     return `<div class="cmp-card">
-      <div class="cmp-head"><span class="em">${r.icon}</span><span>${r.title}</span>${freeBtn}</div>
-      ${bodyHTML}
+      <div class="cmp-head"><span class="em">${r.icon}</span><span>${r.title}</span></div>
+      <div class="cmp-cols">
+        <div class="cmp-col">${fbtn('e',freeE)}${colE}</div>
+        <div class="cmp-col">${fbtn('n',freeN)}${colN}</div>
+      </div>
     </div>`;
   }).join('');
 
@@ -2084,11 +2090,11 @@ function renderSpesaTab(){
       <button class="shop-filter f-pantry ${listView==='dispensa'?'on':''}" onclick="setListView('dispensa')">🏠 Dispensa</button>
     </div>
     ${body}
-    ${histCount ? `<div style="text-align:center;padding:14px 0 4px;display:flex;gap:18px;justify-content:center;flex-wrap:wrap">
-      <button onclick="recuperaStorico()" style="border:none;background:transparent;color:#9CA3AF;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline">↩️ Recupera spesa da cronologia</button>
-      <button onclick="clearHistory()" style="border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">🧹 Svuota cronologia (${histCount})</button>
+    ${histCount ? `<div class="shop-hist">
+      <button onclick="recuperaStorico()">↩️ Recupera da cronologia</button>
+      <button onclick="clearHistory()">🧹 Svuota cronologia (${histCount})</button>
     </div>` : ''}
-    ${(spesaMeta&&spesaMeta.at)?`<div class="spesa-meta">Ultima modifica: <b>${esc(spesaMeta.by||'?')}</b> · ${fmtWhen(spesaMeta.at)}</div>`:''}
+    ${(spesaMeta&&spesaMeta.at)?`<div class="spesa-meta"><span class="ini">${esc((spesaMeta.by||'?').slice(0,1).toUpperCase())}</span><span>Ultimo aggiornamento di <b>${esc(spesaMeta.by||'?')}</b> · ${fmtWhen(spesaMeta.at)}</span></div>`:''}
     ${categoryManager ? renderCategoryManager() : ''}
   `;
 }
@@ -2251,12 +2257,16 @@ window.closeNav   = () => { document.getElementById('rail').classList.remove('ex
 window.setNicType = id => { nicType=id; renderContent(); };
 window.setOggiDay = id => { oggiDay=id; renderContent(); };
 function isoDate(d){ const x=new Date(d); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
-window.togglePastoLibero = (dateKey, meal)=>{
-  if(!dateKey||!meal) return;
+window.togglePastoLibero = (dateKey, meal, who)=>{
+  if(!dateKey||!meal||!who) return;
   if(!overrides[dateKey]) overrides[dateKey]={};
-  const now = !overrides[dateKey][meal];
-  if(now) overrides[dateKey][meal]=true; else delete overrides[dateKey][meal];
-  dbSet('overrides/'+dateKey+'/'+meal, now?true:null);
+  let cur = overrides[dateKey][meal];
+  if(cur===true) cur={e:true,n:true};               // migra vecchio formato (entrambi)
+  if(!cur || typeof cur!=='object') cur={};
+  const now = !cur[who];
+  if(now) cur[who]=true; else delete cur[who];
+  overrides[dateKey][meal]=cur;
+  dbSet('overrides/'+dateKey+'/'+meal, Object.keys(cur).length?cur:null);
   renderContent();
   toast(now?'🍕 Segnato come fuori':'↩️ Ripristinato');
 };
