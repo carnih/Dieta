@@ -1425,6 +1425,7 @@ const DASH_LBL = {corsa:'Corsa',bici:'Bici',nuoto:'Nuoto',forza:'Forza',padel:'P
 const MESI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
 function _n(v){ const x=parseFloat(v); return isNaN(x)?0:x; }
 function _mlabel(m){ const p=(m||'').split('-'); return (MESI[(+p[1])-1]||'')+" '"+(p[0]||'').slice(2); }
+function ALTRI_LBL(t){ return ({resort_snowboarding:'🏂 Snowboard',backcountry_snowboarding:'🏂 Snowboard',indoor_cardio:'🤸 Cardio indoor',transition_v2:'🔁 Transizioni',multi_sport:'🔀 Multisport',hiking:'🥾 Trekking',walking:'🚶 Camminata',snorkeling:'🤿 Snorkeling',other:'• Altro'})[t] || ('• '+(t||'altro').replace(/_/g,' ')); }
 let _dashData=null, _charts=[], dashDetail=null;
 function _destroyCharts(){ _charts.forEach(c=>{try{c.destroy();}catch(e){}}); _charts=[]; }
 window.openDash  = ()=>{ dashOpen=true; dashDetail=null; renderContent(); window.scrollTo(0,0); };
@@ -1448,7 +1449,12 @@ function computeDash(){
   const rhr=rmonths.map(m=>Math.round(rh[m].reduce((x,y)=>x+y,0)/rh[m].length));
   const vo2v=A.filter(a=>_n(a.vo2max)>0); const vo2=vo2v.length?_n(vo2v[vo2v.length-1].vo2max):null;
   const totH=Object.values(tot).reduce((s,d)=>s+d.h,0);
-  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,vo2,totH};
+  const MAIN=['corsa','bici','nuoto','forza','padel'];
+  const altri={h:0,n:0,km:0,byType:{}}; const volAltri=months.map(()=>0);
+  A.forEach(a=>{ if(!MAIN.includes(a.disciplina)){ const hh=_n(a.durata_min)/60; altri.h+=hh; altri.n++; altri.km+=_n(a.distanza_km);
+    const lab=ALTRI_LBL(a.tipo_garmin); (altri.byType[lab]=altri.byType[lab]||{h:0,n:0}); altri.byType[lab].h+=hh; altri.byType[lab].n++;
+    const mi=months.indexOf(a.mese); if(mi>=0) volAltri[mi]+=hh; } });
+  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,vo2,totH,altri,volAltri};
 }
 
 function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><div class="dch-title">${title}</div><div class="dch-canvas"><canvas id="${id}"></canvas></div></div>`; }
@@ -1478,9 +1484,10 @@ function renderDashboard(){
       ${card(null,'❤️','VO₂max',D.vo2||'–','stima Garmin')}
       ${card(null,'⏱️','Totale',D.totH.toFixed(0)+'h',D.A.length+' sedute complessive')}
     </div>
-    <div class="dash-sec-title">🎾 Altri sport <span class="dash-sec-sum">${padelH.toFixed(0)}h totali</span></div>
+    <div class="dash-sec-title">🎾🏂 Altri sport <span class="dash-sec-sum">${(padelH+D.altri.h).toFixed(0)}h totali</span></div>
     <div class="dash-cards">
       ${card('padel','🎾','Padel',padelH.toFixed(0)+'h',(D.tot.padel?D.tot.padel.n:0)+' partite')}
+      ${D.altri.n?card('altri','🤸','Altri',D.altri.h.toFixed(0)+'h',D.altri.n+' attività'):''}
     </div>
     <div class="dash-insights">
       <div class="di-title">💡 Lettura rapida</div>
@@ -1502,9 +1509,10 @@ function renderDashboard(){
 // ── dettaglio disciplina ──
 function renderDashDetail(D){
   const d=dashDetail;
-  const acts=D.A.filter(a=>a.disciplina===d);
+  const MAIN=['corsa','bici','nuoto','forza','padel'];
+  const acts=d==='altri'?D.A.filter(a=>!MAIN.includes(a.disciplina)):D.A.filter(a=>a.disciplina===d);
   const back=`<div class="dash-head"><button class="dash-back" onclick="closeDashDetail()">←</button>
-    <div><div class="page-title n" style="padding:0">${{corsa:'🏃 Corsa',bici:'🚴 Bici',nuoto:'🏊 Nuoto',padel:'🎾 Padel',forza:'🏋️ Forza'}[d]||d}</div>
+    <div><div class="page-title n" style="padding:0">${{corsa:'🏃 Corsa',bici:'🚴 Bici',nuoto:'🏊 Nuoto',padel:'🎾 Padel',forza:'🏋️ Forza',altri:'🤸 Altri sport'}[d]||d}</div>
     <div class="page-sub" style="padding:0">${acts.length} attività negli ultimi 8 mesi</div></div></div>`;
   if(!acts.length) return back+`<div class="dash-empty">Nessuna attività</div>`;
   const sum=(f)=>acts.reduce((s,a)=>s+_n(a[f]),0);
@@ -1537,6 +1545,8 @@ function renderDashDetail(D){
     spec=st('Passo medio',p100?mmss(p100)+'/100m':'–','')
         +st('Più lunga',(_n(longest.distanza_km)*1000).toFixed(0)+' m',longest.data)
         +st('Media/sessione',(km/acts.length*1000).toFixed(0)+' m','');
+  } else if(d==='altri'){
+    spec=Object.entries(D.altri.byType).sort((a,b)=>b[1].h-a[1].h).map(([lab,o])=>st(lab,o.h.toFixed(1)+'h',o.n+' att.')).join('');
   } else {
     spec=st('Durata media',Math.round(durM)+' min','a seduta')
         +st('Più lunga',Math.round(_n(longestT.durata_min))+' min',longestT.data)
@@ -1553,7 +1563,7 @@ function renderDashDetail(D){
       ${st('Sedute',acts.length,'')}${st('Ore',h.toFixed(1),'')}${km>0.5?st('Km',km.toFixed(d==='nuoto'?1:0),''):st('Carico',Math.round(load),'totale')}
       ${st('FC media',fc?Math.round(fc)+' bpm':'–','')}${st('Durata media',Math.round(durM)+"'",'a seduta')}${st('Carico medio',acts.length?Math.round(load/acts.length):'–','a seduta')}
     </div>
-    <div class="dash-sec-title">Specifiche</div>
+    <div class="dash-sec-title">${d==='altri'?'Sport inclusi':'Specifiche'}</div>
     <div class="dash-cards">${spec}</div>
     ${chartCard('📈 Ore per mese','cDet','dash-wide')}
     <div class="dash-sec-title" style="margin-top:12px">Ultime attività</div>
@@ -1566,8 +1576,8 @@ function drawDashCharts(){
   const D=_dashData;
   if(dashDetail){
     const el=document.getElementById('cDet'); if(!el) return;
-    const hrs=D.months.map((m,i)=>+( (D.vol[dashDetail]||[])[i] || 0 ).toFixed(1));
-    _charts.push(new Chart(el,{type:'bar',data:{labels:D.months.map(_mlabel),datasets:[{data:hrs,backgroundColor:DASH_COL[dashDetail]||'#3B82F6',borderRadius:4}]},
+    const hrs=dashDetail==='altri'?D.volAltri.map(x=>+x.toFixed(1)):D.months.map((m,i)=>+( (D.vol[dashDetail]||[])[i] || 0 ).toFixed(1));
+    _charts.push(new Chart(el,{type:'bar',data:{labels:D.months.map(_mlabel),datasets:[{data:hrs,backgroundColor:DASH_COL[dashDetail]||'#94A3B8',borderRadius:4}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'ore'}}}}}));
     return;
   }
