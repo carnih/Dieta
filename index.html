@@ -1464,22 +1464,23 @@ function renderDashboard(){
   const padelH=D.tot.padel?D.tot.padel.h:0;
   const topDisc=Object.entries(D.tot).sort((a,b)=>b[1].h-a[1].h)[0][0];
   const g=(d,k)=>D.tot[d]?D.tot[d][k]:0;
-  const triH=g('bici','h')+g('corsa','h')+g('nuoto','h');
+  const triH=g('bici','h')+g('corsa','h')+g('nuoto','h')+g('forza','h');
   const card=(disc,ic,lab,val,sub)=>`<button class="dash-card${disc?' clickable':''}" ${disc?`onclick="openDashDetail('${disc}')"`:''}>
       <div class="dc-ic">${ic}</div><div class="dc-val">${val}</div><div class="dc-lab">${lab}</div><div class="dc-sub">${sub||''}</div>${disc?'<div class="dc-more">tocca per dettagli ›</div>':''}</button>`;
   return `
     ${back}
-    <div class="dash-sec-title">🏊🚴🏃 Triathlon <span class="dash-sec-sum">${triH.toFixed(0)}h totali</span></div>
+    <div class="dash-sec-title">🏊🚴🏃 Preparazione tri <span class="dash-sec-sum">${triH.toFixed(0)}h totali (incl. forza)</span></div>
     <div class="dash-cards">
       ${card('bici','🚴','Bici',g('bici','h').toFixed(0)+'h',g('bici','km').toFixed(0)+' km · '+g('bici','n')+' uscite')}
       ${card('corsa','🏃','Corsa',g('corsa','h').toFixed(0)+'h',g('corsa','km').toFixed(0)+' km · '+g('corsa','n')+' uscite')}
       ${card('nuoto','🏊','Nuoto',g('nuoto','h').toFixed(0)+'h',g('nuoto','km').toFixed(1)+' km · '+g('nuoto','n')+' sessioni')}
+      ${card('forza','🏋️','Forza',g('forza','h').toFixed(0)+'h',g('forza','n')+' sedute · S&C')}
+      ${card(null,'❤️','VO₂max',D.vo2||'–','stima Garmin')}
+      ${card(null,'⏱️','Totale',D.totH.toFixed(0)+'h',D.A.length+' sedute complessive')}
     </div>
-    <div class="dash-sec-title">💪 Altri sport <span class="dash-sec-sum">${(padelH+g('forza','h')).toFixed(0)}h totali</span></div>
+    <div class="dash-sec-title">🎾 Altri sport <span class="dash-sec-sum">${padelH.toFixed(0)}h totali</span></div>
     <div class="dash-cards">
       ${card('padel','🎾','Padel',padelH.toFixed(0)+'h',(D.tot.padel?D.tot.padel.n:0)+' partite')}
-      ${card('forza','🏋️','Forza',g('forza','h').toFixed(0)+'h',g('forza','n')+' sedute')}
-      ${card(null,'❤️','VO₂max',D.vo2||'–','stima Garmin')}
     </div>
     <div class="dash-insights">
       <div class="di-title">💡 Lettura rapida</div>
