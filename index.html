@@ -575,7 +575,17 @@
     .login-btn:active{opacity:.9}
     .login-err{font-size:12.5px;color:#DC2626;min-height:16px}
     body.logged-out #rail{display:none}
-    .logout-link{display:block;margin:18px auto 4px;border:none;background:transparent;color:#C5CAD2;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline}
+    /* ── ACCOUNT CHIP (in alto a destra) ── */
+    #acct{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));z-index:60}
+    body.logged-out #acct{display:none}
+    #acct-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--n-g);color:#fff;font-weight:800;font-size:14px;cursor:pointer;box-shadow:var(--sh-2);display:flex;align-items:center;justify-content:center;padding:0}
+    #acct-btn:active{transform:scale(.92)}
+    #acct-menu{position:absolute;top:42px;right:0;background:#fff;border-radius:14px;box-shadow:var(--sh-pop);padding:12px;min-width:170px;display:none}
+    #acct.open #acct-menu{display:block}
+    .acct-who{font-size:13.5px;font-weight:800;color:#1F2937;padding:2px 4px 9px;border-bottom:1px solid var(--border);margin-bottom:9px}
+    .acct-who span{display:block;font-size:11px;font-weight:600;color:#9CA3AF;margin-top:2px}
+    .acct-logout{width:100%;border:none;background:#FEF2F2;color:#DC2626;font-weight:700;font-size:13.5px;padding:10px;border-radius:10px;cursor:pointer}
+    .acct-logout:active{background:#FEE2E2}
 
     /* ── BENVENUTO ── */
     #welcome{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;background:rgba(241,250,246,.97);opacity:0;pointer-events:none;transition:opacity .4s var(--ease)}
@@ -619,6 +629,13 @@
   <button data-tab="allen"    onclick="setTab('allen')"><span class="ic">🏋️</span><span class="lbl">Allen.</span></button>
 </nav>
 <div id="toast"></div>
+<div id="acct">
+  <button id="acct-btn" onclick="toggleAcct()" aria-label="Account">·</button>
+  <div id="acct-menu">
+    <div class="acct-who" id="acct-who"></div>
+    <button class="acct-logout" onclick="doLogout()">🔒 Esci</button>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js';
@@ -2196,7 +2213,6 @@ function renderContent(animate){
   // autosize dei campi liberi di Noemi
   el.querySelectorAll('textarea.nw-ta').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
   if(tab==='allen' && dashOpen) drawDashCharts();
-  el.insertAdjacentHTML('beforeend', '<button class="logout-link" onclick="doLogout()">🔒 Esci</button>');
 }
 
 function toast(msg){
@@ -2226,7 +2242,8 @@ window.doLogin = () => {
     console.warn('login error:', e.code);
   });
 };
-window.doLogout = () => { if(confirm('Uscire da Dieta?')) signOut(auth); };
+window.doLogout = () => { document.getElementById('acct').classList.remove('open'); if(confirm('Uscire da Dieta?')) signOut(auth); };
+window.toggleAcct = () => document.getElementById('acct').classList.toggle('open');
 
 // chi è chi (per il saluto personalizzato) — riconosciuto dall'email
 const PEOPLE = {
@@ -2249,6 +2266,9 @@ setPersistence(auth, browserLocalPersistence).finally(()=>{
     if(user){
       document.getElementById('login').style.display = 'none';
       document.body.classList.remove('logged-out');
+      const _p = PEOPLE[(user.email||'').toLowerCase()];
+      document.getElementById('acct-btn').textContent = ((_p&&_p.nome)||user.email||'?').slice(0,1).toUpperCase();
+      document.getElementById('acct-who').innerHTML = ((_p&&_p.nome)||'Account') + '<span>'+esc(user.email||'')+'</span>';
       startApp();
       if(_lastUser !== user.uid){ _lastUser = user.uid; showWelcome(user.email); }
     } else {
