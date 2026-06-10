@@ -519,6 +519,39 @@
     .content.tab-anim > *:nth-child(4){animation-delay:.09s}
     .content.tab-anim > *:nth-child(n+5){animation-delay:.12s}
 
+    /* ── DASHBOARD ALLENAMENTI ── */
+    .dash-cta{width:100%;display:flex;align-items:center;gap:13px;border:none;cursor:pointer;text-align:left;
+      background:linear-gradient(135deg,#1E3A8A,#3B82F6);color:#fff;border-radius:16px;padding:15px 16px;margin:2px 0 6px;box-shadow:0 8px 22px rgba(37,99,235,.28);transition:transform .12s}
+    .dash-cta:active{transform:scale(.99)}
+    .dash-cta-ic{font-size:26px;flex:none}
+    .dash-cta>span:nth-child(2){flex:1;min-width:0}
+    .dash-cta b{display:block;font-family:var(--font-head);font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+    .dash-cta small{display:block;font-size:12px;opacity:.9;font-weight:600;margin-top:1px}
+    .dash-cta-arr{font-size:26px;opacity:.85;flex:none}
+    .dash-head{display:flex;align-items:center;gap:12px;padding:4px 2px 10px}
+    .dash-back{flex:none;width:40px;height:40px;border:none;background:#fff;box-shadow:var(--sh-1);border-radius:50%;font-size:19px;cursor:pointer;color:#1F2937}
+    .dash-back:active{background:#F1F5F9}
+    .dash-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}
+    .dash-card{background:#fff;border-radius:14px;padding:12px 8px;box-shadow:var(--sh-1);text-align:center}
+    .dc-ic{font-size:18px;line-height:1}
+    .dc-val{font-family:var(--font-head);font-size:21px;font-weight:850;color:#111827;line-height:1.1;margin-top:3px}
+    .dc-lab{font-size:10.5px;color:#9CA3AF;font-weight:800;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
+    .dc-sub{font-size:11px;color:#64748B;font-weight:600;min-height:14px}
+    .dash-insights{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:var(--sh-1);margin-bottom:12px}
+    .di-title{font-family:var(--font-head);font-weight:800;font-size:14px;margin-bottom:7px}
+    .dash-insights ul{margin:0;padding-left:18px}
+    .dash-insights li{font-size:13px;color:#374151;line-height:1.5;margin-bottom:6px}
+    .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+    .dash-chart{background:#fff;border-radius:16px;padding:13px 13px 10px;box-shadow:var(--sh-1);min-width:0}
+    .dash-chart.dash-wide{grid-column:1/-1}
+    .dch-title{font-family:var(--font-head);font-weight:800;font-size:13px;color:#374151;margin-bottom:8px}
+    .dch-canvas{position:relative;height:210px}
+    .dash-empty{padding:48px 16px;text-align:center;color:#9CA3AF;font-weight:700}
+    @media (max-width:560px){
+      .dash-cards{grid-template-columns:repeat(2,1fr)}
+      .dash-grid{grid-template-columns:1fr}
+    }
+
     /* ── LOGIN (accesso riservato) ── */
     #login{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:var(--bg);padding:24px}
     .login-card{background:#fff;border-radius:22px;box-shadow:var(--sh-2);padding:30px 24px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:11px;text-align:center}
@@ -580,6 +613,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js';
 import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/auto/+esm';
 
 const app = initializeApp({
   apiKey:"AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4",
@@ -976,7 +1010,7 @@ function getSpesaCats(){
 //  STATE
 // ══════════════════════════════════════════
 let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], _cid=0, editBase=null, baseNicDay='corsa', categoryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
-    allenamentiCfg={}, alOpen={}, sched2Open={};
+    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false;
 const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
 // ── SOTTOSCRIZIONI FIREBASE (dichiarative) ──
@@ -1003,6 +1037,8 @@ const SUBS = [
     () => tab==='spesa' && !categoryManager && !_catDrag],
   ['schedule',        v => schedule = v||{},
     () => !editBase && (tab==='oggi'||tab==='nicholas')],
+  ['training/activities', v => training = Array.isArray(v) ? v : (v ? Object.values(v) : []),
+    () => tab==='allen' && dashOpen],
 ];
 function initFirebaseSubs(){
   SUBS.forEach(([path, assign, shouldRender]) => {
@@ -1359,10 +1395,116 @@ function renderAllenamentiTab(){
   return `
     <div class="page-title n">Allenamenti</div>
     <div class="page-sub">🏊🚴🏃 Verso IM 70.3 · ${esc(ALLENAMENTI.forza.coach)}</div>
+    <button class="dash-cta" onclick="openDash()">
+      <span class="dash-cta-ic">📊</span>
+      <span><b>Vuoi capire come sta andando?</b><small>Analisi e grafici dei tuoi allenamenti</small></span>
+      <span class="dash-cta-arr">›</span>
+    </button>
     ${oggi}
     ${progCard('forza', forzaBody)}
     ${progCard('tri', triBody)}
   `;
+}
+
+// ══════════════════════════════════════════
+//  DASHBOARD ALLENAMENTI (analisi + grafici)
+// ══════════════════════════════════════════
+const DASH_COL = {corsa:'#F59E0B',bici:'#3B82F6',nuoto:'#06B6D4',forza:'#8B5CF6',padel:'#EC4899'};
+const DASH_LBL = {corsa:'Corsa',bici:'Bici',nuoto:'Nuoto',forza:'Forza',padel:'Padel'};
+const MESI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+function _n(v){ const x=parseFloat(v); return isNaN(x)?0:x; }
+function _mlabel(m){ const p=(m||'').split('-'); return (MESI[(+p[1])-1]||'')+" '"+(p[0]||'').slice(2); }
+let _dashData=null, _charts=[];
+function _destroyCharts(){ _charts.forEach(c=>{try{c.destroy();}catch(e){}}); _charts=[]; }
+window.openDash  = ()=>{ dashOpen=true;  renderContent(); window.scrollTo(0,0); };
+window.closeDash = ()=>{ dashOpen=false; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
+
+function computeDash(){
+  const A = Array.isArray(training)?training:[];
+  const discs=['corsa','bici','nuoto','forza','padel'];
+  const tot={}; A.forEach(a=>{ const d=a.disciplina; (tot[d]=tot[d]||{n:0,h:0,km:0}); tot[d].n++; tot[d].h+=_n(a.durata_min)/60; tot[d].km+=_n(a.distanza_km); });
+  const months=[...new Set(A.map(a=>a.mese))].filter(Boolean).sort();
+  const vol={}; discs.forEach(d=>vol[d]=months.map(()=>0));
+  A.forEach(a=>{ if(discs.includes(a.disciplina)){ const mi=months.indexOf(a.mese); if(mi>=0) vol[a.disciplina][mi]+=_n(a.durata_min)/60; } });
+  const wk={}; A.forEach(a=>{ if(a.anno_sett) wk[a.anno_sett]=(wk[a.anno_sett]||0)+_n(a.carico); });
+  const weeks=Object.keys(wk).sort().slice(-18); const load=weeks.map(w=>Math.round(wk[w]));
+  const z=[0,0,0,0,0,0]; A.forEach(a=>{ for(let i=1;i<=5;i++) z[i]+=_n(a['zona'+i+'_min']); });
+  const rp={},rh={}; A.forEach(a=>{ if(a.disciplina==='corsa'){ const di=_n(a.distanza_km),du=_n(a.durata_min),hr=_n(a.fc_media); if(di>1&&hr>0){ (rp[a.mese]=rp[a.mese]||[]).push(du/di); (rh[a.mese]=rh[a.mese]||[]).push(hr);} } });
+  const rmonths=months.filter(m=>rp[m]);
+  const pace=rmonths.map(m=>rp[m].reduce((x,y)=>x+y,0)/rp[m].length);
+  const rhr=rmonths.map(m=>Math.round(rh[m].reduce((x,y)=>x+y,0)/rh[m].length));
+  const vo2v=A.filter(a=>_n(a.vo2max)>0); const vo2=vo2v.length?_n(vo2v[vo2v.length-1].vo2max):null;
+  const totH=Object.values(tot).reduce((s,d)=>s+d.h,0);
+  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,vo2,totH};
+}
+
+function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><div class="dch-title">${title}</div><div class="dch-canvas"><canvas id="${id}"></canvas></div></div>`; }
+
+function renderDashboard(){
+  const D = _dashData = computeDash();
+  const back = `<div class="dash-head"><button class="dash-back" onclick="closeDash()">←</button>
+    <div><div class="page-title n" style="padding:0">Come sta andando</div><div class="page-sub" style="padding:0">verso il 70.3 · Cervia set. 2026</div></div></div>`;
+  if(!D.A.length) return back + `<div class="dash-empty">Sto caricando i tuoi dati…</div>`;
+  const zt=D.z.reduce((a,b)=>a+b,0)||1;
+  const easy=Math.round((D.z[1]+D.z[2])/zt*100);
+  const padelH=D.tot.padel?D.tot.padel.h:0;
+  const topDisc=Object.entries(D.tot).sort((a,b)=>b[1].h-a[1].h)[0][0];
+  const g=(d,k)=>D.tot[d]?D.tot[d][k]:0;
+  const card=(ic,lab,val,sub)=>`<div class="dash-card"><div class="dc-ic">${ic}</div><div class="dc-val">${val}</div><div class="dc-lab">${lab}</div><div class="dc-sub">${sub||''}</div></div>`;
+  return `
+    ${back}
+    <div class="dash-cards">
+      ${card('⏱️','Ore tot',D.totH.toFixed(0),D.A.length+' sedute')}
+      ${card('🚴','Bici',g('bici','h').toFixed(0)+'h',g('bici','km').toFixed(0)+' km')}
+      ${card('🏃','Corsa',g('corsa','h').toFixed(0)+'h',g('corsa','km').toFixed(0)+' km')}
+      ${card('🏊','Nuoto',g('nuoto','h').toFixed(0)+'h',g('nuoto','km').toFixed(1)+' km')}
+      ${card('❤️','VO₂max',D.vo2||'–','stima')}
+      ${card('🎾','Padel',padelH.toFixed(0)+'h',(D.tot.padel?D.tot.padel.n:0)+' partite')}
+    </div>
+    <div class="dash-insights">
+      <div class="di-title">💡 Lettura rapida</div>
+      <ul>
+        <li><b>${topDisc==='padel'?'Il padel è lo sport con più ore':'Sport con più ore: '+topDisc}</b> (${padelH.toFixed(0)}h di padel) — occhio a quanto toglie a bici/corsa/nuoto verso la gara.</li>
+        <li><b>Tempo facile (Z1-2): ${easy}%</b> — per l'endurance l'ideale è ~80%. Se è basso, le sedute "facili" sono troppo intense (il coach le vuole a 6:05–6:20).</li>
+        <li><b>VO₂max ${D.vo2||'–'}</b> — guarda il grafico efficienza: se passo e FC restano piatti, serve più qualità mirata.</li>
+      </ul>
+    </div>
+    <div class="dash-grid">
+      ${chartCard('📊 Volume mensile (ore)','cVol')}
+      ${chartCard('⚡ Carico settimanale','cLoad')}
+      ${chartCard('🥧 Bilanciamento (ore)','cBal')}
+      ${chartCard('❤️ Zone FC (minuti)','cZone')}
+      ${chartCard('🏃 Efficienza corsa: passo vs FC','cEff','dash-wide')}
+    </div>`;
+}
+
+function drawDashCharts(){
+  if(typeof Chart==='undefined' || !_dashData || !_dashData.A.length) return;
+  _destroyCharts();
+  const D=_dashData;
+  Chart.defaults.font.family="'Nunito Sans',sans-serif"; Chart.defaults.font.size=11;
+  const mk=(id,cfg)=>{ const el=document.getElementById(id); if(el) _charts.push(new Chart(el,cfg)); };
+  const noMaint={responsive:true,maintainAspectRatio:false};
+  // volume mensile (stacked)
+  mk('cVol',{type:'bar',data:{labels:D.months.map(_mlabel),datasets:D.discs.map(d=>({label:DASH_LBL[d],data:D.vol[d].map(x=>+x.toFixed(1)),backgroundColor:DASH_COL[d]}))},
+    options:{...noMaint,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true}},plugins:{legend:{position:'bottom',labels:{boxWidth:11,padding:8}}}}});
+  // carico settimanale
+  mk('cLoad',{type:'bar',data:{labels:D.weeks.map(w=>w.split('-')[1]),datasets:[{data:D.load,backgroundColor:'#3B82F6',borderRadius:3}]},
+    options:{...noMaint,scales:{x:{grid:{display:false}},y:{beginAtZero:true}},plugins:{legend:{display:false}}}});
+  // bilanciamento (doughnut)
+  const bd=D.discs.filter(d=>D.tot[d]);
+  mk('cBal',{type:'doughnut',data:{labels:bd.map(d=>DASH_LBL[d]),datasets:[{data:bd.map(d=>+D.tot[d].h.toFixed(1)),backgroundColor:bd.map(d=>DASH_COL[d]),borderWidth:2,borderColor:'#fff'}]},
+    options:{...noMaint,cutout:'58%',plugins:{legend:{position:'right',labels:{boxWidth:11,padding:8}}}}});
+  // zone FC (barre orizzontali)
+  mk('cZone',{type:'bar',data:{labels:['Z1','Z2','Z3','Z4','Z5'],datasets:[{data:[1,2,3,4,5].map(i=>Math.round(D.z[i])),backgroundColor:['#BFDBFE','#86EFAC','#FDE68A','#FCA5A5','#EF4444'],borderRadius:3}]},
+    options:{...noMaint,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,title:{display:true,text:'minuti'}}}}});
+  // efficienza corsa (passo invertito + FC, doppio asse)
+  mk('cEff',{data:{labels:D.rmonths.map(_mlabel),datasets:[
+      {type:'line',label:'Passo (min/km)',data:D.pace.map(p=>+p.toFixed(2)),borderColor:'#F59E0B',backgroundColor:'#F59E0B',yAxisID:'yP',tension:.3,pointRadius:3},
+      {type:'line',label:'FC media',data:D.rhr,borderColor:'#EF4444',backgroundColor:'#EF4444',yAxisID:'yH',tension:.3,pointRadius:3}]},
+    options:{...noMaint,interaction:{intersect:false,mode:'index'},plugins:{legend:{position:'bottom',labels:{boxWidth:11,padding:10}}},
+      scales:{yP:{position:'left',reverse:true,title:{display:true,text:'passo (su = più veloce)'},ticks:{callback:v=>{const m=Math.floor(v),s=Math.round((v-m)*60);return m+':'+(s<10?'0'+s:s);}}},
+              yH:{position:'right',title:{display:true,text:'FC'},grid:{drawOnChartArea:false}}}}});
 }
 
 // ── EDITOR DIETA BASE ──
@@ -1911,7 +2053,7 @@ window.toggleOwner = (cat, idx, owner) => {
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editBase=null; baseView=null; if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editBase=null; baseView=null; dashOpen=false; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
 window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
@@ -1948,11 +2090,13 @@ function renderContent(animate){
                : tab==='oggi'      ? renderOggi()
                : tab==='nicholas'  ? renderNicholasTab()
                : tab==='spesa'     ? renderSpesaTab()
+               : (tab==='allen' && dashOpen) ? renderDashboard()
                : tab==='allen'     ? renderAllenamentiTab()
                :                     renderNoemiTab();
   if(animate){ void el.offsetWidth; el.classList.add('tab-anim'); }
   // autosize dei campi liberi di Noemi
   el.querySelectorAll('textarea.nw-ta').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
+  if(tab==='allen' && dashOpen) drawDashCharts();
   el.insertAdjacentHTML('beforeend', '<button class="logout-link" onclick="doLogout()">🔒 Esci</button>');
 }
 
