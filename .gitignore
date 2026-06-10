@@ -1,6 +1,9 @@
 # Dati privati (scan/PDF del nutrizionista) — NON pubblicare
 file origine/
 
+# Dati allenamento personali (export Garmin + dataset normalizzato) — NON pubblicare
+coach/
+
 # Config locale dev
 .claude/
 
