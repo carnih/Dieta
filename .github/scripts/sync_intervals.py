@@ -13,6 +13,7 @@ KEY   = os.environ['INTERVALS_KEY']
 DRY   = os.environ.get('DRY_RUN') == '1'
 FB_APIKEY = os.environ.get('FB_APIKEY', 'AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4')
 FB_DB     = os.environ.get('FB_DB', 'https://dieta-b7804-default-rtdb.europe-west1.firebasedatabase.app')
+TRACK_V   = 2   # schema tracce: bump quando cambia il calcolo -> auto-rigenerazione incrementale
 
 def http(url, data=None, headers=None, method=None):
     h = {'User-Agent': 'Mozilla/5.0 (dieta-sync; +https://github.com/carnih/Dieta)'}
@@ -114,7 +115,8 @@ def build_track(text):
     if len(lat) < 2: return None
     pts = [[round(lat[i], 5), round(lng[i], 5)] for i in range(len(lat))]
     has_alt = any(alt)
-    return {'track': _dp(pts, 0.00015),
+    return {'v': TRACK_V,
+            'track': _dp(pts, 0.00015),
             'elev': _downsample(dist, alt) if has_alt else [],
             'climbs': _detect_climbs(dist, alt, tim, hr) if has_alt else [],
             'gain': round(sum(max(0, alt[i + 1] - alt[i]) for i in range(len(alt) - 1))) if has_alt else 0}
@@ -208,16 +210,19 @@ print(f"OK: scritte {len(out)} attivita' su Firebase (training/activities).")
 # 4) TRACCE GPS (mappa + profilo + salite) — incrementale: solo attivita' nuove con GPS
 force = os.environ.get('FORCE_TRACKS') in ('1', 'true', 'True', 'yes', 'on')
 try:
-    existing = {} if force else (json.loads(http(f'{FB_DB}/training/tracks.json?shallow=true&auth={idtok}')) or {})
+    existing = {} if force else (json.loads(http(f'{FB_DB}/training/tracks.json?auth={idtok}')) or {})
 except Exception:
     existing = {}
+cap = 10**9 if force else 30   # auto-heal: max 30 (ri)generazioni per run (le vecchie si aggiornano in pochi giorni)
 added = 0
 for a in acts:
     sid = str(a.get('id') or '')
-    if not sid or sid in existing: continue
+    if not sid: continue
     sts = a.get('stream_types') or []
     if isinstance(sts, str): sts = sts.split(',')
     if 'latlng' not in sts: continue
+    cur = existing.get(sid)
+    if isinstance(cur, dict) and cur.get('v') == TRACK_V: continue   # gia' allo schema corrente
     try:
         text = http(f'https://intervals.icu/api/v1/activity/{sid}/streams.csv',
                     headers={'Authorization': 'Basic ' + auth}).decode('utf-8', 'ignore')
@@ -226,7 +231,7 @@ for a in acts:
             http(f'{FB_DB}/training/tracks/{sid}.json?auth={idtok}',
                  data=json.dumps(tr).encode(), headers={'Content-Type': 'application/json'}, method='PUT')
             added += 1
-            if added >= 200: break       # safety: non superare 200 tracce per run
+            if added >= cap: break
     except Exception as e:
         print(f"  traccia {sid} saltata: {e}")
-print(f"OK: {added} tracce GPS aggiunte (totale gia' presenti: {len(existing)}).")
+print(f"OK: {added} tracce (ri)generate (schema v{TRACK_V}); presenti su DB: {len(existing)}.")
