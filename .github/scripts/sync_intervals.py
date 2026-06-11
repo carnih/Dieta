@@ -4,8 +4,9 @@ Legge tutte le attivita' da intervals.icu, le normalizza nello schema della dash
 e le scrive (idempotente, chiave = id attivita').
 Variabili d'ambiente: INTERVALS_ATHLETE, INTERVALS_KEY, FB_EMAIL, FB_PASSWORD.
 DRY_RUN=1 -> non scrive su Firebase, stampa solo un riepilogo (per test)."""
-import os, json, base64, urllib.request, urllib.error
+import os, json, base64, urllib.request, urllib.error, io, csv, sys
 from datetime import datetime
+sys.setrecursionlimit(20000)
 
 ATH   = os.environ['INTERVALS_ATHLETE']
 KEY   = os.environ['INTERVALS_KEY']
@@ -41,13 +42,74 @@ def num(v):
     try: return float(v)
     except: return None
 
+# ── traccia GPS: semplificazione (Douglas-Peucker), profilo altimetrico, salite ──
+def _pdist(p, a, b):
+    x, y = p; x1, y1 = a; x2, y2 = b; dx, dy = x2 - x1, y2 - y1
+    if dx == 0 and dy == 0: return ((x - x1) ** 2 + (y - y1) ** 2) ** 0.5
+    t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy); px, py = x1 + t * dx, y1 + t * dy
+    return ((x - px) ** 2 + (y - py) ** 2) ** 0.5
+
+def _dp(pts, eps):
+    if len(pts) < 3: return pts
+    dmax = 0.0; idx = 0; a, b = pts[0], pts[-1]
+    for i in range(1, len(pts) - 1):
+        d = _pdist(pts[i], a, b)
+        if d > dmax: dmax = d; idx = i
+    if dmax > eps: return _dp(pts[:idx + 1], eps)[:-1] + _dp(pts[idx:], eps)
+    return [pts[0], pts[-1]]
+
+def _downsample(dist, alt, n=80):
+    m = min(len(dist), len(alt))
+    if m == 0: return []
+    if m <= n: return [[round(dist[i] / 1000, 3), round(alt[i], 1)] for i in range(m)]
+    out = []; step = m / float(n)
+    for k in range(n):
+        i = int(k * step); out.append([round(dist[i] / 1000, 3), round(alt[i], 1)])
+    out.append([round(dist[m - 1] / 1000, 3), round(alt[m - 1], 1)]); return out
+
+def _detect_climbs(dist, alt):
+    n = min(len(dist), len(alt))
+    if n < 3: return []
+    climbs = []; i = 0
+    while i < n - 1:
+        if alt[i + 1] <= alt[i]: i += 1; continue
+        s = i; j = i; maxj = i
+        while j < n - 1:
+            if alt[j + 1] >= alt[maxj] - 8:
+                j += 1
+                if alt[j] > alt[maxj]: maxj = j
+            else: break
+        gain = alt[maxj] - alt[s]; length = dist[maxj] - dist[s]
+        if gain >= 20 and length >= 300:
+            climbs.append({'km': round(dist[s] / 1000, 1), 'len_m': round(length),
+                           'gain_m': round(gain), 'grad': round(gain / length * 100, 1)})
+        i = max(maxj, s + 1)
+    return climbs
+
+def build_track(text):
+    lat = []; lng = []; alt = []; dist = []
+    for row in csv.DictReader(io.StringIO(text)):
+        la = row.get('lat'); ln = row.get('lng')
+        if not la or not ln: continue
+        try:
+            lat.append(float(la)); lng.append(float(ln))
+            alt.append(float(row.get('altitude') or 0)); dist.append(float(row.get('distance') or 0))
+        except Exception: pass
+    if len(lat) < 2: return None
+    pts = [[round(lat[i], 5), round(lng[i], 5)] for i in range(len(lat))]
+    has_alt = any(alt)
+    return {'track': _dp(pts, 0.00015),
+            'elev': _downsample(dist, alt) if has_alt else [],
+            'climbs': _detect_climbs(dist, alt) if has_alt else [],
+            'gain': round(sum(max(0, alt[i + 1] - alt[i]) for i in range(len(alt) - 1))) if has_alt else 0}
+
 # 1) leggi attivita' da intervals.icu (o da file locale per test: INTERVALS_FILE)
+auth = base64.b64encode(('API_KEY:' + KEY).encode()).decode()
 _src = os.environ.get('INTERVALS_FILE')
 if _src:
     with open(_src, encoding='utf-8-sig') as f:
         acts = json.load(f)
 else:
-    auth = base64.b64encode(('API_KEY:' + KEY).encode()).decode()
     acts = json.loads(http(f'https://intervals.icu/api/v1/athlete/{ATH}/activities?oldest=2020-01-01&newest=2035-01-01',
                            headers={'Authorization': 'Basic ' + auth}))
 
@@ -64,6 +126,7 @@ for a in acts:
     dist_m = num(a.get('distance')) or 0
     km = dist_m / 1000.0
     rec = {
+        'id': sid,
         'data': dt.strftime('%Y-%m-%d') if dt else '',
         'ora': dt.strftime('%H:%M') if dt else '',
         'mese': dt.strftime('%Y-%m') if dt else '',
@@ -125,3 +188,28 @@ idtok = signin['idToken']
 http(f'{FB_DB}/training/activities.json?auth={idtok}',
      data=json.dumps(out).encode(), headers={'Content-Type': 'application/json'}, method='PUT')
 print(f"OK: scritte {len(out)} attivita' su Firebase (training/activities).")
+
+# 4) TRACCE GPS (mappa + profilo + salite) — incrementale: solo attivita' nuove con GPS
+try:
+    existing = json.loads(http(f'{FB_DB}/training/tracks.json?shallow=true&auth={idtok}')) or {}
+except Exception:
+    existing = {}
+added = 0
+for a in acts:
+    sid = str(a.get('id') or '')
+    if not sid or sid in existing: continue
+    sts = a.get('stream_types') or []
+    if isinstance(sts, str): sts = sts.split(',')
+    if 'latlng' not in sts: continue
+    try:
+        text = http(f'https://intervals.icu/api/v1/activity/{sid}/streams.csv',
+                    headers={'Authorization': 'Basic ' + auth}).decode('utf-8', 'ignore')
+        tr = build_track(text)
+        if tr:
+            http(f'{FB_DB}/training/tracks/{sid}.json?auth={idtok}',
+                 data=json.dumps(tr).encode(), headers={'Content-Type': 'application/json'}, method='PUT')
+            added += 1
+            if added >= 200: break       # safety: non superare 200 tracce per run
+    except Exception as e:
+        print(f"  traccia {sid} saltata: {e}")
+print(f"OK: {added} tracce GPS aggiunte (totale gia' presenti: {len(existing)}).")

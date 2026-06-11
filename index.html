@@ -595,6 +595,13 @@
     .zleg span{display:flex;align-items:center;gap:4px}
     .zleg i{width:9px;height:9px;border-radius:2px;display:inline-block}
     .dash-note{font-size:12px;color:#94A3B8;text-align:center;padding:14px 0 4px;font-style:italic}
+    /* ── mappa percorso + salite ── */
+    .act-map{height:240px;border-radius:14px;overflow:hidden;margin-bottom:10px;background:#E8EDF2;position:relative;z-index:0}
+    .climb-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid #F4F5F7;font-size:13px}
+    .climb-row:first-child{border-top:none}
+    .climb-km{flex:none;width:52px;font-weight:800;color:#94A3B8;font-size:11px}
+    .climb-main{flex:1;font-weight:700;color:#1F2937}
+    .climb-grad{flex:none;font-weight:800;color:#F59E0B}
     /* ── spesa: ultima modifica ── */
     .spesa-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 0 6px;font-size:13.5px;color:#475569;font-weight:700}
     .spesa-meta .ini{width:26px;height:26px;border-radius:50%;background:var(--n-g);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
@@ -659,7 +666,7 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js';
-import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js';
+import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
 import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/auto/+esm';
 
@@ -1480,8 +1487,8 @@ const MESI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov',
 function _n(v){ const x=parseFloat(v); return isNaN(x)?0:x; }
 function _mlabel(m){ const p=(m||'').split('-'); return (MESI[(+p[1])-1]||'')+" '"+(p[0]||'').slice(2); }
 function ALTRI_LBL(t){ return ({resort_snowboarding:'🏂 Snowboard',backcountry_snowboarding:'🏂 Snowboard',indoor_cardio:'🤸 Cardio indoor',transition_v2:'🔁 Transizioni',multi_sport:'🔀 Multisport',hiking:'🥾 Trekking',walking:'🚶 Camminata',snorkeling:'🤿 Snorkeling',other:'• Altro'})[t] || ('• '+(t||'altro').replace(/_/g,' ')); }
-let _dashData=null, _charts=[], dashDetail=null, actDetail=null;
-function _destroyCharts(){ _charts.forEach(c=>{try{c.destroy();}catch(e){}}); _charts=[]; }
+let _dashData=null, _charts=[], dashDetail=null, actDetail=null, _actMap=null;
+function _destroyCharts(){ _charts.forEach(c=>{try{c.destroy();}catch(e){}}); _charts=[]; if(_actMap){ try{_actMap.remove();}catch(e){} _actMap=null; } }
 window.openDash  = ()=>{ dashOpen=true; dashDetail=null; actDetail=null; renderContent(); window.scrollTo(0,0); };
 window.closeDash = ()=>{ dashOpen=false; dashDetail=null; actDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
 window.openDashDetail  = d=>{ dashDetail=d; actDetail=null; _destroyCharts(); renderContent(); window.scrollTo(0,0); };
@@ -1661,7 +1668,48 @@ function renderActivityDetail(D){
   return `${back}
     <div class="dash-cards">${cards}</div>
     ${zbar}
-    <div class="dash-note">🗺️ Mappa e salite in arrivo con l'aggancio Strava.</div>`;
+    ${a.id ? `<div id="actMap" class="act-map"></div><div id="actElevWrap"></div><div id="actClimbs"></div>` : ''}`;
+}
+
+// carica (on-demand) la traccia GPS dell'attivita' e disegna mappa + altimetria + salite
+async function loadActivityTrack(a){
+  if(!a || !a.id) return;
+  let tr=null;
+  try{ const snap=await get(ref(db,'training/tracks/'+a.id)); tr=snap.exists()?snap.val():null; }catch(e){}
+  if(actDetail==null) return;                       // utente ha gia' navigato via
+  const mapEl=document.getElementById('actMap');
+  if(!mapEl) return;
+  if(!tr || !Array.isArray(tr.track) || tr.track.length<2){ mapEl.style.display='none'; return; }
+  // mappa Leaflet (caricata solo quando serve)
+  try{
+    if(!document.getElementById('leaflet-css')){
+      const l=document.createElement('link'); l.id='leaflet-css'; l.rel='stylesheet';
+      l.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(l);
+    }
+    const mod=await import('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/+esm'); const L=mod.default||mod;
+    if(actDetail==null || !document.getElementById('actMap')) return;
+    _actMap=L.map(mapEl);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(_actMap);
+    const line=L.polyline(tr.track,{color:'#EF4444',weight:4}).addTo(_actMap);
+    _actMap.fitBounds(line.getBounds(),{padding:[18,18]});
+    setTimeout(()=>{ try{_actMap.invalidateSize();}catch(e){} },150);
+  }catch(e){ mapEl.innerHTML='<div class="dash-empty" style="padding:20px">Mappa non disponibile</div>'; }
+  // profilo altimetrico
+  const ew=document.getElementById('actElevWrap');
+  if(ew && Array.isArray(tr.elev) && tr.elev.length>1 && typeof Chart!=='undefined'){
+    ew.innerHTML=chartCard('📈 Altimetria'+(tr.gain?' · +'+tr.gain+' m':''),'cElev','dash-wide');
+    const el=document.getElementById('cElev');
+    if(el) _charts.push(new Chart(el,{type:'line',data:{labels:tr.elev.map(p=>p[0]),
+      datasets:[{data:tr.elev.map(p=>p[1]),borderColor:'#F59E0B',backgroundColor:'rgba(245,158,11,.18)',fill:true,pointRadius:0,borderWidth:2,tension:.3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{title:{display:true,text:'km'},ticks:{maxTicksLimit:8}},y:{title:{display:true,text:'m'}}}}}));
+  }
+  // salite
+  const cw=document.getElementById('actClimbs');
+  if(cw && Array.isArray(tr.climbs) && tr.climbs.length){
+    cw.innerHTML='<div class="dash-sec-title" style="margin-top:12px">🧗 Salite ('+tr.climbs.length+')</div>'+
+      '<div class="ddet-list">'+tr.climbs.map(c=>`<div class="climb-row"><span class="climb-km">km ${c.km}</span><span class="climb-main">${(c.len_m/1000).toFixed(1)} km · +${c.gain_m} m</span><span class="climb-grad">${c.grad}%</span></div>`).join('')+'</div>';
+  }
 }
 
 function drawDashCharts(){
@@ -2314,6 +2362,7 @@ function renderContent(animate){
   // autosize dei campi liberi di Noemi
   el.querySelectorAll('textarea.nw-ta').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
   if(tab==='allen' && dashOpen) drawDashCharts();
+  if(tab==='allen' && dashOpen && actDetail!=null) loadActivityTrack(training[actDetail]);
 }
 
 function toast(msg){
