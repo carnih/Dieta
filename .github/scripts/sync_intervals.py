@@ -4,7 +4,7 @@ Legge tutte le attivita' da intervals.icu, le normalizza nello schema della dash
 e le scrive (idempotente, chiave = id attivita').
 Variabili d'ambiente: INTERVALS_ATHLETE, INTERVALS_KEY, FB_EMAIL, FB_PASSWORD.
 DRY_RUN=1 -> non scrive su Firebase, stampa solo un riepilogo (per test)."""
-import os, json, base64, urllib.request
+import os, json, base64, urllib.request, urllib.error
 from datetime import datetime
 
 ATH   = os.environ['INTERVALS_ATHLETE']
@@ -17,8 +17,12 @@ def http(url, data=None, headers=None, method=None):
     h = {'User-Agent': 'Mozilla/5.0 (dieta-sync; +https://github.com/carnih/Dieta)'}
     if headers: h.update(headers)
     req = urllib.request.Request(url, data=data, headers=h, method=method)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read()
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return r.read()
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', 'ignore')[:400]
+        raise SystemExit(f"Errore HTTP {e.code} su {url.split('?')[0]} -> {body}")
 
 SPORT = {'Run':'corsa','VirtualRun':'corsa','TrailRun':'corsa',
          'Ride':'bici','VirtualRide':'bici','GravelRide':'bici','MountainBikeRide':'bici',
@@ -102,12 +106,19 @@ if DRY:
               'passo_corsa_min_km', 'velocita_bici_kmh', 'passo_nuoto_min_100m', 'fc_media', 'carico', 'ctl')})
     raise SystemExit(0)
 
+# salvaguardia: se non ho letto attivita' NON sovrascrivo (evita di azzerare lo storico
+# in caso di risposta vuota/errore da intervals.icu)
+if not out:
+    raise SystemExit("0 attivita' normalizzate: non sovrascrivo training/activities.")
+
 # 2) login Firebase come utente (rispetta le regole: scrive come account autorizzato)
 signin = json.loads(http(
     f'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FB_APIKEY}',
     data=json.dumps({'email': os.environ['FB_EMAIL'], 'password': os.environ['FB_PASSWORD'],
                      'returnSecureToken': True}).encode(),
     headers={'Content-Type': 'application/json'}, method='POST'))
+if 'idToken' not in signin:
+    raise SystemExit("Login Firebase fallito: " + json.dumps(signin)[:300])
 idtok = signin['idToken']
 
 # 3) scrivi (replace dell'intero nodo, idempotente)

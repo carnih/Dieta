@@ -1264,6 +1264,7 @@ function renderOggi(){
   const wd   = oggiDay;
   const isT  = wd===todayId();
   const nd   = NICHOLAS.days.find(d=>d.id===getTrain(wd)) || NICHOLAS.days.find(d=>d.id==='riposo');
+  if(!nd || !Array.isArray(nd.pasti)) return `<div class="page-title">${isT?'Oggi':NOEMI_FULL[wd]}</div><div class="page-sub">Dati dieta non disponibili</div>${calendarHTML()}`;
 
   const rows = [{icon:'💊', title:'Integrazione', e:null, integ:nd.integ}];
   const pre = nicMealBy(nd,'preall');
@@ -1387,7 +1388,7 @@ window.saveNoemiWeek  = (wd,mk,v)=>{
   if(!noemiSettimana[wd]) noemiSettimana[wd]={};
   noemiSettimana[wd][mk]=v;
   dbSet('noemiSettimana/'+wd+'/'+mk, v||null);
-  toast('✓ Salvato');
+  toast(MSG_SAVED);
 };
 window.nwGrow = el=>{ el.style.height='auto'; el.style.height=Math.max(38, el.scrollHeight)+'px'; };
 
@@ -1471,6 +1472,9 @@ function renderAllenamentiTab(){
 //  DASHBOARD ALLENAMENTI (analisi + grafici)
 // ══════════════════════════════════════════
 const DASH_COL = {corsa:'#F59E0B',bici:'#3B82F6',nuoto:'#06B6D4',forza:'#8B5CF6',padel:'#EC4899'};
+const DISC_MAIN = ['corsa','bici','nuoto','forza','padel'];   // discipline "tri" (resto = Altri)
+const MSG_SAVED = '✓ Salvato';
+function mmss(x){ const m=Math.floor(x), s=Math.round((x-m)*60); return m+':'+(s<10?'0'+s:s); }
 const DASH_LBL = {corsa:'Corsa',bici:'Bici',nuoto:'Nuoto',forza:'Forza',padel:'Padel'};
 const MESI = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
 function _n(v){ const x=parseFloat(v); return isNaN(x)?0:x; }
@@ -1487,7 +1491,7 @@ window.closeActivityDetail = ()=>{ actDetail=null; _destroyCharts(); renderConte
 
 function computeDash(){
   const A = Array.isArray(training)?training:[];
-  const discs=['corsa','bici','nuoto','forza','padel'];
+  const discs=DISC_MAIN;
   const tot={}; A.forEach(a=>{ const d=a.disciplina; (tot[d]=tot[d]||{n:0,h:0,km:0}); tot[d].n++; tot[d].h+=_n(a.durata_min)/60; tot[d].km+=_n(a.distanza_km); });
   const months=[...new Set(A.map(a=>a.mese))].filter(Boolean).sort();
   const vol={}; discs.forEach(d=>vol[d]=months.map(()=>0));
@@ -1501,7 +1505,7 @@ function computeDash(){
   const rhr=rmonths.map(m=>Math.round(rh[m].reduce((x,y)=>x+y,0)/rh[m].length));
   const ctlv=A.filter(a=>_n(a.ctl)>0); const ctl=ctlv.length?Math.round(_n(ctlv[ctlv.length-1].ctl)):null;
   const totH=Object.values(tot).reduce((s,d)=>s+d.h,0);
-  const MAIN=['corsa','bici','nuoto','forza','padel'];
+  const MAIN=DISC_MAIN;
   const altri={h:0,n:0,km:0,byType:{}}; const volAltri=months.map(()=>0);
   A.forEach(a=>{ if(!MAIN.includes(a.disciplina)){ const hh=_n(a.durata_min)/60; altri.h+=hh; altri.n++; altri.km+=_n(a.distanza_km);
     const lab=ALTRI_LBL(a.tipo_garmin); (altri.byType[lab]=altri.byType[lab]||{h:0,n:0}); altri.byType[lab].h+=hh; altri.byType[lab].n++;
@@ -1562,7 +1566,7 @@ function renderDashboard(){
 // ── dettaglio disciplina ──
 function renderDashDetail(D){
   const d=dashDetail;
-  const MAIN=['corsa','bici','nuoto','forza','padel'];
+  const MAIN=DISC_MAIN;
   const acts=d==='altri'?D.A.filter(a=>!MAIN.includes(a.disciplina)):D.A.filter(a=>a.disciplina===d);
   const back=`<div class="dash-head"><button class="dash-back" onclick="closeDashDetail()">←</button>
     <div><div class="page-title n" style="padding:0">${{corsa:'🏃 Corsa',bici:'🚴 Bici',nuoto:'🏊 Nuoto',padel:'🎾 Padel',forza:'🏋️ Forza',altri:'🤸 Altri sport'}[d]||d}</div>
@@ -1576,7 +1580,6 @@ function renderDashDetail(D){
   const load=sum('carico');
   const longest=acts.reduce((b,a)=>_n(a.distanza_km)>_n(b.distanza_km)?a:b,acts[0]);
   const longestT=acts.reduce((b,a)=>_n(a.durata_min)>_n(b.durata_min)?a:b,acts[0]);
-  const mmss=x=>{const m=Math.floor(x),s=Math.round((x-m)*60);return m+':'+(s<10?'0'+s:s);};
   const st=(lab,val,sub)=>`<div class="dash-card"><div class="dc-val" style="font-size:18px">${val}</div><div class="dc-lab">${lab}</div><div class="dc-sub">${sub||''}</div></div>`;
   let spec='';
   if(d==='corsa'){
@@ -1709,7 +1712,7 @@ function renderCatEditor(){
   return `<div class="sec-title" style="margin-top:14px;color:#6B7280">🏷️ Rinomina categorie</div>
     <div class="day-card" style="padding:13px 14px">${rows}</div>`;
 }
-window.setCatLabel = (c,v) => { v=(v||'').trim(); if(v) catLabels[c]=v; else delete catLabels[c]; dbSet('catLabels/'+c, v||null); toast('✓ Salvato'); };
+window.setCatLabel = (c,v) => { v=(v||'').trim(); if(v) catLabels[c]=v; else delete catLabels[c]; dbSet('catLabels/'+c, v||null); toast(MSG_SAVED); };
 
 function saveNoemiBase(){ dbSet('noemiBase', NOEMI_BASE); }
 function saveNicBase(){ dbSet('nicBase', NICHOLAS); }
@@ -1717,6 +1720,7 @@ function saveNicBase(){ dbSet('nicBase', NICHOLAS); }
 function renderNoemiBaseEdit(){
   const meals = NOEMI_MEALS.map(mk=>{
     const m = NOEMI_BASE[mk];
+    if(!m || !Array.isArray(m.slots)) return '';
     const groups = m.slots.map((s,si)=>{
       const opts = s.opts.map((o,oi)=>`
         <div class="be-optrow">
@@ -1752,14 +1756,14 @@ function renderNoemiBaseEdit(){
     <div class="sec-title e" style="margin-top:6px">🔎 Alimenti ammessi</div>
     <div class="pl-notes">${refz}</div>`;
 }
-window.beNoemiOpt    = (mk,si,oi,v)=>{ NOEMI_BASE[mk].slots[si].opts[oi]=v; saveNoemiBase(); toast('✓ Salvato'); };
+window.beNoemiOpt    = (mk,si,oi,v)=>{ NOEMI_BASE[mk].slots[si].opts[oi]=v; saveNoemiBase(); toast(MSG_SAVED); };
 window.beNoemiOptAdd = (mk,si)=>{ NOEMI_BASE[mk].slots[si].opts.push('nuova opzione'); saveNoemiBase(); renderContent(); };
 window.beNoemiOptDel = (mk,si,oi)=>{ const a=NOEMI_BASE[mk].slots[si].opts; a.splice(oi,1); if(!a.length)a.push(''); saveNoemiBase(); renderContent(); };
 // opzioni categoria per i <select> dell'editor base
 function catOptions(sel){
   return Object.keys(CAT).map(k=>`<option value="${k}" ${sel===k?'selected':''}>${esc(CAT[k].pill)}</option>`).join('');
 }
-window.beNoemiSlotLabel = (mk,si,v)=>{ NOEMI_BASE[mk].slots[si].label=(v||'').trim()||'Voce'; saveNoemiBase(); toast('✓ Salvato'); };
+window.beNoemiSlotLabel = (mk,si,v)=>{ NOEMI_BASE[mk].slots[si].label=(v||'').trim()||'Voce'; saveNoemiBase(); toast(MSG_SAVED); };
 window.beNoemiSlotCat   = (mk,si,v)=>{ NOEMI_BASE[mk].slots[si].cat=v; saveNoemiBase(); renderContent(); };
 window.beNoemiSlotDel   = (mk,si)=>{ if(!confirm('Eliminare questa categoria dal pasto?'))return; NOEMI_BASE[mk].slots.splice(si,1); saveNoemiBase(); renderContent(); };
 window.beNoemiSlotAdd   = (mk)=>{ NOEMI_BASE[mk].slots.push({key:'cust_'+Date.now(), cat:'verdura', label:'Nuova', opts:['nuova opzione']}); saveNoemiBase(); renderContent(); };
@@ -1801,8 +1805,8 @@ function renderNicBaseEdit(){
 }
 function nicBaseDay(){ return NICHOLAS.days.find(x=>x.id===baseNicDay) || NICHOLAS.days[0]; }
 window.setBaseNicDay = id=>{ baseNicDay=id; renderContent(); };
-window.beNicVal    = (pi,ii,v)=>{ nicBaseDay().pasti[pi].items[ii].v=v; saveNicBase(); toast('✓ Salvato'); };
-window.beNicAlt    = (pi,ii,ai,v)=>{ nicBaseDay().pasti[pi].items[ii].alts[ai]=v; saveNicBase(); toast('✓ Salvato'); };
+window.beNicVal    = (pi,ii,v)=>{ nicBaseDay().pasti[pi].items[ii].v=v; saveNicBase(); toast(MSG_SAVED); };
+window.beNicAlt    = (pi,ii,ai,v)=>{ nicBaseDay().pasti[pi].items[ii].alts[ai]=v; saveNicBase(); toast(MSG_SAVED); };
 window.beNicAltAdd = (pi,ii)=>{ nicBaseDay().pasti[pi].items[ii].alts.push('nuova opzione'); saveNicBase(); renderContent(); };
 window.beNicAltDel = (pi,ii,ai)=>{ const a=nicBaseDay().pasti[pi].items[ii].alts; a.splice(ai,1); if(!a.length)a.push(''); saveNicBase(); renderContent(); };
 window.beNicItemCat = (pi,ii,v)=>{ nicBaseDay().pasti[pi].items[ii].cat=v; saveNicBase(); renderContent(); };
@@ -1819,6 +1823,7 @@ window.closeBaseView = ()=>{ baseView=null; renderContent(); window.scrollTo(0,0
 function renderNoemiBaseConsult(){
   const meals = NOEMI_MEALS.map(mk=>{
     const m = NOEMI_BASE[mk];
+    if(!m || !Array.isArray(m.slots)) return '';
     const slots = m.slots.map(s=>`
       <div class="cb-slot">
         <div class="cb-slot-h">${catPill(s.cat)}<b>${esc(s.label)}</b></div>
@@ -1901,7 +1906,7 @@ window.saveCatInline = (key, newEmoji, newName) => {
   const label = (emoji ? emoji+' ' : '') + name;
   const order = c.order || 100;
   dbSet('spesaCategories/'+key, {label, order});
-  toast('✓ Salvato');
+  toast(MSG_SAVED);
 };
 window.managerAddNewCat = () => {
   const newKey = 'cat_' + Date.now();
