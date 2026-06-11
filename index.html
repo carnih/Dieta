@@ -1092,7 +1092,7 @@ const SUBS = [
     () => tab==='spesa' && !categoryManager && !_catDrag],
   ['schedule',        v => schedule = v||{},
     () => !editBase && (tab==='oggi'||tab==='nicholas')],
-  ['training/activities', v => training = Array.isArray(v) ? v : (v ? Object.values(v) : []),
+  ['training/activities', v => training = Array.isArray(v) ? v : (v ? Object.entries(v).map(([k,r])=> (r&&typeof r==='object') ? {...r, id:r.id||k} : r) : []),
     () => tab==='allen' && dashOpen],
   ['spesaMeta',  v => spesaMeta = v||{},  () => tab==='spesa'],
   ['overrides',  v => overrides = v||{},  () => tab==='oggi' && !editBase],
