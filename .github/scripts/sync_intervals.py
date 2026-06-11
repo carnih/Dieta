@@ -67,7 +67,7 @@ def _downsample(dist, alt, n=80):
         i = int(k * step); out.append([round(dist[i] / 1000, 3), round(alt[i], 1)])
     out.append([round(dist[m - 1] / 1000, 3), round(alt[m - 1], 1)]); return out
 
-def _detect_climbs(dist, alt):
+def _detect_climbs(dist, alt, tim=None, hr=None):
     n = min(len(dist), len(alt))
     if n < 3: return []
     climbs = []; i = 0
@@ -81,26 +81,42 @@ def _detect_climbs(dist, alt):
             else: break
         gain = alt[maxj] - alt[s]; length = dist[maxj] - dist[s]
         if gain >= 20 and length >= 300:
+            dur = (tim[maxj] - tim[s]) if (tim and maxj < len(tim)) else 0
+            hrs = [hr[k] for k in range(s, maxj + 1) if hr and k < len(hr) and hr[k]]
+            gmax = gain / length * 100; k = s
+            while k < maxj:
+                j2 = k
+                while j2 < maxj and dist[j2] - dist[k] < 100: j2 += 1
+                dd = dist[j2] - dist[k]
+                if dd >= 50:
+                    g = (alt[j2] - alt[k]) / dd * 100
+                    if g > gmax: gmax = g
+                k = j2 if j2 > k else k + 1
             climbs.append({'km': round(dist[s] / 1000, 1), 'len_m': round(length),
-                           'gain_m': round(gain), 'grad': round(gain / length * 100, 1)})
+                           'gain_m': round(gain), 'grad': round(gain / length * 100, 1),
+                           'gmax': round(gmax, 1), 'dur_s': round(dur),
+                           'hr': round(sum(hrs) / len(hrs)) if hrs else '',
+                           'vam': round(gain / (dur / 3600)) if dur > 0 else '',
+                           'spd': round((length / 1000) / (dur / 3600), 1) if dur > 0 else ''})
         i = max(maxj, s + 1)
     return climbs
 
 def build_track(text):
-    lat = []; lng = []; alt = []; dist = []
+    lat = []; lng = []; alt = []; dist = []; tim = []; hr = []
     for row in csv.DictReader(io.StringIO(text)):
         la = row.get('lat'); ln = row.get('lng')
         if not la or not ln: continue
         try:
             lat.append(float(la)); lng.append(float(ln))
             alt.append(float(row.get('altitude') or 0)); dist.append(float(row.get('distance') or 0))
+            tim.append(float(row.get('time') or 0)); hr.append(float(row.get('heartrate') or 0))
         except Exception: pass
     if len(lat) < 2: return None
     pts = [[round(lat[i], 5), round(lng[i], 5)] for i in range(len(lat))]
     has_alt = any(alt)
     return {'track': _dp(pts, 0.00015),
             'elev': _downsample(dist, alt) if has_alt else [],
-            'climbs': _detect_climbs(dist, alt) if has_alt else [],
+            'climbs': _detect_climbs(dist, alt, tim, hr) if has_alt else [],
             'gain': round(sum(max(0, alt[i + 1] - alt[i]) for i in range(len(alt) - 1))) if has_alt else 0}
 
 # 1) leggi attivita' da intervals.icu (o da file locale per test: INTERVALS_FILE)
@@ -190,8 +206,9 @@ http(f'{FB_DB}/training/activities.json?auth={idtok}',
 print(f"OK: scritte {len(out)} attivita' su Firebase (training/activities).")
 
 # 4) TRACCE GPS (mappa + profilo + salite) — incrementale: solo attivita' nuove con GPS
+force = os.environ.get('FORCE_TRACKS') in ('1', 'true', 'True', 'yes', 'on')
 try:
-    existing = json.loads(http(f'{FB_DB}/training/tracks.json?shallow=true&auth={idtok}')) or {}
+    existing = {} if force else (json.loads(http(f'{FB_DB}/training/tracks.json?shallow=true&auth={idtok}')) or {})
 except Exception:
     existing = {}
 added = 0

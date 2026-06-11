@@ -5,7 +5,12 @@ name: Sync allenamenti (intervals.icu -> Firebase)
 on:
   schedule:
     - cron: '0 4 * * *'      # ~06:00 Europe/Rome (estate) / 05:00 (inverno)
-  workflow_dispatch: {}        # avvio manuale dalla tab "Actions"
+  workflow_dispatch:           # avvio manuale dalla tab "Actions"
+    inputs:
+      force_tracks:
+        description: "Rigenera TUTTE le tracce GPS (lento, ~92) - usare dopo modifiche al calcolo salite"
+        type: boolean
+        default: false
 
 jobs:
   sync:
@@ -18,4 +23,5 @@ jobs:
           INTERVALS_KEY:     ${{ secrets.INTERVALS_KEY }}
           FB_EMAIL:          ${{ secrets.FB_EMAIL }}
           FB_PASSWORD:       ${{ secrets.FB_PASSWORD }}
+          FORCE_TRACKS:      ${{ inputs.force_tracks }}
         run: python3 .github/scripts/sync_intervals.py
