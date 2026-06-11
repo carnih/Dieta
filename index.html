@@ -1499,7 +1499,6 @@ function computeDash(){
   const rmonths=months.filter(m=>rp[m]);
   const pace=rmonths.map(m=>rp[m].reduce((x,y)=>x+y,0)/rp[m].length);
   const rhr=rmonths.map(m=>Math.round(rh[m].reduce((x,y)=>x+y,0)/rh[m].length));
-  const vo2v=A.filter(a=>_n(a.vo2max)>0); const vo2=vo2v.length?_n(vo2v[vo2v.length-1].vo2max):null;
   const ctlv=A.filter(a=>_n(a.ctl)>0); const ctl=ctlv.length?Math.round(_n(ctlv[ctlv.length-1].ctl)):null;
   const totH=Object.values(tot).reduce((s,d)=>s+d.h,0);
   const MAIN=['corsa','bici','nuoto','forza','padel'];
@@ -1507,7 +1506,7 @@ function computeDash(){
   A.forEach(a=>{ if(!MAIN.includes(a.disciplina)){ const hh=_n(a.durata_min)/60; altri.h+=hh; altri.n++; altri.km+=_n(a.distanza_km);
     const lab=ALTRI_LBL(a.tipo_garmin); (altri.byType[lab]=altri.byType[lab]||{h:0,n:0}); altri.byType[lab].h+=hh; altri.byType[lab].n++;
     const mi=months.indexOf(a.mese); if(mi>=0) volAltri[mi]+=hh; } });
-  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,vo2,ctl,totH,altri,volAltri};
+  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri};
 }
 
 function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><div class="dch-title">${title}</div><div class="dch-canvas"><canvas id="${id}"></canvas></div></div>`; }
@@ -1535,7 +1534,7 @@ function renderDashboard(){
       ${card('corsa','🏃','Corsa',g('corsa','h').toFixed(0)+'h',g('corsa','km').toFixed(0)+' km · '+g('corsa','n')+' uscite')}
       ${card('nuoto','🏊','Nuoto',g('nuoto','h').toFixed(0)+'h',g('nuoto','km').toFixed(1)+' km · '+g('nuoto','n')+' sessioni')}
       ${card('forza','🏋️','Forza',g('forza','h').toFixed(0)+'h',g('forza','n')+' sedute · S&C')}
-      ${card(null,'📈','Fitness',D.ctl!=null?D.ctl:(D.vo2||'–'),D.ctl!=null?'forma · CTL':'VO₂max')}
+      ${card(null,'📈','Fitness',D.ctl!=null?D.ctl:'–','forma · CTL')}
       ${card(null,'⏱️','Totale',D.totH.toFixed(0)+'h',D.A.length+' sedute complessive')}
     </div>
     <div class="dash-sec-title">🎾🏂 Altri sport <span class="dash-sec-sum">${(padelH+D.altri.h).toFixed(0)}h totali</span></div>
@@ -1548,7 +1547,7 @@ function renderDashboard(){
       <ul>
         <li><b>${topDisc==='padel'?'Il padel è lo sport con più ore':'Sport con più ore: '+topDisc}</b> (${padelH.toFixed(0)}h di padel) — occhio a quanto toglie a bici/corsa/nuoto verso la gara.</li>
         <li><b>Tempo facile (Z1-2): ${easy}%</b> — per l'endurance l'ideale è ~80%. Se è basso, le sedute "facili" sono troppo intense (il coach le vuole a 6:05–6:20).</li>
-        <li><b>Fitness (CTL) ${D.ctl!=null?D.ctl:(D.vo2||'–')}</b> — il carico cronico: se cresce sei in costruzione, se cala stai scaricando (o fermo).</li>
+        <li><b>Fitness (CTL) ${D.ctl!=null?D.ctl:'–'}</b> — il carico cronico: se cresce sei in costruzione, se cala stai scaricando (o fermo).</li>
       </ul>
     </div>
     <div class="dash-grid">
@@ -1643,11 +1642,10 @@ function renderActivityDetail(D){
     speed,
     a.fc_media?sv('FC media',a.fc_media+' bpm', a.fc_max?'max '+a.fc_max:''):'',
     a.carico?sv('Carico',a.carico):'',
-    a.vo2max?sv('VO₂max',a.vo2max):'',
+    a.ctl?sv('Fitness',a.ctl,'CTL'):'',
     _n(a.disliv_m)>0?sv('Dislivello',a.disliv_m+' m'):'',
     a.potenza_media_w?sv('Potenza',a.potenza_media_w+' W'):'',
     a.cadenza_corsa_spm?sv('Cadenza',a.cadenza_corsa_spm+' spm'):'',
-    a.te_aerobico?sv('Training Effect','aer '+a.te_aerobico, a.te_anaerobico?'ana '+a.te_anaerobico:''):'',
     a.calorie?sv('Calorie',a.calorie+' kcal'):'',
     (a.rpe||a.feel)?sv('Sensazione',((a.rpe?'RPE '+a.rpe:'')+(a.feel?(a.rpe?' · ':'')+a.feel:''))||'–'):'',
   ].join('');

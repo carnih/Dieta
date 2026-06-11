@@ -83,7 +83,6 @@ for a in acts:
         'calorie': a.get('calories') or '',
         'rpe': a.get('perceived_exertion') or a.get('icu_rpe') or '',
         'feel': a.get('feel') or '',
-        'vo2max': '', 'te_aerobico': '', 'te_anaerobico': '',
     }
     zt = a.get('icu_hr_zone_times') or []
     for i in range(1, 6):
