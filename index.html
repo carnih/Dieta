@@ -602,9 +602,9 @@
     .shop-hist{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;padding:6px 0 2px;opacity:.5}
     .shop-hist button{border:none;background:transparent;color:#C5CAD2;font-size:10.5px;font-weight:600;cursor:pointer}
     /* ── dieta: pasto libero / fuori ── */
-    .cmp-col{position:relative}
-    .col-free{position:absolute;top:6px;right:6px;z-index:2;border:1.5px solid var(--border);background:#fff;border-radius:50px;font-size:15px;line-height:1;padding:3px 7px;cursor:pointer;opacity:.55;box-shadow:var(--sh-1);transition:all .15s}
-    .col-free:active{transform:scale(.88)}
+    .col-freebar{display:flex;justify-content:flex-end;margin-bottom:6px}
+    .col-free{border:1.5px solid var(--border);background:#fff;border-radius:50px;font-size:14px;line-height:1;padding:3px 8px;cursor:pointer;opacity:.6;transition:all .15s}
+    .col-free:active{transform:scale(.9)}
     .cmp-free{padding:14px 6px;text-align:center;font-weight:800;color:#854D0E;background:#FEFCE8;font-size:13px;border-radius:8px;cursor:pointer}
 
     /* ── BENVENUTO ── */
@@ -1290,8 +1290,8 @@ function renderOggi(){
     else nSide = dash();
     const colHtml=(who,on,side)=>{
       if(r.e&&dateKey&&on) return `<div class="cmp-free" onclick="togglePastoLibero('${dateKey}','${r.e}','${who}')">🍕 Fuori</div>`;
-      const btn=(r.e&&dateKey)?`<button class="col-free" onclick="togglePastoLibero('${dateKey}','${r.e}','${who}')" title="Pasto libero / fuori">🍕</button>`:'';
-      return `${btn}<div class="cmp-items">${side}</div>`;
+      const bar=(r.e&&dateKey)?`<div class="col-freebar"><button class="col-free" onclick="togglePastoLibero('${dateKey}','${r.e}','${who}')" title="Pasto libero / fuori">🍕</button></div>`:'';
+      return `${bar}<div class="cmp-items">${side}</div>`;
     };
     return `<div class="cmp-card">
       <div class="cmp-head"><span class="em">${r.icon}</span><span>${r.title}</span></div>
