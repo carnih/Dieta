@@ -1,0 +1,21 @@
+name: Sync allenamenti (intervals.icu -> Firebase)
+
+# Legge le attività da intervals.icu (sincronizzate da Garmin) e le scrive su Firebase.
+# Gira nel cloud di GitHub ogni mattina; il PC può essere spento.
+on:
+  schedule:
+    - cron: '0 4 * * *'      # ~06:00 Europe/Rome (estate) / 05:00 (inverno)
+  workflow_dispatch: {}        # avvio manuale dalla tab "Actions"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sincronizza intervals.icu -> Firebase
+        env:
+          INTERVALS_ATHLETE: ${{ secrets.INTERVALS_ATHLETE }}
+          INTERVALS_KEY:     ${{ secrets.INTERVALS_KEY }}
+          FB_EMAIL:          ${{ secrets.FB_EMAIL }}
+          FB_PASSWORD:       ${{ secrets.FB_PASSWORD }}
+        run: python3 .github/scripts/sync_intervals.py
