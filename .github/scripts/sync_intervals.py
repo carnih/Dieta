@@ -14,7 +14,9 @@ FB_APIKEY = os.environ.get('FB_APIKEY', 'AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4
 FB_DB     = os.environ.get('FB_DB', 'https://dieta-b7804-default-rtdb.europe-west1.firebasedatabase.app')
 
 def http(url, data=None, headers=None, method=None):
-    req = urllib.request.Request(url, data=data, headers=headers or {}, method=method)
+    h = {'User-Agent': 'Mozilla/5.0 (dieta-sync; +https://github.com/carnih/Dieta)'}
+    if headers: h.update(headers)
+    req = urllib.request.Request(url, data=data, headers=h, method=method)
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read()
 
