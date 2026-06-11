@@ -13,7 +13,7 @@ KEY   = os.environ['INTERVALS_KEY']
 DRY   = os.environ.get('DRY_RUN') == '1'
 FB_APIKEY = os.environ.get('FB_APIKEY', 'AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4')
 FB_DB     = os.environ.get('FB_DB', 'https://dieta-b7804-default-rtdb.europe-west1.firebasedatabase.app')
-TRACK_V   = 3   # schema tracce: bump quando cambia il calcolo -> auto-rigenerazione incrementale
+TRACK_V   = 4   # schema tracce: bump quando cambia il calcolo -> auto-rigenerazione incrementale
 
 def http(url, data=None, headers=None, method=None):
     h = {'User-Agent': 'Mozilla/5.0 (dieta-sync; +https://github.com/carnih/Dieta)'}
@@ -229,7 +229,7 @@ for a in acts:
     if isinstance(cur, dict) and cur.get('v') == TRACK_V: continue   # gia' allo schema corrente
     try:
         text = http(f'https://intervals.icu/api/v1/activity/{sid}/streams.csv',
-                    headers={'Authorization': 'Basic ' + auth}).decode('utf-8', 'ignore')
+                    headers={'Authorization': 'Basic ' + auth}).decode('utf-8-sig', 'ignore')
         tr = build_track(text)
         if tr:
             http(f'{FB_DB}/training/tracks/{sid}.json?auth={idtok}',
