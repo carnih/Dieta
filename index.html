@@ -604,6 +604,12 @@
     .climb-sub{font-size:11px;color:#94A3B8;font-weight:600;margin-top:2px}
     .climb-grad{flex:none;text-align:right;font-weight:800;color:#F59E0B;font-size:15px;line-height:1.15}
     .climb-grad small{display:block;font-size:9.5px;color:#CBD5E1;font-weight:700}
+    .lap-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid #F4F5F7}
+    .lap-row:first-child{border-top:none}
+    .lap-n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--n-l);color:var(--n);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+    .lap-l{flex:1;min-width:0}
+    .lap-top{font-size:13px;font-weight:700;color:#1F2937}
+    .lap-sub{font-size:11px;color:#94A3B8;font-weight:600;margin-top:2px}
     /* ── spesa: ultima modifica ── */
     .spesa-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 0 6px;font-size:13.5px;color:#475569;font-weight:700}
     .spesa-meta .ini{width:26px;height:26px;border-radius:50%;background:var(--n-g);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
@@ -1670,7 +1676,7 @@ function renderActivityDetail(D){
   return `${back}
     <div class="dash-cards">${cards}</div>
     ${zbar}
-    ${a.id ? `<div id="actMap" class="act-map"></div><div id="actElevWrap"></div><div id="actClimbs"></div>` : ''}`;
+    ${a.id ? `<div id="actMap" class="act-map"></div><div id="actElevWrap"></div><div id="actClimbs"></div><div id="actLaps"></div>` : ''}`;
 }
 
 // carica (on-demand) la traccia GPS dell'attivita' e disegna mappa + altimetria + salite
@@ -1715,6 +1721,22 @@ async function loadActivityTrack(a){
         const sub=[t?'⏱ '+t:'', c.hr?('❤️ '+c.hr+(c.hrmax?'/'+c.hrmax:'')):'', c.cad?'🔄 '+c.cad:'', c.vam?'VAM '+c.vam:'', c.spd?c.spd+' km/h':''].filter(Boolean).join('  ·  ');
         return `<div class="climb-row"><div class="climb-l"><div class="climb-top">km ${c.km} · ${(c.len_m/1000).toFixed(1)} km · +${c.gain_m} m</div>${sub?`<div class="climb-sub">${sub}</div>`:''}</div><div class="climb-grad">${c.grad}%<small>max ${c.gmax!=null?c.gmax:c.grad}%</small></div></div>`;
       }).join('')+'</div>';
+  }
+  // lap (corsa / bici / nuoto)
+  const lw=document.getElementById('actLaps');
+  if(lw && Array.isArray(tr.laps) && tr.laps.length){
+    const d=a.disciplina;
+    const rows=tr.laps.map((L,i)=>{
+      const km=(L.d||0)/1000, t=L.t||0;
+      let main;
+      if(d==='corsa') main = km.toFixed(2)+' km · '+(L.d>0&&t>0?mmss((t/(L.d/1000))/60)+'/km':'–');
+      else if(d==='bici') main = km.toFixed(1)+' km · '+(t>0?(km/(t/3600)).toFixed(1)+' km/h':'–');
+      else if(d==='nuoto') main = Math.round(L.d)+' m · '+(L.d>0&&t>0?mmss((t/(L.d/100))/60)+'/100m':'–');
+      else main = (L.d>0?km.toFixed(2)+' km · ':'')+mmss(t/60);
+      const extra=['⏱ '+mmss(t/60), L.hr?'❤️ '+L.hr:'', L.cad?'🔄 '+L.cad:'', (d==='bici'&&L.w)?L.w+' W':''].filter(Boolean).join('  ·  ');
+      return `<div class="lap-row"><span class="lap-n">${i+1}</span><div class="lap-l"><div class="lap-top">${main}</div><div class="lap-sub">${extra}</div></div></div>`;
+    }).join('');
+    lw.innerHTML='<div class="dash-sec-title" style="margin-top:12px">⏱ Lap ('+tr.laps.length+')</div><div class="ddet-list">'+rows+'</div>';
   }
 }
 

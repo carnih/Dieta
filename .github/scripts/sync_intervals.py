@@ -13,7 +13,7 @@ KEY   = os.environ['INTERVALS_KEY']
 DRY   = os.environ.get('DRY_RUN') == '1'
 FB_APIKEY = os.environ.get('FB_APIKEY', 'AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4')
 FB_DB     = os.environ.get('FB_DB', 'https://dieta-b7804-default-rtdb.europe-west1.firebasedatabase.app')
-TRACK_V   = 4   # schema tracce: bump quando cambia il calcolo -> auto-rigenerazione incrementale
+TRACK_V   = 5   # schema tracce: bump quando cambia il calcolo -> auto-rigenerazione incrementale
 
 def http(url, data=None, headers=None, method=None):
     h = {'User-Agent': 'Mozilla/5.0 (dieta-sync; +https://github.com/carnih/Dieta)'}
@@ -125,6 +125,21 @@ def build_track(text):
             'climbs': _detect_climbs(dist, alt, tim, hr, cad) if has_alt else [],
             'gain': round(sum(max(0, alt[i + 1] - alt[i]) for i in range(len(alt) - 1))) if has_alt else 0}
 
+def parse_laps(sid, auth):
+    try:
+        iv = json.loads(http(f'https://intervals.icu/api/v1/activity/{sid}/intervals',
+                             headers={'Authorization': 'Basic ' + auth}))
+    except Exception:
+        return []
+    out = []
+    for L in (iv.get('icu_intervals') or [])[:80]:
+        out.append({'d': round(L.get('distance') or 0),
+                    't': round(L.get('moving_time') or L.get('elapsed_time') or 0),
+                    'hr': round(L['average_heartrate']) if L.get('average_heartrate') else '',
+                    'cad': round(L['average_cadence']) if L.get('average_cadence') else '',
+                    'w': round(L['average_watts']) if L.get('average_watts') else ''})
+    return out
+
 # 1) leggi attivita' da intervals.icu (o da file locale per test: INTERVALS_FILE)
 auth = base64.b64encode(('API_KEY:' + KEY).encode()).decode()
 _src = os.environ.get('INTERVALS_FILE')
@@ -224,18 +239,26 @@ for a in acts:
     if not sid: continue
     sts = a.get('stream_types') or []
     if isinstance(sts, str): sts = sts.split(',')
-    if 'latlng' not in sts: continue
+    gps = 'latlng' in sts
+    disc = SPORT.get(a.get('type') or '', 'altro')
+    want_laps = (a.get('icu_lap_count') or 0) > 1 and disc in ('corsa', 'bici', 'nuoto')
+    if not gps and not want_laps: continue
     cur = existing.get(sid)
     if isinstance(cur, dict) and cur.get('v') == TRACK_V: continue   # gia' allo schema corrente
     try:
-        text = http(f'https://intervals.icu/api/v1/activity/{sid}/streams.csv',
-                    headers={'Authorization': 'Basic ' + auth}).decode('utf-8-sig', 'ignore')
-        tr = build_track(text)
-        if tr:
-            http(f'{FB_DB}/training/tracks/{sid}.json?auth={idtok}',
-                 data=json.dumps(tr).encode(), headers={'Content-Type': 'application/json'}, method='PUT')
-            added += 1
-            if added >= cap: break
+        node = None
+        if gps:
+            text = http(f'https://intervals.icu/api/v1/activity/{sid}/streams.csv',
+                        headers={'Authorization': 'Basic ' + auth}).decode('utf-8-sig', 'ignore')
+            node = build_track(text)
+        if node is None:
+            node = {'v': TRACK_V}
+        if want_laps:
+            node['laps'] = parse_laps(sid, auth)
+        http(f'{FB_DB}/training/tracks/{sid}.json?auth={idtok}',
+             data=json.dumps(node).encode(), headers={'Content-Type': 'application/json'}, method='PUT')
+        added += 1
+        if added >= cap: break
     except Exception as e:
         print(f"  traccia {sid} saltata: {e}")
-print(f"OK: {added} tracce (ri)generate (schema v{TRACK_V}); presenti su DB: {len(existing)}.")
+print(f"OK: {added} tracce/lap (ri)generate (schema v{TRACK_V}); presenti su DB: {len(existing)}.")
