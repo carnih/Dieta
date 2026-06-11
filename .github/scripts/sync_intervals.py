@@ -13,7 +13,7 @@ KEY   = os.environ['INTERVALS_KEY']
 DRY   = os.environ.get('DRY_RUN') == '1'
 FB_APIKEY = os.environ.get('FB_APIKEY', 'AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4')
 FB_DB     = os.environ.get('FB_DB', 'https://dieta-b7804-default-rtdb.europe-west1.firebasedatabase.app')
-TRACK_V   = 2   # schema tracce: bump quando cambia il calcolo -> auto-rigenerazione incrementale
+TRACK_V   = 3   # schema tracce: bump quando cambia il calcolo -> auto-rigenerazione incrementale
 
 def http(url, data=None, headers=None, method=None):
     h = {'User-Agent': 'Mozilla/5.0 (dieta-sync; +https://github.com/carnih/Dieta)'}
@@ -68,7 +68,7 @@ def _downsample(dist, alt, n=80):
         i = int(k * step); out.append([round(dist[i] / 1000, 3), round(alt[i], 1)])
     out.append([round(dist[m - 1] / 1000, 3), round(alt[m - 1], 1)]); return out
 
-def _detect_climbs(dist, alt, tim=None, hr=None):
+def _detect_climbs(dist, alt, tim=None, hr=None, cad=None):
     n = min(len(dist), len(alt))
     if n < 3: return []
     climbs = []; i = 0
@@ -84,6 +84,7 @@ def _detect_climbs(dist, alt, tim=None, hr=None):
         if gain >= 20 and length >= 300:
             dur = (tim[maxj] - tim[s]) if (tim and maxj < len(tim)) else 0
             hrs = [hr[k] for k in range(s, maxj + 1) if hr and k < len(hr) and hr[k]]
+            cads = [cad[k] for k in range(s, maxj + 1) if cad and k < len(cad) and cad[k]]
             gmax = gain / length * 100; k = s
             while k < maxj:
                 j2 = k
@@ -97,13 +98,15 @@ def _detect_climbs(dist, alt, tim=None, hr=None):
                            'gain_m': round(gain), 'grad': round(gain / length * 100, 1),
                            'gmax': round(gmax, 1), 'dur_s': round(dur),
                            'hr': round(sum(hrs) / len(hrs)) if hrs else '',
+                           'hrmax': round(max(hrs)) if hrs else '',
+                           'cad': round(sum(cads) / len(cads)) if cads else '',
                            'vam': round(gain / (dur / 3600)) if dur > 0 else '',
                            'spd': round((length / 1000) / (dur / 3600), 1) if dur > 0 else ''})
         i = max(maxj, s + 1)
     return climbs
 
 def build_track(text):
-    lat = []; lng = []; alt = []; dist = []; tim = []; hr = []
+    lat = []; lng = []; alt = []; dist = []; tim = []; hr = []; cad = []
     for row in csv.DictReader(io.StringIO(text)):
         la = row.get('lat'); ln = row.get('lng')
         if not la or not ln: continue
@@ -111,6 +114,7 @@ def build_track(text):
             lat.append(float(la)); lng.append(float(ln))
             alt.append(float(row.get('altitude') or 0)); dist.append(float(row.get('distance') or 0))
             tim.append(float(row.get('time') or 0)); hr.append(float(row.get('heartrate') or 0))
+            cad.append(float(row.get('cadence') or 0))
         except Exception: pass
     if len(lat) < 2: return None
     pts = [[round(lat[i], 5), round(lng[i], 5)] for i in range(len(lat))]
@@ -118,7 +122,7 @@ def build_track(text):
     return {'v': TRACK_V,
             'track': _dp(pts, 0.00015),
             'elev': _downsample(dist, alt) if has_alt else [],
-            'climbs': _detect_climbs(dist, alt, tim, hr) if has_alt else [],
+            'climbs': _detect_climbs(dist, alt, tim, hr, cad) if has_alt else [],
             'gain': round(sum(max(0, alt[i + 1] - alt[i]) for i in range(len(alt) - 1))) if has_alt else 0}
 
 # 1) leggi attivita' da intervals.icu (o da file locale per test: INTERVALS_FILE)
