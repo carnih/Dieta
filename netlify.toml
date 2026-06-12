@@ -1,0 +1,6 @@
+# Sito statico (index.html in root) + funzioni serverless in netlify/functions
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
