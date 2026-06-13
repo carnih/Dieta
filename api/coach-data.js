@@ -66,6 +66,26 @@ export default async function handler(req, res) {
       triathlon: { settimana_corrente: progWeek('tri', allenCfg, 4), totale_settimane: 4 }
     };
 
+    // settimana in corso: dove siamo adesso, cosa era già dovuto vs cosa resta, cosa è stato fatto finora
+    const ORD = ['lun','mar','mer','gio','ven','sab','dom'];
+    const now = new Date();
+    const dow = (now.getDay()+6)%7;               // 0 = lunedì
+    const mondayStr = mondayOf(now).toISOString().slice(0,10);
+    const piano_gia_dovuto = {}, piano_ancora_da_fare = {};
+    ORD.forEach((wd,i) => { (i <= dow ? piano_gia_dovuto : piano_ancora_da_fare)[WD[wd]] = piano_settimana[WD[wd]]; });
+    const settimana_in_corso = {
+      oggi: WD[ORD[dow]] + ' ' + now.toISOString().slice(0,10),
+      giorno_n_su_7: dow + 1,
+      giorni_ancora_da_giocare: 6 - dow,
+      settimana_completata: dow === 6,
+      piano_gia_dovuto,
+      piano_ancora_da_fare,
+      attivita_di_questa_settimana: byDate.filter(a => a.data >= mondayStr).reverse().map(a => ({
+        data: a.data, sport: a.disciplina, nome: a.nome,
+        km: num(a.distanza_km) || undefined, min: Math.round(num(a.durata_min)), carico: a.carico || undefined
+      }))
+    };
+
     res.status(200).json({
       atleta: 'Nicholas',
       obiettivo: (coachConfig && coachConfig.obiettivo) || 'Non impostato — preparazione generale (chiedi all\'atleta l\'obiettivo attuale se serve).',
@@ -76,9 +96,10 @@ export default async function handler(req, res) {
       distribuzione_zone_fc_perc: zone,
       fitness_ctl: ctl, fatica_atl: atl, forma_tsb: (ctl != null && atl != null) ? ctl - atl : null,
       piano_settimana_programmato: piano_settimana,
+      settimana_in_corso,
       programmi_in_corso: programmi,
       ultime_attivita,
-      note: 'Distanze in km, durate in minuti. CTL=fitness, ATL=fatica, TSB=forma. piano_settimana_programmato = cosa l\'atleta ha pianificato; ultime_attivita = cosa ha realmente svolto.'
+      note: 'Distanze in km, durate in minuti. CTL=fitness, ATL=fatica, TSB=forma. piano_settimana_programmato = cosa l\'atleta ha pianificato; ultime_attivita = cosa ha realmente svolto. IMPORTANTE: se settimana_in_corso.settimana_completata = false, la settimana NON è finita: NON dare voti/giudizi finali e NON segnare come "mancati" gli allenamenti in piano_ancora_da_fare (sono ancora in programma). Confronta solo piano_gia_dovuto con attivita_di_questa_settimana. I dati arrivano da intervals.icu: se l\'atleta cita un allenamento che non vedi, è possibile che non sia ancora stato sincronizzato — diglielo invece di assumere che non l\'abbia fatto.'
     });
   } catch (e) {
     res.status(500).json({ error: String(e) });
