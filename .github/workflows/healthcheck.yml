@@ -15,7 +15,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import urllib.request, re, sys
-          URL = "https://dietacarstr.netlify.app/"
+          URL = "https://dieta-livid.vercel.app/"
           problems = []
           try:
               req = urllib.request.Request(URL, headers={'User-Agent': 'dieta-healthcheck'})

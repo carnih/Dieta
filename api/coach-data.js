@@ -1,20 +1,20 @@
-// Netlify Function: espone un riassunto AGGIORNATO degli allenamenti per il GPT personalizzato.
+// Vercel Serverless Function: espone un riassunto AGGIORNATO degli allenamenti per il GPT personalizzato.
 // Nessun costo AI: serve solo dati (il "cervello" e' ChatGPT). Protetta da COACH_API_KEY.
-// Env richieste su Netlify: COACH_API_KEY, FB_EMAIL, FB_PASSWORD (FB_APIKEY/FB_DB hanno default pubblici).
+// Env richieste su Vercel: COACH_API_KEY, FB_EMAIL, FB_PASSWORD (FB_APIKEY/FB_DB hanno default pubblici).
 const FB_APIKEY = process.env.FB_APIKEY || 'AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4';
 const FB_DB     = process.env.FB_DB     || 'https://dieta-b7804-default-rtdb.europe-west1.firebasedatabase.app';
 const num = v => { const x = parseFloat(v); return isNaN(x) ? 0 : x; };
 
-exports.handler = async (event) => {
+export default async function handler(req, res) {
   const key = process.env.COACH_API_KEY;
-  const auth = event.headers.authorization || event.headers.Authorization || '';
-  if (!key || auth !== 'Bearer ' + key) return { statusCode: 401, body: '{"error":"unauthorized"}' };
+  const auth = req.headers.authorization || '';
+  if (!key || auth !== 'Bearer ' + key) { res.status(401).json({ error: 'unauthorized' }); return; }
   try {
     const si = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FB_APIKEY}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: process.env.FB_EMAIL, password: process.env.FB_PASSWORD, returnSecureToken: true })
     }).then(r => r.json());
-    if (!si.idToken) return { statusCode: 500, body: '{"error":"firebase auth failed"}' };
+    if (!si.idToken) { res.status(500).json({ error: 'firebase auth failed' }); return; }
     const obj = await fetch(`${FB_DB}/training/activities.json?auth=${si.idToken}`).then(r => r.json());
     const A = obj ? Object.values(obj) : [];
 
@@ -41,7 +41,7 @@ exports.handler = async (event) => {
       kmh: a.velocita_bici_kmh || undefined, fc: a.fc_media || undefined, carico: a.carico || undefined
     }));
 
-    const out = {
+    res.status(200).json({
       atleta: 'Nicholas', obiettivo: 'Ironman 70.3 Cervia ~20 settembre 2026', coach: 'Paolo Morosini',
       ritmi_coach: { corsa_facile: '6:05-6:20/km', corsa_lunga_brick: '5:45-5:55/km', scala_sforzo: 'PE/RPE 0-10 (5-6 facile, 7-8 soglia, 8-9 ripetute)' },
       aggiornato: new Date().toISOString().slice(0, 10),
@@ -51,9 +51,8 @@ exports.handler = async (event) => {
       fitness_ctl: ctl, fatica_atl: atl, forma_tsb: (ctl != null && atl != null) ? ctl - atl : null,
       ultime_attivita,
       note: 'Distanze in km, durate in minuti. CTL=fitness, ATL=fatica, TSB=forma. Padel/forza non sono triathlon-specifici.'
-    };
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(out) };
+    });
   } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: String(e) }) };
+    res.status(500).json({ error: String(e) });
   }
-};
+}
