@@ -610,6 +610,8 @@
     .lap-l{flex:1;min-width:0}
     .lap-top{font-size:13px;font-weight:700;color:#1F2937}
     .lap-sub{font-size:11px;color:#94A3B8;font-weight:600;margin-top:2px}
+    .obj-in{border:none;border-bottom:1px dashed #CBD5E1;background:transparent;font-family:inherit;font-size:14px;font-weight:600;color:#475569;outline:none;padding:2px 0;width:70%;min-width:180px}
+    .obj-in:focus{border-bottom-color:var(--n);color:#1F2937}
     /* ── spesa: ultima modifica ── */
     .spesa-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 0 6px;font-size:13.5px;color:#475569;font-weight:700}
     .spesa-meta .ini{width:26px;height:26px;border-radius:50%;background:var(--n-g);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
@@ -1073,7 +1075,7 @@ function getSpesaCats(){
 //  STATE
 // ══════════════════════════════════════════
 let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], _cid=0, editBase=null, baseNicDay='corsa', categoryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
-    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={};
+    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={}, coachConfig={};
 const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
 // ── SOTTOSCRIZIONI FIREBASE (dichiarative) ──
@@ -1104,6 +1106,7 @@ const SUBS = [
     () => tab==='allen' && dashOpen],
   ['spesaMeta',  v => spesaMeta = v||{},  () => tab==='spesa'],
   ['overrides',  v => overrides = v||{},  () => tab==='oggi' && !editBase],
+  ['coachConfig',v => coachConfig = v||{},() => tab==='allen' && !dashOpen],
 ];
 function initFirebaseSubs(){
   SUBS.forEach(([path, assign, shouldRender]) => {
@@ -1458,6 +1461,7 @@ function progCard(prog, bodyFn){
   </div>`;
 }
 
+window.setObiettivo = v => { v=(v||'').trim(); coachConfig.obiettivo=v; dbSet('coachConfig/obiettivo', v||null); toast(MSG_SAVED); };
 function renderAllenamentiTab(){
   const t = todayId();
   const tlabel = trainLabel(t);
@@ -1471,7 +1475,7 @@ function renderAllenamentiTab(){
   </div>`;
   return `
     <div class="page-title n">Allenamenti</div>
-    <div class="page-sub">🏊🚴🏃 Verso IM 70.3 · ${esc(ALLENAMENTI.forza.coach)}</div>
+    <div class="page-sub">🎯 <input class="obj-in" value="${esc(coachConfig.obiettivo||'')}" placeholder="Imposta obiettivo (es. IM 70.3 Cervia · set)" onchange="setObiettivo(this.value)"></div>
     <button class="dash-cta" onclick="openDash()">
       <span class="dash-cta-ic">📊</span>
       <span><b>Vuoi capire come sta andando?</b><small>Analisi e grafici dei tuoi allenamenti</small></span>
