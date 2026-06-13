@@ -3,6 +3,16 @@
 Storico delle modifiche significative all'app. Le voci più recenti in alto.
 Formato libero: data — cosa è cambiato e perché.
 
+## 2026-06-13 — Coach AI, dashboard mappe/lap, pipeline intervals.icu, migrazione Vercel
+- **Account chip** in alto a destra (login/logout pulito); rimosso il vecchio "Esci" a fondo pagina.
+- **Spesa**: "ultimo aggiornamento di [utente] · data" in fondo (`spesaMeta`).
+- **Dieta**: 🍕 "fuori/pasto libero" selezionabile **per persona** e legato alla **data reale** (scade da solo): `overrides/{data}/{pasto}/{n|e}`.
+- **Dashboard allenamenti** (tab Allenamenti → "come sta andando"): sezioni Triathlon/Altri, dettaglio per disciplina, **dettaglio singola attività** con **mappa Leaflet+OSM, profilo altimetrico, salite (tempo/pendenza media+max/FC/cadenza/VAM/velocità), lap** (passo/km·km/h·/100m). Card **Fitness=CTL**.
+- **Pipeline dati = intervals.icu** (non più export Garmin né Strava): `sync_intervals.py` + workflow `sync-intervals.yml` (cron) scrivono `training/activities` e `training/tracks/{id}`; tracce con **auto-heal per versione** (`TRACK_V`) + input `force_tracks`. Fix BOM CSV (decode utf-8-sig). Export Garmin archiviato in `file origine/`.
+- **Coach AI**: function Vercel `api/coach-data.js` (protetta da `COACH_API_KEY`) che espone il riassunto allenamenti; consumata da un **GPT personalizzato** su ChatGPT (gratis). Obiettivo gara non più cablato → campo 🎯 `coachConfig/obiettivo` in app.
+- **Hosting → Vercel** (`https://dieta-livid.vercel.app/`); function in `api/`, healthcheck aggiornato al dominio Vercel. Rimossi file Netlify.
+- **Qualità/pulizia**: codice morto rimosso, guardie anti-schermo-bianco su dati Firebase, dedup (`DISC_MAIN`/`mmss`/`MSG_SAVED`), nodi DB orfani `noemi`/`noemiPlan` eliminati.
+
 ## 2026-06-09 — Sicurezza (login)
 - Aggiunto **gate di autenticazione** (Firebase Auth, email/password). L'app non parte finché
   non si è loggati; login persistente per dispositivo (`browserLocalPersistence`). Schermata `#login`,

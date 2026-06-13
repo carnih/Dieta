@@ -1,48 +1,41 @@
-# COACH-AI — piano "assistente allenamenti"
+# COACH-AI — assistente allenamenti (stato)
 
-Obiettivo: un assistente che legge i dati di allenamento (in continuo aggiornamento) e
-aiuta a interpretarli nel lungo periodo, in ottica preparazione **Ironman 70.3**.
+Obiettivo: leggere i dati di allenamento (in continuo aggiornamento) e aiutare a interpretarli.
+L'obiettivo sportivo NON è cablato: è il campo `coachConfig/obiettivo`, modificabile in app (🎯 tab Allenamenti).
 
-## Stato attuale (giugno 2026)
-- ✅ **Storico**: export Garmin "Esporta i tuoi dati" — 272 attività (~8 mesi).
-  File chiave nell'export: `DI_CONNECT/DI-Connect-Fitness/..._summarizedActivities.json` (riepilogo strutturato, ~2 MB).
-  Metriche per attività: durata, distanza, passo/velocità, FC media/max/min, minuti per zona FC,
-  carico (`activityTrainingLoad`), training effect aero/anaero, VO₂max, potenza, dinamica corsa,
-  nuoto (SWOLF/bracciate/vasca), RPE/feel, GPS, splits.
-- ✅ **Ordinario**: API Strava validata (Garmin→Strava sync attivo da 10/06/2026, solo in avanti).
-  App Strava: **Client ID 256950**, scope `activity:read_all`. Client Secret/refresh: NON in repo;
-  da **rigenerare** prima dell'automazione permanente e salvare come GitHub Secrets.
-- ✅ **App**: login email/password (2 account) + Realtime Database chiuso all'allowlist email.
+## ✅ Fatto e in produzione
 
-## Architettura prevista
-```
-Garmin export (storico, 1x) ┐
-                            ├─→ normalizzazione → Firebase training/ → dashboard + chat
-Strava API (ordinario, auto)┘
-```
-- `training/activities/{id}` — attività normalizzate (unità pulite, dedup per id).
-- `training/rollups` — aggregati settimanali/mensili (volume, carico, passo@FC, zone, VO₂max).
-- `training/insights/{periodo}` — riepiloghi scritti dall'AI.
+### Fonte dati: intervals.icu (NON Strava, NON export Garmin)
+- Garmin → **intervals.icu** (sync automatico, gratis) → **GitHub Action** → Firebase.
+- `.github/scripts/sync_intervals.py` (cron giornaliero): scrive `training/activities` (replace idempotente, guard anti-azzeramento) + `training/tracks/{id}` per le attività con GPS/lap.
+- Auto-heal per versione schema (`TRACK_V`): le tracce vecchie si rigenerano da sole (~30/run); input `force_tracks` per farle tutte subito.
+- Segreti in GitHub Secrets: `INTERVALS_ATHLETE`, `INTERVALS_KEY`, `FB_EMAIL`, `FB_PASSWORD`.
+- Lo storico (8 mesi, ~260 attività) è stato importato da intervals.icu (che aveva già tutto). L'export Garmin è solo **archiviato** in `file origine/Dati grezzi allenamenti/` (nessun richiamo nel codice).
 
-## Come ci si "chatta" (3 strade)
-- **A. File caricato a mano** in ChatGPT/Claude/Gemini → gratis (abbonamento), ma è uno snapshot (non si aggiorna).
-- **B. Endpoint vivo + connettore** (GPT personalizzato / MCP) → automatico + aggiornato, gratis con abbonamento, serve costruire un piccolo endpoint che legge Firebase.
-- **C. "Chiedi al coach" dentro l'app** (API LLM) → automatico, comodo sul telefono, costo a consumo (centesimi).
-- Nota: l'AI non vede l'app/Firebase da sola; o legge un file (A) o chiama un endpoint vivo (B/C).
-  La "freschezza" dei dati la garantisce la sync Strava→Firebase.
+### Dashboard in-app (gratis)
+Tab Allenamenti → "Vuoi capire come sta andando?" → dashboard:
+- card per disciplina (Triathlon: bici/corsa/nuoto/forza; Altri: padel + "Altri" raggruppati), Fitness=CTL;
+- dettaglio disciplina → tutte le attività → **dettaglio singola attività**: mappa **Leaflet+OSM**, profilo altimetrico (Chart.js), **salite** (tempo, pendenza media+max, FC media/max, cadenza, VAM, velocità), **lap** (passo/km · km/h · /100m + FC/cadenza/W).
+- Dati traccia caricati on-demand da `training/tracks/{id}`.
 
-## Roadmap
-1. **Normalizzazione storico** → dataset pulito (CSV+JSON). Base per tutto + file per chat manuale (Strada A). [in corso]
-2. **Firebase + sync Strava** (GitHub Action giornaliero, secrets rigenerati).
-3. **Dashboard** (nuova tab "Analisi", Chart.js).
-4. **Chat sempre aggiornata** (Strada B; eventuale C in-app).
+### Coach AI via ChatGPT (gratis, "Strada B")
+- Endpoint **`api/coach-data.js`** su Vercel (protetto da `COACH_API_KEY`): restituisce riassunto aggiornato (totali, carico settimanale, zone, CTL/ATL/forma, **piano_settimana_programmato** vs **ultime_attivita**, **programmi_in_corso**, obiettivo).
+- **GPT personalizzato** su ChatGPT con Action → chiama l'endpoint, risponde sui dati freschi. Nessun costo API.
+- Env Vercel: `COACH_API_KEY`, `FB_EMAIL`, `FB_PASSWORD`.
 
 ## Decisioni prese
-- Aggiornamento ordinario: **Strava automatico** (testato OK).
-- AI: **si parte manuale/gratis** (Strada A); automazione (B/C) valutata dopo.
-- Dashboard: **dentro l'app attuale** (nuova tab), quando si arriva allo Step 3.
+- Aggiornamento dati: **intervals.icu** (non Strava — l'API Strava è gratis ma intervals dà anche storico+GPS senza attriti).
+- Chat: **ChatGPT con GPT personalizzato + Action** (gratis con l'abbonamento). NON chat in-app (richiederebbe API LLM a consumo).
+- Obiettivo gara: **configurabile** (`coachConfig`), non hardcoded.
+- Mappe: **Leaflet + OpenStreetMap** (mappa vera, non SVG).
+
+## Possibili prossimi step
+- Curva Forma (CTL/ATL/TSB) come grafico in dashboard.
+- Ricalibrare le **zone FC** (intervals le definisce diversamente da Garmin → in dashboard risultano sbilanciate).
+- Piano vs fatto più dettagliato (strutturare i piani del coach, oggi solo `schedule` + settimana programma).
+- Riepilogo settimanale automatico (email/Telegram via GitHub Action).
+- Categoria salite (HC/1-4), confronto attività.
 
 ## Sicurezza / privacy
-- Dati di salute → sotto Firebase già protetto dai 2 account.
-- Export grezzi e segreti (Strava secret/refresh, eventuali chiavi servizio) → MAI nel repo. Usare `.gitignore` + GitHub Secrets.
-- API LLM: i dati inviati non vengono usati per training (impostazione API di Anthropic/OpenAI).
+- Dati di salute sotto Firebase protetto (2 account). Segreti solo in GitHub Secrets / Vercel env.
+- Endpoint coach protetto da `COACH_API_KEY` (Bearer): non pubblicamente leggibile.
