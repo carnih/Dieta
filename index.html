@@ -1517,6 +1517,13 @@ function computeDash(){
   A.forEach(a=>{ if(discs.includes(a.disciplina)){ const mi=months.indexOf(a.mese); if(mi>=0) vol[a.disciplina][mi]+=_n(a.durata_min)/60; } });
   const wk={}; A.forEach(a=>{ if(a.anno_sett) wk[a.anno_sett]=(wk[a.anno_sett]||0)+_n(a.carico); });
   const weeks=Object.keys(wk).sort().slice(-18); const load=weeks.map(w=>Math.round(wk[w]));
+  // ore settimanali di allenamento (tutte le discipline) e progressione mensile
+  const wkH={}; A.forEach(a=>{ if(a.anno_sett) wkH[a.anno_sett]=(wkH[a.anno_sett]||0)+_n(a.durata_min)/60; });
+  const hMon={},wkMon={}; A.forEach(a=>{ if(a.mese){ hMon[a.mese]=(hMon[a.mese]||0)+_n(a.durata_min)/60; (wkMon[a.mese]=wkMon[a.mese]||new Set()).add(a.anno_sett); } });
+  const avgWkMonth=months.map(m=>{ const w=wkMon[m]?wkMon[m].size:0; return w?+((hMon[m]||0)/w).toFixed(1):0; });
+  const wkKeys=Object.keys(wkH).sort(); const fullW=wkKeys.slice(0,-1); // esclude la settimana in corso (parziale)
+  const avgH=arr=>arr.length?arr.reduce((s,w)=>s+wkH[w],0)/arr.length:0;
+  const avgWkRecent=avgH(fullW.slice(-8)); const avgWkPrev=fullW.length>8?avgH(fullW.slice(-16,-8)):null;
   const z=[0,0,0,0,0,0]; A.forEach(a=>{ for(let i=1;i<=5;i++) z[i]+=_n(a['zona'+i+'_min']); });
   const rp={},rh={}; A.forEach(a=>{ if(a.disciplina==='corsa'){ const di=_n(a.distanza_km),du=_n(a.durata_min),hr=_n(a.fc_media); if(di>1&&hr>0){ (rp[a.mese]=rp[a.mese]||[]).push(du/di); (rh[a.mese]=rh[a.mese]||[]).push(hr);} } });
   const rmonths=months.filter(m=>rp[m]);
@@ -1529,7 +1536,7 @@ function computeDash(){
   A.forEach(a=>{ if(!MAIN.includes(a.disciplina)){ const hh=_n(a.durata_min)/60; altri.h+=hh; altri.n++; altri.km+=_n(a.distanza_km);
     const lab=ALTRI_LBL(a.tipo_garmin); (altri.byType[lab]=altri.byType[lab]||{h:0,n:0}); altri.byType[lab].h+=hh; altri.byType[lab].n++;
     const mi=months.indexOf(a.mese); if(mi>=0) volAltri[mi]+=hh; } });
-  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri};
+  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri,avgWkMonth,avgWkRecent,avgWkPrev};
 }
 
 function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><div class="dch-title">${title}</div><div class="dch-canvas"><canvas id="${id}"></canvas></div></div>`; }
@@ -1559,6 +1566,7 @@ function renderDashboard(){
       ${card('forza','🏋️','Forza',g('forza','h').toFixed(0)+'h',g('forza','n')+' sedute · S&C')}
       ${card(null,'📈','Fitness',D.ctl!=null?D.ctl:'–','forma · CTL')}
       ${card(null,'⏱️','Totale',D.totH.toFixed(0)+'h',D.A.length+' sedute complessive')}
+      ${card(null,'📅','Ore/sett',D.avgWkRecent.toFixed(1)+'h',D.avgWkPrev!=null?((D.avgWkRecent-D.avgWkPrev>=0?'↑ +':'↓ ')+(D.avgWkRecent-D.avgWkPrev).toFixed(1)+'h vs 8 sett prima'):'media ultime 8 sett')}
     </div>
     <div class="dash-sec-title">🎾🏂 Altri sport <span class="dash-sec-sum">${(padelH+D.altri.h).toFixed(0)}h totali</span></div>
     <div class="dash-cards">
@@ -1571,9 +1579,11 @@ function renderDashboard(){
         <li><b>${topDisc==='padel'?'Il padel è lo sport con più ore':'Sport con più ore: '+topDisc}</b> (${padelH.toFixed(0)}h di padel) — occhio a quanto toglie a bici/corsa/nuoto verso la gara.</li>
         <li><b>Tempo facile (Z1-2): ${easy}%</b> — per l'endurance l'ideale è ~80%. Se è basso, le sedute "facili" sono troppo intense (il coach le vuole a 6:05–6:20).</li>
         <li><b>Fitness (CTL) ${D.ctl!=null?D.ctl:'–'}</b> — il carico cronico: se cresce sei in costruzione, se cala stai scaricando (o fermo).</li>
+        <li><b>Volume: ${D.avgWkRecent.toFixed(1)} h/sett</b> (media ultime 8 settimane${D.avgWkPrev!=null?', '+(D.avgWkRecent-D.avgWkPrev>=0?'in crescita 📈':'in calo 📉')+' rispetto alle 8 precedenti ('+D.avgWkPrev.toFixed(1)+'h)':''}) — per un endurance lungo il volume costante conta più dei singoli allenamenti intensi.</li>
       </ul>
     </div>
     <div class="dash-grid">
+      ${chartCard('📅 Ore settimanali medie / mese','cWkAvg','dash-wide')}
       ${chartCard('📊 Volume mensile (ore)','cVol')}
       ${chartCard('⚡ Carico settimanale','cLoad')}
       ${chartCard('🥧 Bilanciamento (ore)','cBal')}
@@ -1759,6 +1769,9 @@ function drawDashCharts(){
   Chart.defaults.font.family="'Nunito Sans',sans-serif"; Chart.defaults.font.size=11;
   const mk=(id,cfg)=>{ const el=document.getElementById(id); if(el) _charts.push(new Chart(el,cfg)); };
   const noMaint={responsive:true,maintainAspectRatio:false};
+  // ore settimanali medie per mese (progressione del volume)
+  mk('cWkAvg',{type:'line',data:{labels:D.months.map(_mlabel),datasets:[{label:'ore/sett',data:D.avgWkMonth,borderColor:'#0EA5E9',backgroundColor:'rgba(14,165,233,.15)',fill:true,tension:.3,pointRadius:3}]},
+    options:{...noMaint,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'ore / settimana'}}}}});
   // volume mensile (stacked)
   mk('cVol',{type:'bar',data:{labels:D.months.map(_mlabel),datasets:D.discs.map(d=>({label:DASH_LBL[d],data:D.vol[d].map(x=>+x.toFixed(1)),backgroundColor:DASH_COL[d]}))},
     options:{...noMaint,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true}},plugins:{legend:{position:'bottom',labels:{boxWidth:11,padding:8}}}}});

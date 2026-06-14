@@ -3,6 +3,11 @@
 Storico delle modifiche significative all'app. Le voci più recenti in alto.
 Formato libero: data — cosa è cambiato e perché.
 
+## 2026-06-14 — Coach "settimana in corso", healthcheck robusto, volume settimanale in dashboard
+- **Coach endpoint** (`api/coach-data.js`): nuovo blocco `settimana_in_corso` (oggi, giorni rimanenti, `piano_gia_dovuto` vs `piano_ancora_da_fare`, attività della settimana). Il GPT non valuta più la settimana come conclusa a metà e avvisa se un allenamento citato potrebbe essere solo non ancora sincronizzato.
+- **Healthcheck** (`healthcheck.yml`): sostituito il conteggio parentesi (falsi allarmi per le `()` dentro le stringhe) con `node --check` sul modulo estratto → valida la sintassi ESM reale.
+- **Dashboard**: card **"Ore/sett"** (media ultime 8 settimane + trend vs 8 precedenti), riga di lettura sul volume, e grafico **"Ore settimanali medie / mese"** (progressione). Calcolo in `computeDash` (`avgWkMonth`/`avgWkRecent`/`avgWkPrev`).
+
 ## 2026-06-13 — Coach AI, dashboard mappe/lap, pipeline intervals.icu, migrazione Vercel
 - **Account chip** in alto a destra (login/logout pulito); rimosso il vecchio "Esci" a fondo pagina.
 - **Spesa**: "ultimo aggiornamento di [utente] · data" in fondo (`spesaMeta`).
