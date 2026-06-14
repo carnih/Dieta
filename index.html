@@ -1523,7 +1523,8 @@ function computeDash(){
   const avgWkMonth=months.map(m=>{ const w=wkMon[m]?wkMon[m].size:0; return w?+((hMon[m]||0)/w).toFixed(1):0; });
   const wkKeys=Object.keys(wkH).sort(); const fullW=wkKeys.slice(0,-1); // esclude la settimana in corso (parziale)
   const avgH=arr=>arr.length?arr.reduce((s,w)=>s+wkH[w],0)/arr.length:0;
-  const avgWkRecent=avgH(fullW.slice(-8)); const avgWkPrev=fullW.length>8?avgH(fullW.slice(-16,-8)):null;
+  const avgWkRecent=avgH(fullW.slice(-4)); const avgWkPrev=fullW.length>4?avgH(fullW.slice(-8,-4)):null;
+  const peakWk=fullW.length?Math.max(...fullW.slice(-12).map(w=>wkH[w])):0;
   const z=[0,0,0,0,0,0]; A.forEach(a=>{ for(let i=1;i<=5;i++) z[i]+=_n(a['zona'+i+'_min']); });
   const rp={},rh={}; A.forEach(a=>{ if(a.disciplina==='corsa'){ const di=_n(a.distanza_km),du=_n(a.durata_min),hr=_n(a.fc_media); if(di>1&&hr>0){ (rp[a.mese]=rp[a.mese]||[]).push(du/di); (rh[a.mese]=rh[a.mese]||[]).push(hr);} } });
   const rmonths=months.filter(m=>rp[m]);
@@ -1536,7 +1537,7 @@ function computeDash(){
   A.forEach(a=>{ if(!MAIN.includes(a.disciplina)){ const hh=_n(a.durata_min)/60; altri.h+=hh; altri.n++; altri.km+=_n(a.distanza_km);
     const lab=ALTRI_LBL(a.tipo_garmin); (altri.byType[lab]=altri.byType[lab]||{h:0,n:0}); altri.byType[lab].h+=hh; altri.byType[lab].n++;
     const mi=months.indexOf(a.mese); if(mi>=0) volAltri[mi]+=hh; } });
-  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri,avgWkMonth,avgWkRecent,avgWkPrev};
+  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri,avgWkMonth,avgWkRecent,avgWkPrev,peakWk};
 }
 
 function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><div class="dch-title">${title}</div><div class="dch-canvas"><canvas id="${id}"></canvas></div></div>`; }
@@ -1566,7 +1567,7 @@ function renderDashboard(){
       ${card('forza','🏋️','Forza',g('forza','h').toFixed(0)+'h',g('forza','n')+' sedute · S&C')}
       ${card(null,'📈','Fitness',D.ctl!=null?D.ctl:'–','forma · CTL')}
       ${card(null,'⏱️','Totale',D.totH.toFixed(0)+'h',D.A.length+' sedute complessive')}
-      ${card(null,'📅','Ore/sett',D.avgWkRecent.toFixed(1)+'h',D.avgWkPrev!=null?((D.avgWkRecent-D.avgWkPrev>=0?'↑ +':'↓ ')+(D.avgWkRecent-D.avgWkPrev).toFixed(1)+'h vs 8 sett prima'):'media ultime 8 sett')}
+      ${card(null,'📅','Ore/sett',D.avgWkRecent.toFixed(1)+'h',(D.avgWkPrev!=null?(D.avgWkRecent-D.avgWkPrev>=0?'↑ +':'↓ ')+(D.avgWkRecent-D.avgWkPrev).toFixed(1)+'h':'media 4 sett')+' · picco '+D.peakWk.toFixed(1)+'h')}
     </div>
     <div class="dash-sec-title">🎾🏂 Altri sport <span class="dash-sec-sum">${(padelH+D.altri.h).toFixed(0)}h totali</span></div>
     <div class="dash-cards">
@@ -1579,7 +1580,7 @@ function renderDashboard(){
         <li><b>${topDisc==='padel'?'Il padel è lo sport con più ore':'Sport con più ore: '+topDisc}</b> (${padelH.toFixed(0)}h di padel) — occhio a quanto toglie a bici/corsa/nuoto verso la gara.</li>
         <li><b>Tempo facile (Z1-2): ${easy}%</b> — per l'endurance l'ideale è ~80%. Se è basso, le sedute "facili" sono troppo intense (il coach le vuole a 6:05–6:20).</li>
         <li><b>Fitness (CTL) ${D.ctl!=null?D.ctl:'–'}</b> — il carico cronico: se cresce sei in costruzione, se cala stai scaricando (o fermo).</li>
-        <li><b>Volume: ${D.avgWkRecent.toFixed(1)} h/sett</b> (media ultime 8 settimane${D.avgWkPrev!=null?', '+(D.avgWkRecent-D.avgWkPrev>=0?'in crescita 📈':'in calo 📉')+' rispetto alle 8 precedenti ('+D.avgWkPrev.toFixed(1)+'h)':''}) — per un endurance lungo il volume costante conta più dei singoli allenamenti intensi.</li>
+        <li><b>Volume: ${D.avgWkRecent.toFixed(1)} h/sett</b> (media ultime 4 settimane, picco ${D.peakWk.toFixed(1)}h${D.avgWkPrev!=null?', '+(D.avgWkRecent-D.avgWkPrev>=0?'in crescita 📈':'in calo 📉')+' rispetto alle 4 precedenti ('+D.avgWkPrev.toFixed(1)+'h)':''}) — per un endurance lungo il volume costante conta più dei singoli allenamenti intensi.</li>
       </ul>
     </div>
     <div class="dash-grid">
