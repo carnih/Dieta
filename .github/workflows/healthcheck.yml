@@ -11,7 +11,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Controlla il sito live
+      - name: Scarica la pagina e controlla i contenuti
         run: |
           python3 - <<'PY'
           import urllib.request, re, sys
@@ -39,18 +39,27 @@ jobs:
           if not m:
               problems.append("blocco <script type=module> assente")
           else:
-              js = m.group(1)
-              for a, b in [('{', '}'), ('(', ')'), ('[', ']')]:
-                  if js.count(a) != js.count(b):
-                      problems.append(f"parentesi {a}{b} sbilanciate")
-              if js.count('`') % 2:
-                  problems.append("backtick dispari (template literal rotto)")
+              # Salva il modulo per la validazione di sintassi (step successivo).
+              # NB: NON contiamo le parentesi a mano: dentro le stringhe (faccine,
+              # etichette come "(126')") sono naturalmente sbilanciate -> falsi allarmi.
+              open("app.mjs", "w", encoding="utf-8").write(m.group(1))
 
           if problems:
-              print("⚠️  PROBLEMI sul sito Dieta:")
+              print("PROBLEMI sul sito Dieta:")
               for p in problems:
                   print("  -", p)
               sys.exit(1)   # fallisce -> GitHub invia email
 
-          print("✅ Sito Dieta: tutto ok")
+          print("Contenuti pagina ok")
           PY
+
+      - name: Valida la sintassi del modulo JS
+        run: |
+          if [ ! -f app.mjs ]; then echo "app.mjs assente (vedi step precedente)"; exit 1; fi
+          # node --check valida la sintassi ESM senza eseguire ne' risolvere gli import (CDN).
+          if node --check app.mjs; then
+            echo "Sintassi JS ok"
+          else
+            echo "PROBLEMA: errore di sintassi nel modulo JS del sito"
+            exit 1
+          fi
