@@ -7,7 +7,7 @@
 ## Cos'è
 Web-app privata mobile-first per: **dieta** (Nicholas & Noemi), **allenamenti** (con dashboard analitica + coach AI), **lista spesa** condivisa.
 - Live: **https://dieta-livid.vercel.app/** (Vercel)
-- Repo: `carnih/Dieta` (privato; valutare **public** per Actions illimitate/affidabili — non ci sono segreti nel codice)
+- Repo: `carnih/Dieta` — **da rendere public** (via GitHub Settings) per avere Actions schedulate affidabili/illimitate: il cron su repo privato veniva saltato. La cronologia è **già stata ripulita** dalle 2 email personali (`filter-branch`, force-push; backup in `../Dieta-backup-prepublic.bundle`). Verificato: nessun segreto nel codice né nella storia. Segreti solo in GitHub Secrets / Vercel env.
 
 ## Architettura (volutamente minimale — niente build/framework)
 - **Un solo file**: `index.html` — HTML+CSS+JS vanilla (ES module). Firebase + Chart.js + Leaflet importati da CDN. Nessun npm/bundler.
@@ -20,6 +20,7 @@ Web-app privata mobile-first per: **dieta** (Nicholas & Noemi), **allenamenti** 
 - Login email/password (Firebase Auth), 2 account: Nicholas e Noemi. Persistente per dispositivo. Gate in fondo allo `<script>` (`onAuthStateChanged`); chip account in alto a destra (`#acct`).
 - Regole RTDB chiuse all'**allowlist email** (NON `".read":true`; `auth != null` da solo non basta perché chiunque può registrarsi con la apiKey pubblica).
 - Credenziali/segreti → SOLO in GitHub Secrets / Vercel env, mai nel repo.
+- Mappa saluto/identità utente (`PEOPLE`) **chiavettata su hash** dell'email (`_eid`, djb2/base36), non sull'email in chiaro → nessuna email personale nel sorgente (repo pubblico). `personOf(email)` per la lookup.
 
 ## Tab e viste (render in `index.html`)
 1. 🍽️ Dieta/oggi → `renderOggi()` — confronto pasti del giorno; **🍕 "fuori/pasto libero" per persona e per data** (override in `overrides/{YYYY-MM-DD}/{pasto}/{n|e}`, scade da solo).
