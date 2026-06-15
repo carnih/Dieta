@@ -2214,7 +2214,7 @@ window.clearHistory = () => {
   toast('🧹 Cronologia svuotata');
 };
 
-function currentUserName(){ const e=((auth.currentUser&&auth.currentUser.email)||'').toLowerCase(); return (PEOPLE[e]&&PEOPLE[e].nome)||e||'?'; }
+function currentUserName(){ const e=(auth.currentUser&&auth.currentUser.email)||''; const p=personOf(e); return (p&&p.nome)||e||'?'; }
 function fmtWhen(ts){ try{ return new Date(ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
 function markSpesaEdit(){ spesaMeta={by:currentUserName(), at:Date.now()}; dbSet('spesaMeta', spesaMeta); }
 function saveSpesaCat(cat){ const l=spesa[cat]; dbSet('spesa/'+cat, (l&&l.length)?l:null); markSpesaEdit(); }
@@ -2441,13 +2441,16 @@ window.doLogin = () => {
 window.doLogout = () => { document.getElementById('acct').classList.remove('open'); if(confirm('Uscire da Dieta?')) signOut(auth); };
 window.toggleAcct = () => document.getElementById('acct').classList.toggle('open');
 
-// chi è chi (per il saluto personalizzato) — riconosciuto dall'email
+// chi è chi (per il saluto personalizzato) — riconosciuto dall'email via hash,
+// così l'email in chiaro non finisce nel sorgente (repo pubblico).
+const _eid = s => { s=(s||'').toLowerCase(); let h=5381; for(let i=0;i<s.length;i++) h=((h*33)^s.charCodeAt(i))>>>0; return h.toString(36); };
 const PEOPLE = {
-  'u1@redacted.invalid': { nome:'Nicholas', salut:'Bentornato', em:'🏃', sub:'Pronto per oggi? 💪' },
-  'u2@redacted.invalid':     { nome:'Noemi',    salut:'Bentornata', em:'🍓', sub:'Buona giornata! ✨' },
+  '16k6zvv': { nome:'Nicholas', salut:'Bentornato', em:'🏃', sub:'Pronto per oggi? 💪' },
+  '8k7j0w':  { nome:'Noemi',    salut:'Bentornata', em:'🍓', sub:'Buona giornata! ✨' },
 };
+const personOf = email => PEOPLE[_eid(email)];
 function showWelcome(email){
-  const p = PEOPLE[(email||'').toLowerCase()] || { nome:'', salut:'Benvenuto', em:'👋', sub:'' };
+  const p = personOf(email) || { nome:'', salut:'Benvenuto', em:'👋', sub:'' };
   const w = document.getElementById('welcome');
   w.querySelector('.welcome-emoji').textContent = p.em;
   w.querySelector('.welcome-text').textContent  = (p.salut + ' ' + p.nome).trim();
@@ -2462,7 +2465,7 @@ setPersistence(auth, browserLocalPersistence).finally(()=>{
     if(user){
       document.getElementById('login').style.display = 'none';
       document.body.classList.remove('logged-out');
-      const _p = PEOPLE[(user.email||'').toLowerCase()];
+      const _p = personOf(user.email);
       document.getElementById('acct-btn').textContent = ((_p&&_p.nome)||user.email||'?').slice(0,1).toUpperCase();
       document.getElementById('acct-who').innerHTML = ((_p&&_p.nome)||'Account') + '<span>'+esc(user.email||'')+'</span>';
       startApp();
