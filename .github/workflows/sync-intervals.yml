@@ -4,11 +4,12 @@ name: Sync allenamenti (intervals.icu -> Firebase)
 # Gira nel cloud di GitHub ogni mattina; il PC può essere spento.
 on:
   schedule:
-    # NB: gli eventi 'schedule' al minuto 00 (picco di carico GitHub) vengono spesso
-    # ritardati o saltati -> minuto dispari. Doppia corsa (mattina + riserva pomeriggio):
-    # il sync e' idempotente, quindi se una viene saltata l'altra recupera.
-    - cron: '37 4 * * *'     # ~06:37 Europe/Rome (estate) / 05:37 (inverno)
-    - cron: '37 12 * * *'    # riserva: ~14:37 / 13:37
+    # Sera: a fine giornata tutte le attivita' del giorno sono gia' su intervals.icu.
+    # NB: gli eventi 'schedule' al minuto 00 (picco GitHub) vengono spesso ritardati/saltati
+    # -> minuto dispari. Due run a un'ora di distanza: il sync e' idempotente, quindi
+    # fanno da riserva l'uno all'altro se GitHub ne salta/ritarda uno.
+    - cron: '17 17 * * *'    # ~19:17 Europe/Rome (estate) / 18:17 (inverno)
+    - cron: '17 18 * * *'    # riserva: ~20:17 / 19:17
   workflow_dispatch:           # avvio manuale dalla tab "Actions"
     inputs:
       force_tracks:
