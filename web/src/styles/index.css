@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Token storici dell'app, mantenuti come CSS var per coerenza col vecchio index.html.
+   Tailwind ha gli stessi colori (vedi tailwind.config.js); qui per gradienti/uso diretto. */
+:root {
+  --n: #3b82f6;
+  --n-l: #eff6ff;
+  --n-g: linear-gradient(135deg, #2563eb, #60a5fa);
+  --e: #e879a0;
+  --e-l: #fdf2f8;
+  --e-g: linear-gradient(135deg, #db2777, #f472b6);
+  --bg: #f1faf6;
+  --card: #fff;
+  --text: #111827;
+  --muted: #8b97a6;
+  --border: #e6efea;
+  --grn: #059669;
+  --r: 18px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
