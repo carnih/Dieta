@@ -7,7 +7,7 @@
 ## Cos'è
 Web-app privata mobile-first per: **dieta** (Nicholas & Noemi), **allenamenti** (con dashboard analitica + coach AI), **lista spesa** condivisa.
 - Live: **https://dieta-livid.vercel.app/** (Vercel)
-- Repo: `carnih/Dieta` — **da rendere public** (via GitHub Settings) per avere Actions schedulate affidabili/illimitate: il cron su repo privato veniva saltato. La cronologia è **già stata ripulita** dalle 2 email personali (`filter-branch`, force-push; backup in `../Dieta-backup-prepublic.bundle`). Verificato: nessun segreto nel codice né nella storia. Segreti solo in GitHub Secrets / Vercel env.
+- Repo: `carnih/Dieta` — **public** (per Actions schedulate affidabili/illimitate: il cron su repo privato veniva saltato). Cronologia ripulita dalle 2 email personali (`filter-branch`, force-push; backup in `../Dieta-backup-prepublic.bundle`). Verificato: nessun segreto nel codice né nella storia. Segreti solo in GitHub Secrets / Vercel env.
 
 ## Architettura (volutamente minimale — niente build/framework)
 - **Un solo file**: `index.html` — HTML+CSS+JS vanilla (ES module). Firebase + Chart.js + Leaflet importati da CDN. Nessun npm/bundler.
