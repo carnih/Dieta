@@ -1,10 +1,25 @@
 # Dieta — Nicholas & Noemi
 
-Web-app privata per consultare e pianificare le diete di Nicholas e Noemi.
+Web-app privata mobile-first per due persone: **dieta**, **allenamenti** (con dashboard analitica e coach AI) e **lista della spesa** condivisa.
 
-- **Singolo file**: `index.html` (autosufficiente, dati su Firebase Realtime Database)
-- **Hosting**: Netlify (deploy automatico ad ogni push su `main`)
-- I contenuti (piano allenamenti, scelte pasti, ricette, dieta base) si salvano su Firebase e si sincronizzano tra i dispositivi — non richiedono ripubblicazione.
-- Una modifica al **codice** (`index.html`) viene pubblicata automaticamente da Netlify dopo il push.
+🔗 **Live:** https://dieta-livid.vercel.app/ (accesso con login)
 
-> I file in `file origine/` (scan del nutrizionista) sono privati ed esclusi dal repository.
+## Cosa fa
+- 🍽️ **Dieta** — confronto pasti del giorno, pianificazione settimanale, "pasto libero" per persona e per data.
+- 🏋️ **Allenamenti** — schede + **dashboard**: volume per disciplina, ore settimanali medie e loro progressione, carico, zone FC, e **dettaglio singola attività** con mappa, profilo altimetrico, salite e lap.
+- 🤖 **Coach AI** — un GPT personalizzato interroga i dati di allenamento (storico + settimana + piano) tramite un endpoint dedicato.
+- 🛒 **Spesa** — lista condivisa con categorie, drag&drop e storico.
+
+## Come è fatta
+- **Single-file**: `index.html` — HTML+CSS+JS vanilla (ES module), nessun build/framework. Firebase, Chart.js e Leaflet via CDN.
+- **Dati**: Firebase Realtime Database (login email/password, regole chiuse all'allowlist).
+- **Hosting**: **Vercel**, deploy automatico ad ogni push su `main`. Funzioni serverless in `api/`.
+- **Pipeline allenamenti**: Garmin → **intervals.icu** → GitHub Action (`.github/`) → Firebase.
+
+## Sicurezza
+Nessun segreto nel repo: tutte le credenziali stanno nei **GitHub Secrets** e nelle **env di Vercel**. La `apiKey` Firebase è pubblica per design (la protezione è data dalle regole del database).
+
+## Documentazione
+- [`CLAUDE.md`](CLAUDE.md) — contesto tecnico completo (architettura, nodi Firebase, helper).
+- [`docs/COACH-AI.md`](docs/COACH-AI.md) — design e stato del coach AI.
+- [`CHANGELOG.md`](CHANGELOG.md) — storico delle modifiche.
