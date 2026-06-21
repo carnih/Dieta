@@ -963,56 +963,62 @@ const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì
 //  ALLENAMENTI (schede dal preparatore — generato dai PDF, aggiornato mensilmente)
 // ══════════════════════════════════════════
 const ALLENAMENTI = {
-  forza: { nome:'Forza · S&C', coach:'Paolo Morosini', durata:8, weeks:[
+  forza: { nome:'Forza · S&C', coach:'Paolo Morosini', durata:8,
+    note:'NIC S&C Program · preparatore atletico Paolo Morosini. Cue del PT riportate fedeli (carichi, reps dal cedimento, progressioni).', weeks:[
     { titolo:'Settimana 1', blocchi:[
       {nome:"Warm-up · EMOM 10'", righe:'10 burpees · 16 affondi avanti · 8 pull ups · 5 high jump squat · 30" wall sit'},
-      {nome:'Squat', righe:"1x6 box jump (atterraggio in accosciata) · front squat ogni 3' x4 round @80% 1RM"},
-      {nome:'Spinta', righe:"Shoulder press in superset · Hip thrust 3x10 · Panca piana manubri 3x10 · rest 1'"},
-      {nome:'Posteriori', righe:'6x6 single leg deadlift con 2 kb'},
-      {nome:'Tirata', righe:'Rematore bilanciere 4x8 + 5 dips parallele + 5+5 step ups manubri · rec 90"'},
-      {nome:'Core', righe:'Tabata: hollow rocks / superman'}]},
+      {nome:'Pliometria', righe:'1x6 box jump con atterraggio sulla box in accosciata'},
+      {nome:'Squat', righe:"10' per scaldare a front squat · poi front squat ogni 3' x4 round @ 80% 1RM"},
+      {nome:'Spinta (superset)', righe:"Shoulder press (stessa modalità: ogni 3' x4) in superset con Hip thrust 3x10 + Panca piana manubri 3x10 · rest 1'"},
+      {nome:'A chiudere', righe:'6x6 single leg deadlift con 2 kb'},
+      {nome:'Tirata (superset)', righe:'Rematore bilanciere 4x8 in superset con 5 dips parallele + 5+5 step ups manubri · recupero 90"'},
+      {nome:'Core · Tabata', righe:'hollow rocks / superman'}]},
     { titolo:'Settimana 2', blocchi:[
-      {nome:'Warm-up 2x', righe:"1' corda · 10m affondi camminati · 8 thruster manubri · 10 face pull · 10 push ups · 20\" hollow"},
-      {nome:"Fase 1 · EMOM 10'", righe:'dispari: 6-5-4-4-3 back squat · pari: 6/8 push ups (carichi graduali)'},
-      {nome:'Fase 2 · 3\'30" x4', righe:'8 squat (2 reps dal cedimento) + 6/8 hand release push ups'},
-      {nome:"Fase 3 · EMOM 10'", righe:'dispari: 6-5-4-3-3 bench press · pari: 8/10 alzate laterali (sali)'},
-      {nome:"Fase 4 · 3' x4", righe:'8 bench press (2 reps cedim.) + 6 alzate laterali'},
-      {nome:'Fase 5/6', righe:'2\'30"x4: 12 box step ups (6+6) · 3\'x4: 6/12 pull ups + 15 rdl manubri'}]},
+      {nome:'Warm-up 2x', righe:"1' salti corda · 10m affondi camminati · 8 thruster manubri · 10 face pull (elastico o cavi) · 10 push ups · 20\" hollow con disco"},
+      {nome:"Fase 1 · EMOM 10'", righe:'min dispari: 6-5-4-4-3 back squat · min pari: 6/8 push ups · carichi graduali'},
+      {nome:'Fase 2 · ogni 3\'30" x4', righe:'8 squat (almeno 2 reps prima del cedimento) in superset con 6/8 hand release push ups'},
+      {nome:"Fase 3 · EMOM 10'", righe:'min dispari: 6-5-4-3-3 bench press · min pari: 8/10 alzate laterali (leggero, sali graduale)'},
+      {nome:"Fase 4 · ogni 3' x4", righe:'8 bench press (2 reps al cedimento) in superset con 6 alzate laterali (più pesanti di prima)'},
+      {nome:'Fase 5 · ogni 2\'30" x4', righe:'12 box step ups heavy (6+6)'},
+      {nome:"Fase 6 · ogni 3' x4", righe:'6/12 pull ups · 15 rdl manubri'}]},
     { titolo:'Settimana 3', blocchi:[
-      {nome:'Warm-up', righe:'come settimana scorsa'},
-      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat (progressioni) · 6/8 push ups'},
-      {nome:'Strength · 3\'30" x4', righe:'8 back squat (2 reps dal cedimento) + 6/8 h/r push ups'},
-      {nome:"EMOM 10'", righe:'6-5-4-3-3 bench press (progressione) · 8/10 affondi avanti manubri'},
-      {nome:"3' x4", righe:'8 shoulder press + 6 alzate laterali pesanti'},
-      {nome:"3' x4", righe:'6-12 trazioni · 15 hip thrust'}]},
+      {nome:'Warm-up', righe:'vedi warm-up settimana scorsa'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-4-3 back squat (sali in progressioni) · 2) 6/8 push ups'},
+      {nome:'Strength · ogni 3\'30" x4', righe:'8 back squat (fermati almeno 2 reps prima del cedimento) in superset con 6/8 hand release push ups'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-3-3 bench press (sali in progressione) · 2) 8/10 affondi avanti manubri'},
+      {nome:"Ogni 3' x4", righe:'8 shoulder press (2 reps prima del cedimento) in superset con 6 alzate laterali pesanti'},
+      {nome:"Ogni 3' x4", righe:'6-12 trazioni · 15 hip thrust'}]},
     { titolo:'Settimana 4', blocchi:[
-      {nome:'Warm-up 2x', righe:"1' corda · 10m overhead lunges · 8 thruster · 10 banded face pull · 8 box jump 50cm"},
+      {nome:'Warm-up 2x', righe:"1' salti corda · 10m overhead walking lunges db/bb · 8 thruster manubri · 10 banded face pull · 8 box jump 50cm"},
       {nome:"EMOM 10'", righe:'4 seated box jump · 4 lanci palla medica dal petto'},
-      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat · 6/8 push ups'},
-      {nome:'3\'30" x4', righe:'8 trap bar deadlift (2 reps riserva) · 6/8 push press manubri'},
-      {nome:"3' x4", righe:'8 bench press (2 reps riserva) · 6+6 one leg rdl manubrio'},
-      {nome:'2\'30" x4', righe:'6+6 step ups'}]},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-4-3 back squat · 2) 6/8 push ups'},
+      {nome:'Ogni 3\'30" x4', righe:'8 trap bar deadlift (2 reps di riserva) · 6/8 push press manubri'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-3-3 bench press · 2) rest'},
+      {nome:"Ogni 3' x4", righe:'8 bench press (2 reps di riserva) · 6+6 one leg rdl manubrio'},
+      {nome:'Ogni 2\'30" x4', righe:'6+6 step ups'}]},
     { titolo:'Settimana 5', blocchi:[
-      {nome:'Warm-up 2x', righe:'corda · overhead lunges · thruster · banded face pull · box jump · 2x10+10 side plank clamshell'},
+      {nome:'Warm-up 2x', righe:"1' salti corda · 10m overhead w.lunges db/bb · 8 thruster manubri · 10 banded face pull · 8 box jump 50cm · 2x(10+10) side plank clamshell"},
       {nome:"EMOM 10'", righe:'4 seated box jump · 4 lat slam ball'},
-      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat (attivazione, carichi inferiori) · 6 push ups'},
-      {nome:'2\'30" x4', righe:'8 back squat (4-5 reps dal cedim.) + 8+8 rematore unilaterale manubrio'},
-      {nome:"EMOM / 3' x4", righe:'6-5-4-3-3 shoulder press · 8 bench press (4 reps cedim.) + 6 lateral raises'},
-      {nome:'2\'30" x4', righe:'6+6 step ups'}]},
+      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat (carichi inferiori alle scorse settimane, come attivazione) · min dispari: 6 push ups'},
+      {nome:'Ogni 2\'30" x4', righe:'8 back squat (4-5 reps prima del cedimento) subito seguito da 8+8 rematore unilaterale manubrio'},
+      {nome:"EMOM 10'", righe:'6-5-4-3-3 shoulder press · 2° minuto: rest'},
+      {nome:"Ogni 3' x4", righe:'8 bench press (4 reps al cedimento) + 6 lateral raises carico medio'},
+      {nome:'Ogni 2\'30" x4', righe:'6+6 step ups'}]},
     { titolo:'Settimana 6', blocchi:[
-      {nome:'Warm-up 2x + PLYO', righe:"EMOM 10': 4 balzi ostacoli · 4 slam ball"},
-      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat · 8 push press manubri'},
-      {nome:'2\'30" x4', righe:'7 hip thrust (2 reps cedim.) + 6 chin ups'},
-      {nome:"EMOM 10'", righe:'6-5-4-3-3 shoulder press · 15 croci manubri'},
-      {nome:"3' x4", righe:'7 rematore presa prona bilanciere · 6 alzate laterali medio'},
-      {nome:'Finisher', righe:"3x10 stacco da terra – 1' rest"}]},
+      {nome:'Warm-up 2x', righe:"1' salti corda · 10m overhead w.lunges db/bb · 8 thruster manubri · 10 banded face pull · 8 box jump 50cm"},
+      {nome:"PLYO · EMOM 10'", righe:'1) 4 balzi ostacoli · 2) 4 slam ball'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-4-3 back squat · 2) 8 push press manubri'},
+      {nome:'Ogni 2\'30" x4', righe:'7 hip thrust (2 reps prima del cedimento) subito seguito da 6 chin ups'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-3-3 shoulder press · 2) 15 croci con manubri'},
+      {nome:"Ogni 3' x4", righe:'7 rematore presa prona con bilanciere · 6 alzate laterali peso medio'},
+      {nome:'Finisher', righe:"3x10 stacco da terra · 1' rest"}]},
     { titolo:'Settimana 7', blocchi:[
-      {nome:"Warm-up · EMOM 6'", righe:"1' row · 12 ring row · 8 squat jumps"},
-      {nome:'Back squat', righe:"10' build up · 3x: 5 back squat 70%1RM o 8 rdl + 10 push ups + 10 bent row db · 2' rest"},
-      {nome:'4x (RPE 7-8)', righe:'40m farmer carry · 10 renegade row · 10 push press · 10 curl · 10 skullcrusher · 20m affondi manubri'}]},
+      {nome:"Warm-up · EMOM 6'", righe:"1' row · 12 ring row / aus. pull · 8 squat jumps"},
+      {nome:'Forza', righe:"10' back squat build up · poi 3x: 5 back squat 70% 1RM (o 8 rdl) subito seguito da 10 push ups + 10 bent over row db · 2' rest"},
+      {nome:'Metcon · 4x (RPE 7-8)', righe:'40m farmer carry · 10 renegade row · 10 push press manubri · 10 curl manubri · 10 skullcrusher manubri · 20m affondi con manubri'}]},
     { titolo:'Settimana 8', blocchi:[
-      {nome:'Warm-up', righe:"5' easy bike · 2x(10 goblet squat, 10 back lunges, 20m farmer carry) · 5' mobility"},
-      {nome:'4x', righe:"6+6 bulgarian split squat manubri · 6+6 one leg rdl manubrio · 1'30\" rest"},
+      {nome:'Warm-up', righe:"5' easy bike · 2x(10 goblet squat · 10 back lunges · 20m farmer carry) · 5' dynamic mobility"},
+      {nome:'4x', righe:"6+6 bulgarian split squat manubri · 6+6 one leg rdl con manubrio · 1'30\" rest"},
       {nome:'6x', righe:"6 trazioni · 6 dips · 1' rest"},
       {nome:'4x', righe:'12 hip thrust · 20 polpacci da rialzo'},
       {nome:'Finisher 28-21-15-9', righe:'push ups · band face pulls'}]}
@@ -1456,7 +1462,7 @@ function progCard(prog, bodyFn){
       <button class="al-btn" onclick="skipWeek('${prog}',1)">⏭️ Salta</button>
       ${cfg.shift?`<button class="al-btn" onclick="skipWeek('${prog}',-1)">↩︎ (-${cfg.shift})</button>`:''}
     </div>
-    ${prog==='tri'&&P.obiettivi?`<div class="al-obj">🎯 ${esc(P.obiettivi)}</div>`:''}
+    ${(P.obiettivi||P.note)?`<div class="al-obj">${prog==='tri'?'🎯':'📝'} ${esc(P.obiettivi||P.note)}</div>`:''}
     ${weeks}
   </div>`;
 }
