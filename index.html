@@ -693,7 +693,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js';
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js';
 import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/auto/+esm';
 
 const app = initializeApp({
@@ -707,7 +706,6 @@ const app = initializeApp({
 });
 const db = getDatabase(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
 
 // Scrittura su Firebase con gestione errori reale.
 // set() ritorna una Promise: il vecchio try/catch sincrono NON catturava i
@@ -1583,8 +1581,13 @@ window.delSess         = (p,wi,si) => { ALLENAMENTI[p].weeks[wi].sessioni.splice
 window.addWeek         = (p) => { const w = p==='tri' ? {titolo:'Nuova settimana', sessioni:[{disc:'bici',blocchi:[{nome:'',righe:''}]}]} : {titolo:'Nuova settimana', blocchi:[{nome:'',righe:''}]}; ALLENAMENTI[p].weeks.push(w); ALLENAMENTI[p].durata=ALLENAMENTI[p].weeks.length; saveSchede(); renderContent(); };
 window.delWeek         = (p,wi) => { if(!confirm('Eliminare questa settimana?')) return; ALLENAMENTI[p].weeks.splice(wi,1); ALLENAMENTI[p].durata=ALLENAMENTI[p].weeks.length; saveSchede(); renderContent(); };
 
-// ── VIEWER PDF SCHEDA (Firebase Storage privato: schede/{prog}.pdf) ──
+// ── VIEWER PDF SCHEDA (PDF come base64 nel Realtime DB: schedePdf/{prog}) ──
+// Niente Firebase Storage (richiede piano a pagamento): le schede PDF sono piccole
+// (<100KB), le teniamo come data-URL nel DB, protette dall'allowlist esistente.
 let pdfState = null;   // { prog, loading, url, error }
+let _pdfBlob = null;   // object URL da revocare
+function _revokePdf(){ if(_pdfBlob){ URL.revokeObjectURL(_pdfBlob); _pdfBlob=null; } }
+async function _dataUrlToObjUrl(dataUrl){ const b = await (await fetch(dataUrl)).blob(); _revokePdf(); _pdfBlob = URL.createObjectURL(b); return _pdfBlob; }
 function renderPdfModal(){
   let ov = document.getElementById('pdfOverlay');
   if(!pdfState){ if(ov) ov.remove(); return; }
@@ -1603,22 +1606,31 @@ function renderPdfModal(){
 }
 window.openSchedaPdf = prog => {
   pdfState = { prog, loading:true, url:null, error:null }; renderPdfModal();
-  getDownloadURL(sRef(storage, `schede/${prog}.pdf`))
-    .then(u => { if(pdfState && pdfState.prog===prog){ pdfState={prog,loading:false,url:u,error:null}; renderPdfModal(); } })
-    .catch(() => { if(pdfState && pdfState.prog===prog){ pdfState={prog,loading:false,url:null,error:null}; renderPdfModal(); } });
+  get(ref(db, 'schedePdf/'+prog)).then(async snap => {
+    if(!pdfState || pdfState.prog!==prog) return;
+    const data = snap.val();
+    if(data){ const u = await _dataUrlToObjUrl(data); if(pdfState&&pdfState.prog===prog) pdfState={prog,loading:false,url:u,error:null}; }
+    else { pdfState={prog,loading:false,url:null,error:null}; }
+    renderPdfModal();
+  }).catch(e => { if(pdfState&&pdfState.prog===prog){ pdfState={prog,loading:false,url:null,error:'Errore lettura: '+((e&&e.message)||e)}; renderPdfModal(); } });
 };
-window.closeSchedaPdf = () => { pdfState=null; renderPdfModal(); };
-window.uploadSchedaPdf = async (e) => {
+window.closeSchedaPdf = () => { pdfState=null; _revokePdf(); renderPdfModal(); };
+window.uploadSchedaPdf = (e) => {
   const f = e.target.files && e.target.files[0]; if(!f || !pdfState) return;
   const prog = pdfState.prog;
+  if(f.size > 1024*1024){ pdfState={prog,loading:false,url:null,error:'PDF troppo grande ('+Math.round(f.size/1024)+' KB). Max ~1 MB.'}; renderPdfModal(); return; }
   pdfState = { prog, loading:true, url:null, error:null }; renderPdfModal();
-  try {
-    await uploadBytes(sRef(storage, `schede/${prog}.pdf`), f, { contentType:'application/pdf' });
-    const u = await getDownloadURL(sRef(storage, `schede/${prog}.pdf`));
-    pdfState = { prog, loading:false, url:u, error:null }; renderPdfModal(); toast('PDF caricato ✓');
-  } catch(err) {
-    pdfState = { prog, loading:false, url:null, error:'Upload non riuscito ('+((err&&err.code)||(err&&err.message)||err)+'). Hai abilitato Storage e le regole?' }; renderPdfModal();
-  }
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const dataUrl = String(r.result);
+      await dbSet('schedePdf/'+prog, dataUrl);
+      const u = await _dataUrlToObjUrl(dataUrl);
+      pdfState = { prog, loading:false, url:u, error:null }; renderPdfModal(); toast('PDF caricato ✓');
+    } catch(err) { pdfState={prog,loading:false,url:null,error:'Salvataggio non riuscito ('+((err&&err.code)||(err&&err.message)||err)+').'}; renderPdfModal(); }
+  };
+  r.onerror = () => { pdfState={prog,loading:false,url:null,error:'Lettura file non riuscita.'}; renderPdfModal(); };
+  r.readAsDataURL(f);
 };
 
 // ══════════════════════════════════════════
