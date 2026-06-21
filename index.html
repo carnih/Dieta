@@ -962,7 +962,7 @@ const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì
 // ══════════════════════════════════════════
 //  ALLENAMENTI (schede dal preparatore — generato dai PDF, aggiornato mensilmente)
 // ══════════════════════════════════════════
-const ALLENAMENTI = {
+let ALLENAMENTI = {
   forza: { nome:'Forza · S&C', coach:'Paolo Morosini', durata:8,
     note:'NIC S&C Program · preparatore atletico Paolo Morosini. Cue del PT riportate fedeli (carichi, reps dal cedimento, progressioni).', weeks:[
     { titolo:'Settimana 1', blocchi:[
@@ -1081,7 +1081,7 @@ function getSpesaCats(){
 //  STATE
 // ══════════════════════════════════════════
 let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], _cid=0, editBase=null, baseNicDay='corsa', categoryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
-    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={}, coachConfig={};
+    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={}, coachConfig={}, schedeEdit=null;
 const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
 // ── SOTTOSCRIZIONI FIREBASE (dichiarative) ──
@@ -1113,6 +1113,8 @@ const SUBS = [
   ['spesaMeta',  v => spesaMeta = v||{},  () => tab==='spesa'],
   ['overrides',  v => overrides = v||{},  () => tab==='oggi' && !editBase],
   ['coachConfig',v => coachConfig = v||{},() => tab==='allen' && !dashOpen],
+  ['allenamentiSchede', v => { if(v) ALLENAMENTI = v; else dbSet('allenamentiSchede', ALLENAMENTI); },
+    () => (tab==='allen'||tab==='oggi') && !dashOpen && !schedeEdit],
 ];
 function initFirebaseSubs(){
   SUBS.forEach(([path, assign, shouldRender]) => {
@@ -1461,6 +1463,7 @@ function progCard(prog, bodyFn){
       <label class="al-date">📅 <input type="date" value="${cfg.start||''}" onchange="setAlStart('${prog}',this.value)"></label>
       <button class="al-btn" onclick="skipWeek('${prog}',1)">⏭️ Salta</button>
       ${cfg.shift?`<button class="al-btn" onclick="skipWeek('${prog}',-1)">↩︎ (-${cfg.shift})</button>`:''}
+      <button class="al-btn" onclick="openSchedeEdit('${prog}')">✏️ Modifica</button>
     </div>
     ${(P.obiettivi||P.note)?`<div class="al-obj">${prog==='tri'?'🎯':'📝'} ${esc(P.obiettivi||P.note)}</div>`:''}
     ${weeks}
@@ -1492,6 +1495,70 @@ function renderAllenamentiTab(){
     ${progCard('tri', triBody)}
   `;
 }
+
+// ── EDITOR SCHEDE (forza + tri) — contenuto persistito su Firebase (allenamentiSchede) ──
+function blkEditorHTML(prog, wi, si, blocchi){
+  const rows = (blocchi||[]).map((b,bi)=>`
+    <div class="be-group">
+      <input class="be-in be-name" value="${esc(b.nome||'')}" placeholder="Nome blocco (es. Warm-up · EMOM 10')" onchange="setBloccoField('${prog}',${wi},${si},${bi},'nome',this.value)">
+      <textarea class="be-in" rows="2" placeholder="Esercizi / serie / note del PT" oninput="nwGrow(this)" onchange="setBloccoField('${prog}',${wi},${si},${bi},'righe',this.value)">${esc(b.righe||'')}</textarea>
+      <button class="be-iconbtn del" onclick="delBlocco('${prog}',${wi},${si},${bi})" title="Elimina blocco">🗑</button>
+    </div>`).join('');
+  return `${rows}<button class="be-addopt" onclick="addBlocco('${prog}',${wi},${si})">+ blocco</button>`;
+}
+function renderSchedeEdit(){
+  const prog = schedeEdit, P = ALLENAMENTI[prog]; if(!P) return '';
+  const isTri = prog==='tri';
+  const top = isTri
+    ? `<div class="be-meal"><div class="be-meal-h"><span class="em">🎯</span>Obiettivi del mesociclo</div>
+        <textarea class="be-in" rows="3" oninput="nwGrow(this)" onchange="setSchedaTop('tri',this.value)">${esc(P.obiettivi||'')}</textarea></div>`
+    : `<div class="be-meal"><div class="be-meal-h"><span class="em">📝</span>Nota programma (PT)</div>
+        <textarea class="be-in" rows="2" oninput="nwGrow(this)" onchange="setSchedaTop('forza',this.value)">${esc(P.note||'')}</textarea></div>`;
+  const weeks = (P.weeks||[]).map((w,wi)=>{
+    const body = isTri
+      ? `<textarea class="be-in" rows="1" placeholder="Nota settimana (opz.)" oninput="nwGrow(this)" onchange="setWeekNote('tri',${wi},this.value)">${esc(w.note||'')}</textarea>
+         ${(w.sessioni||[]).map((s,si)=>`
+           <div class="be-group" style="border-left:3px solid var(--n);">
+             <div class="be-grouphead">
+               <select class="ed-cat" onchange="setSessDisc('tri',${wi},${si},this.value)">${['nuoto','bici','corsa','forza','brick'].map(d=>{const dd=DISC[d]||['•',d];return `<option value="${d}" ${s.disc===d?'selected':''}>${dd[0]} ${dd[1]}</option>`;}).join('')}</select>
+               <button class="be-iconbtn del" onclick="delSess('tri',${wi},${si})" title="Elimina disciplina">🗑</button>
+             </div>
+             ${blkEditorHTML('tri',wi,si,s.blocchi)}
+           </div>`).join('')}
+         <button class="be-add" onclick="addSess('tri',${wi})">+ disciplina</button>`
+      : blkEditorHTML('forza',wi,-1,w.blocchi);
+    return `<div class="be-meal">
+      <div class="be-meal-h">
+        <input class="be-in be-name" value="${esc(w.titolo||'')}" placeholder="Titolo settimana" onchange="setSchedaTitolo('${prog}',${wi},this.value)">
+        <button class="be-iconbtn del" onclick="delWeek('${prog}',${wi})" title="Elimina settimana">🗑</button>
+      </div>
+      ${body}
+    </div>`;
+  }).join('');
+  return `
+    <div class="page-title n">✏️ ${esc(P.nome)}</div>
+    <div class="page-sub">Modifica settimane e blocchi · si salva da solo</div>
+    <div class="reset-row"><button class="reset-btn" onclick="closeSchedeEdit()">← Indietro</button></div>
+    ${top}
+    ${weeks}
+    <button class="be-add" onclick="addWeek('${prog}')">＋ Aggiungi settimana</button>
+    <div style="height:24px"></div>`;
+}
+function saveSchede(){ dbSet('allenamentiSchede', ALLENAMENTI); }
+window.openSchedeEdit  = p => { schedeEdit=p; renderContent(); window.scrollTo(0,0); };
+window.closeSchedeEdit = ()  => { schedeEdit=null; renderContent(); window.scrollTo(0,0); };
+window.setSchedaTop    = (p,v) => { if(p==='tri') ALLENAMENTI.tri.obiettivi=v; else ALLENAMENTI.forza.note=v; saveSchede(); toast(MSG_SAVED); };
+window.setSchedaTitolo = (p,wi,v) => { ALLENAMENTI[p].weeks[wi].titolo=v; saveSchede(); toast(MSG_SAVED); };
+window.setWeekNote     = (p,wi,v) => { v=(v||'').trim(); if(v) ALLENAMENTI[p].weeks[wi].note=v; else delete ALLENAMENTI[p].weeks[wi].note; saveSchede(); toast(MSG_SAVED); };
+function _blkArr(p,wi,si){ const w=ALLENAMENTI[p].weeks[wi]; return si<0 ? (w.blocchi||(w.blocchi=[])) : (w.sessioni[si].blocchi||(w.sessioni[si].blocchi=[])); }
+window.setBloccoField  = (p,wi,si,bi,f,v) => { _blkArr(p,wi,si)[bi][f]=v; saveSchede(); toast(MSG_SAVED); };
+window.addBlocco       = (p,wi,si) => { _blkArr(p,wi,si).push({nome:'',righe:''}); saveSchede(); renderContent(); };
+window.delBlocco       = (p,wi,si,bi) => { _blkArr(p,wi,si).splice(bi,1); saveSchede(); renderContent(); };
+window.setSessDisc     = (p,wi,si,v) => { ALLENAMENTI[p].weeks[wi].sessioni[si].disc=v; saveSchede(); toast(MSG_SAVED); };
+window.addSess         = (p,wi) => { const w=ALLENAMENTI[p].weeks[wi]; (w.sessioni||(w.sessioni=[])).push({disc:'bici',blocchi:[{nome:'',righe:''}]}); saveSchede(); renderContent(); };
+window.delSess         = (p,wi,si) => { ALLENAMENTI[p].weeks[wi].sessioni.splice(si,1); saveSchede(); renderContent(); };
+window.addWeek         = (p) => { const w = p==='tri' ? {titolo:'Nuova settimana', sessioni:[{disc:'bici',blocchi:[{nome:'',righe:''}]}]} : {titolo:'Nuova settimana', blocchi:[{nome:'',righe:''}]}; ALLENAMENTI[p].weeks.push(w); ALLENAMENTI[p].durata=ALLENAMENTI[p].weeks.length; saveSchede(); renderContent(); };
+window.delWeek         = (p,wi) => { if(!confirm('Eliminare questa settimana?')) return; ALLENAMENTI[p].weeks.splice(wi,1); ALLENAMENTI[p].durata=ALLENAMENTI[p].weeks.length; saveSchede(); renderContent(); };
 
 // ══════════════════════════════════════════
 //  DASHBOARD ALLENAMENTI (analisi + grafici)
@@ -2356,7 +2423,7 @@ window.toggleOwner = (cat, idx, owner) => {
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editBase=null; baseView=null; dashOpen=false; dashDetail=null; actDetail=null; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editBase=null; baseView=null; schedeEdit=null; dashOpen=false; dashDetail=null; actDetail=null; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
 window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
@@ -2401,7 +2468,8 @@ function updateTabbar(){
 function renderContent(animate){
   const el = document.getElementById('content');
   el.classList.remove('tab-anim');
-  el.innerHTML = editBase==='noemi'    ? renderNoemiBaseEdit()
+  el.innerHTML = schedeEdit            ? renderSchedeEdit()
+               : editBase==='noemi'    ? renderNoemiBaseEdit()
                : editBase==='nicholas' ? renderNicBaseEdit()
                : baseView==='noemi'    ? renderNoemiBaseConsult()
                : tab==='oggi'      ? renderOggi()

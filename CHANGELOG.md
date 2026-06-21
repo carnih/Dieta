@@ -3,6 +3,12 @@
 Storico delle modifiche significative all'app. Le voci più recenti in alto.
 Formato libero: data — cosa è cambiato e perché.
 
+## 2026-06-21 — Settimana dom→sab, schede fedeli al PDF, editor schede
+- **Oggi**: il calendario settimanale ora va **domenica → sabato** (prima lun→dom). `NOEMI_DAYS` riordinato dom-first, `todayId()`/`weekDates()` ancorati alla domenica; `mondayOf`/`settCorrente` (settimane dei programmi) invariati.
+- **Scheda forza riscritta fedele al PDF** del PT (`file origine/Allenamenti/2026-05-18 Forza.pdf`, 8 settimane): fasi separate e cue del PT riportate (carichi graduali, "2 reps prima del cedimento", progressioni, superset, finisher 28-21-15-9…). Aggiunto `forza.note` (testata) mostrato in `progCard` (📝).
+- **Tri** verificato vs PDF (Mesociclo 9): già fedele; aggiunta la nota nutrizionale del PT (40→60 g CHO/h crescenti nei brick, per allenare l'intestino).
+- **Editor schede** (forza + tri): contenuto schede ora **editabile in app e persistito su Firebase** (`allenamentiSchede`, seed dai default). `ALLENAMENTI` da `const`→`let`; pulsante **✏️ Modifica** in `progCard`; `renderSchedeEdit` con aggiungi/modifica/elimina di settimane, blocchi e (tri) discipline. `durata` ricalcolata sul n° settimane.
+
 ## 2026-06-14 — Coach "settimana in corso", healthcheck robusto, volume settimanale in dashboard
 - **Coach endpoint** (`api/coach-data.js`): nuovo blocco `settimana_in_corso` (oggi, giorni rimanenti, `piano_gia_dovuto` vs `piano_ancora_da_fare`, attività della settimana). Il GPT non valuta più la settimana come conclusa a metà e avvisa se un allenamento citato potrebbe essere solo non ancora sincronizzato.
 - **Healthcheck** (`healthcheck.yml`): sostituito il conteggio parentesi (falsi allarmi per le `()` dentro le stringhe) con `node --check` sul modulo estratto → valida la sintassi ESM reale.
