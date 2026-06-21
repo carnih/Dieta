@@ -955,7 +955,7 @@ const NOEMI_REF = [
   ['🍓 Frutta', 'albicocche, fragole, ciliegie, pesca, mela, melone, anguria, ananas, arancia, pera, kiwi… (1 porzione)'],
 ];
 
-const NOEMI_DAYS  = ['lun','mar','mer','gio','ven','sab','dom'];
+const NOEMI_DAYS  = ['dom','lun','mar','mer','gio','ven','sab'];   // settimana domenica→sabato
 const NOEMI_LABELS= {lun:'Lun',mar:'Mar',mer:'Mer',gio:'Gio',ven:'Ven',sab:'Sab',dom:'Dom'};
 const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì',ven:'Venerdì',sab:'Sabato',dom:'Domenica'};
 
@@ -1189,7 +1189,7 @@ function noemiSideHTML(wd, mealKey){
 // ══════════════════════════════════════════
 //  ACTIONS
 // ══════════════════════════════════════════
-function todayId(){ const wd=new Date().getDay(); return NOEMI_DAYS[(wd+6)%7]; }
+function todayId(){ return NOEMI_DAYS[new Date().getDay()]; }   // getDay: 0=dom … 6=sab
 
 function chipRow(items, sel, fn, cls){
   return `<div class="chips-wrap"><div class="chips">${
@@ -1265,9 +1265,9 @@ function integCompact(integ){
 }
 function weekDates(){
   const now=new Date();
-  const dow=(now.getDay()+6)%7;            // 0 = lunedì
-  const monday=new Date(now); monday.setDate(now.getDate()-dow);
-  return NOEMI_DAYS.map((id,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return {id,label:NOEMI_LABELS[id],num:d.getDate(),obj:d}; });
+  const dow=now.getDay();                   // 0 = domenica
+  const sunday=new Date(now); sunday.setDate(now.getDate()-dow);
+  return NOEMI_DAYS.map((id,i)=>{ const d=new Date(sunday); d.setDate(sunday.getDate()+i); return {id,label:NOEMI_LABELS[id],num:d.getDate(),obj:d}; });
 }
 function fmtFull(d){ const s=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); }
 function calendarHTML(){
