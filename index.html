@@ -1496,52 +1496,59 @@ function renderAllenamentiTab(){
   `;
 }
 
-// ── EDITOR SCHEDE (forza + tri) — contenuto persistito su Firebase (allenamentiSchede) ──
+// ── EDITOR SCHEDE (forza + tri) — stesso look della pagina Allenamenti; persistito su Firebase ──
+const EDIT_NOME = "border:none;border-bottom:1px dashed #93C5FD;background:transparent;width:100%;padding:0 0 2px;outline:none;font-size:11px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.03em;font-family:inherit";
+const EDIT_RIGHE = "display:block;width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:13.5px;color:#374151;line-height:1.5;outline:none;padding:3px 0 0 10px;border-left:2px solid var(--border);margin-top:3px";
+const EDIT_DEL = "flex-shrink:0;border:none;background:transparent;color:#C9D0D9;cursor:pointer;font-size:13px;padding:2px 4px";
 function blkEditorHTML(prog, wi, si, blocchi){
   const rows = (blocchi||[]).map((b,bi)=>`
-    <div class="be-group">
-      <input class="be-in be-name" value="${esc(b.nome||'')}" placeholder="Nome blocco (es. Warm-up · EMOM 10')" onchange="setBloccoField('${prog}',${wi},${si},${bi},'nome',this.value)">
-      <textarea class="be-in" rows="2" placeholder="Esercizi / serie / note del PT" oninput="nwGrow(this)" onchange="setBloccoField('${prog}',${wi},${si},${bi},'righe',this.value)">${esc(b.righe||'')}</textarea>
-      <button class="be-iconbtn del" onclick="delBlocco('${prog}',${wi},${si},${bi})" title="Elimina blocco">🗑</button>
+    <div class="al-blk" style="display:flex;align-items:flex-start;gap:6px">
+      <div style="flex:1;min-width:0">
+        <input style="${EDIT_NOME}" value="${esc(b.nome||'')}" placeholder="NOME BLOCCO" onchange="setBloccoField('${prog}',${wi},${si},${bi},'nome',this.value)">
+        <textarea class="ta-auto" rows="1" style="${EDIT_RIGHE}" placeholder="esercizi · serie · note del PT" oninput="nwGrow(this)" onchange="setBloccoField('${prog}',${wi},${si},${bi},'righe',this.value)">${esc(b.righe||'')}</textarea>
+      </div>
+      <button style="${EDIT_DEL}" onclick="delBlocco('${prog}',${wi},${si},${bi})" title="Elimina blocco">🗑</button>
     </div>`).join('');
-  return `${rows}<button class="be-addopt" onclick="addBlocco('${prog}',${wi},${si})">+ blocco</button>`;
+  return `${rows}<button class="al-btn" style="font-size:11.5px;padding:5px 11px;margin-top:2px" onclick="addBlocco('${prog}',${wi},${si})">＋ blocco</button>`;
 }
 function renderSchedeEdit(){
   const prog = schedeEdit, P = ALLENAMENTI[prog]; if(!P) return '';
   const isTri = prog==='tri';
   const top = isTri
-    ? `<div class="be-meal"><div class="be-meal-h"><span class="em">🎯</span>Obiettivi del mesociclo</div>
-        <textarea class="be-in" rows="3" oninput="nwGrow(this)" onchange="setSchedaTop('tri',this.value)">${esc(P.obiettivi||'')}</textarea></div>`
-    : `<div class="be-meal"><div class="be-meal-h"><span class="em">📝</span>Nota programma (PT)</div>
-        <textarea class="be-in" rows="2" oninput="nwGrow(this)" onchange="setSchedaTop('forza',this.value)">${esc(P.note||'')}</textarea></div>`;
+    ? `<div class="al-obj"><div style="font-size:11px;font-weight:800;color:var(--n);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">🎯 Obiettivi</div>
+        <textarea class="ta-auto" rows="2" style="display:block;width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:12.5px;color:#3a4a63;line-height:1.45;outline:none" placeholder="Obiettivi del mesociclo…" oninput="nwGrow(this)" onchange="setSchedaTop('tri',this.value)">${esc(P.obiettivi||'')}</textarea></div>`
+    : `<div class="al-obj"><div style="font-size:11px;font-weight:800;color:var(--n);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">📝 Nota programma</div>
+        <textarea class="ta-auto" rows="2" style="display:block;width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:12.5px;color:#3a4a63;line-height:1.45;outline:none" placeholder="Nota del PT…" oninput="nwGrow(this)" onchange="setSchedaTop('forza',this.value)">${esc(P.note||'')}</textarea></div>`;
   const weeks = (P.weeks||[]).map((w,wi)=>{
     const body = isTri
-      ? `<textarea class="be-in" rows="1" placeholder="Nota settimana (opz.)" oninput="nwGrow(this)" onchange="setWeekNote('tri',${wi},this.value)">${esc(w.note||'')}</textarea>
+      ? `<textarea class="ta-auto al-note" rows="1" style="display:block;width:100%;resize:none;font-family:inherit;outline:none" placeholder="🍬 Nota settimana (opz.)" oninput="nwGrow(this)" onchange="setWeekNote('tri',${wi},this.value)">${esc(w.note||'')}</textarea>
          ${(w.sessioni||[]).map((s,si)=>`
-           <div class="be-group" style="border-left:3px solid var(--n);">
-             <div class="be-grouphead">
-               <select class="ed-cat" onchange="setSessDisc('tri',${wi},${si},this.value)">${['nuoto','bici','corsa','forza','brick'].map(d=>{const dd=DISC[d]||['•',d];return `<option value="${d}" ${s.disc===d?'selected':''}>${dd[0]} ${dd[1]}</option>`;}).join('')}</select>
-               <button class="be-iconbtn del" onclick="delSess('tri',${wi},${si})" title="Elimina disciplina">🗑</button>
+           <div class="al-sess">
+             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+               <select class="al-btn" style="padding:5px 10px;font-size:12px" onchange="setSessDisc('tri',${wi},${si},this.value)">${['nuoto','bici','corsa','forza','brick'].map(d=>{const dd=DISC[d]||['•',d];return `<option value="${d}" ${s.disc===d?'selected':''}>${dd[0]} ${dd[1]}</option>`;}).join('')}</select>
+               <button style="${EDIT_DEL}" onclick="delSess('tri',${wi},${si})" title="Elimina disciplina">🗑</button>
              </div>
              ${blkEditorHTML('tri',wi,si,s.blocchi)}
            </div>`).join('')}
-         <button class="be-add" onclick="addSess('tri',${wi})">+ disciplina</button>`
+         <button class="al-btn" style="font-size:11.5px;padding:5px 11px;margin-top:6px" onclick="addSess('tri',${wi})">＋ disciplina</button>`
       : blkEditorHTML('forza',wi,-1,w.blocchi);
-    return `<div class="be-meal">
-      <div class="be-meal-h">
-        <input class="be-in be-name" value="${esc(w.titolo||'')}" placeholder="Titolo settimana" onchange="setSchedaTitolo('${prog}',${wi},this.value)">
-        <button class="be-iconbtn del" onclick="delWeek('${prog}',${wi})" title="Elimina settimana">🗑</button>
+    return `<div class="al-wk">
+      <div class="al-wk-row" style="cursor:default;gap:7px">
+        <input style="flex:1;min-width:0;border:none;border-bottom:1px dashed #93C5FD;background:transparent;font-family:var(--font-head);font-weight:800;font-size:14px;color:#1F2937;outline:none;padding:0 0 2px" value="${esc(w.titolo||'')}" placeholder="Titolo settimana" onchange="setSchedaTitolo('${prog}',${wi},this.value)">
+        <button style="${EDIT_DEL}" onclick="delWeek('${prog}',${wi})" title="Elimina settimana">🗑</button>
       </div>
-      ${body}
+      <div class="al-wk-body">${body}</div>
     </div>`;
   }).join('');
   return `
-    <div class="page-title n">✏️ ${esc(P.nome)}</div>
-    <div class="page-sub">Modifica settimane e blocchi · si salva da solo</div>
-    <div class="reset-row"><button class="reset-btn" onclick="closeSchedeEdit()">← Indietro</button></div>
-    ${top}
-    ${weeks}
-    <button class="be-add" onclick="addWeek('${prog}')">＋ Aggiungi settimana</button>
+    <div class="dash-head"><button class="dash-back" onclick="closeSchedeEdit()">←</button>
+      <div><div class="page-title n" style="padding:0">✏️ Modifica scheda</div><div class="page-sub" style="padding:0">${esc(P.nome)} · si salva da solo</div></div></div>
+    <div class="card">
+      <div class="al-prog-h">${prog==='forza'?'🏋️':'🔱'} ${esc(P.nome.split(' · ')[0])}<span class="al-badge">${(P.weeks||[]).length} sett.</span></div>
+      ${top}
+      ${weeks}
+      <div style="padding:8px 15px 16px"><button class="al-btn" onclick="addWeek('${prog}')">＋ Aggiungi settimana</button></div>
+    </div>
     <div style="height:24px"></div>`;
 }
 function saveSchede(){ dbSet('allenamentiSchede', ALLENAMENTI); }
@@ -2480,7 +2487,7 @@ function renderContent(animate){
                :                     renderNoemiTab();
   if(animate){ void el.offsetWidth; el.classList.add('tab-anim'); }
   // autosize dei campi liberi di Noemi
-  el.querySelectorAll('textarea.nw-ta').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
+  el.querySelectorAll('textarea.nw-ta, textarea.ta-auto').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
   if(tab==='allen' && dashOpen) drawDashCharts();
   if(tab==='allen' && dashOpen && actDetail!=null) loadActivityTrack(training[actDetail]);
 }
