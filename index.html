@@ -368,6 +368,13 @@
     .al-blk-n{font-size:11px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
     .al-blk-r{font-size:13.5px;color:#374151;line-height:1.5;padding-left:10px;border-left:2px solid var(--border)}
     .al-note{font-size:12px;color:#9A6B1E;background:#FEF6E7;border:1px solid #F6E2BD;border-radius:9px;padding:7px 10px;margin-top:8px;line-height:1.4}
+    /* editor schede: campi chiaramente modificabili, in stile pagina */
+    .sch-title{flex:1;min-width:0;border:none;border-bottom:1px dashed #93C5FD;background:transparent;font-family:var(--font-head);font-weight:800;font-size:14px;color:#1F2937;outline:none;padding:0 0 2px}
+    .sch-title:focus{border-bottom-color:var(--n)}
+    .sch-name{width:100%;border:1px solid #DCE6F5;border-radius:8px;background:#fff;padding:5px 9px;outline:none;font-size:11.5px;font-weight:800;color:#2563EB;text-transform:uppercase;letter-spacing:.03em;font-family:inherit}
+    .sch-name:focus{border-color:var(--n);box-shadow:0 0 0 3px var(--n-l)}
+    .sch-righe{display:block;width:100%;border:1px solid transparent;border-left:2px solid var(--border);background:transparent;resize:none;font-family:inherit;font-size:13.5px;color:#374151;line-height:1.5;outline:none;padding:4px 0 2px 10px;margin-top:4px;border-radius:0 8px 8px 0}
+    .sch-righe:focus{border-left-color:var(--n);background:#FAFCFF}
     /* link scheda accanto al tag allenamento (colonna Nicholas, tab Dieta) */
     .train-scheda{border:1.5px solid var(--n);background:#fff;color:var(--n);font-weight:800;font-size:10px;border-radius:20px;padding:2px 9px;cursor:pointer;text-transform:none;letter-spacing:0}
     .train-scheda:active{background:var(--n-l)}
@@ -1497,15 +1504,13 @@ function renderAllenamentiTab(){
 }
 
 // ── EDITOR SCHEDE (forza + tri) — stesso look della pagina Allenamenti; persistito su Firebase ──
-const EDIT_NOME = "border:none;border-bottom:1px dashed #93C5FD;background:transparent;width:100%;padding:0 0 2px;outline:none;font-size:11px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.03em;font-family:inherit";
-const EDIT_RIGHE = "display:block;width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:13.5px;color:#374151;line-height:1.5;outline:none;padding:3px 0 0 10px;border-left:2px solid var(--border);margin-top:3px";
 const EDIT_DEL = "flex-shrink:0;border:none;background:transparent;color:#C9D0D9;cursor:pointer;font-size:13px;padding:2px 4px";
 function blkEditorHTML(prog, wi, si, blocchi){
   const rows = (blocchi||[]).map((b,bi)=>`
     <div class="al-blk" style="display:flex;align-items:flex-start;gap:6px">
       <div style="flex:1;min-width:0">
-        <input style="${EDIT_NOME}" value="${esc(b.nome||'')}" placeholder="NOME BLOCCO" onchange="setBloccoField('${prog}',${wi},${si},${bi},'nome',this.value)">
-        <textarea class="ta-auto" rows="1" style="${EDIT_RIGHE}" placeholder="esercizi · serie · note del PT" oninput="nwGrow(this)" onchange="setBloccoField('${prog}',${wi},${si},${bi},'righe',this.value)">${esc(b.righe||'')}</textarea>
+        <input class="sch-name" value="${esc(b.nome||'')}" placeholder="NOME BLOCCO (es. Tecnica)" onchange="setBloccoField('${prog}',${wi},${si},${bi},'nome',this.value)">
+        <textarea class="ta-auto sch-righe" rows="1" placeholder="esercizi · serie · note del PT" oninput="nwGrow(this)" onchange="setBloccoField('${prog}',${wi},${si},${bi},'righe',this.value)">${esc(b.righe||'')}</textarea>
       </div>
       <button style="${EDIT_DEL}" onclick="delBlocco('${prog}',${wi},${si},${bi})" title="Elimina blocco">🗑</button>
     </div>`).join('');
@@ -1534,7 +1539,7 @@ function renderSchedeEdit(){
       : blkEditorHTML('forza',wi,-1,w.blocchi);
     return `<div class="al-wk">
       <div class="al-wk-row" style="cursor:default;gap:7px">
-        <input style="flex:1;min-width:0;border:none;border-bottom:1px dashed #93C5FD;background:transparent;font-family:var(--font-head);font-weight:800;font-size:14px;color:#1F2937;outline:none;padding:0 0 2px" value="${esc(w.titolo||'')}" placeholder="Titolo settimana" onchange="setSchedaTitolo('${prog}',${wi},this.value)">
+        <input class="sch-title" value="${esc(w.titolo||'')}" placeholder="Titolo settimana" onchange="setSchedaTitolo('${prog}',${wi},this.value)">
         <button style="${EDIT_DEL}" onclick="delWeek('${prog}',${wi})" title="Elimina settimana">🗑</button>
       </div>
       <div class="al-wk-body">${body}</div>
