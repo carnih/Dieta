@@ -1096,7 +1096,7 @@ function getSpesaCats(){
 //  STATE
 // ══════════════════════════════════════════
 let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], _cid=0, editBase=null, baseNicDay='corsa', categoryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
-    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={}, coachConfig={}, schedeEdit=null;
+    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={}, coachConfig={}, schedeEdit=null, edOpen={};
 const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
 // ── SOTTOSCRIZIONI FIREBASE (dichiarative) ──
@@ -1533,8 +1533,10 @@ function renderSchedeEdit(){
         <textarea class="ta-auto" rows="2" style="display:block;width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:12.5px;color:#3a4a63;line-height:1.45;outline:none" placeholder="Obiettivi del mesociclo…" oninput="nwGrow(this)" onchange="setSchedaTop('tri',this.value)">${esc(P.obiettivi||'')}</textarea></div>`
     : `<div class="al-obj"><div style="font-size:11px;font-weight:800;color:var(--n);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">📝 Nota programma</div>
         <textarea class="ta-auto" rows="2" style="display:block;width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:12.5px;color:#3a4a63;line-height:1.45;outline:none" placeholder="Nota del PT…" oninput="nwGrow(this)" onchange="setSchedaTop('forza',this.value)">${esc(P.note||'')}</textarea></div>`;
+  const cur = settCorrente(prog);
   const weeks = (P.weeks||[]).map((w,wi)=>{
-    const body = isTri
+    const op = edOpen[prog+wi] !== undefined ? edOpen[prog+wi] : (wi===cur);
+    const body = !op ? '' : (isTri
       ? `<textarea class="ta-auto al-note" rows="1" style="display:block;width:100%;resize:none;font-family:inherit;outline:none" placeholder="🍬 Nota settimana (opz.)" oninput="nwGrow(this)" onchange="setWeekNote('tri',${wi},this.value)">${esc(w.note||'')}</textarea>
          ${(w.sessioni||[]).map((s,si)=>`
            <div class="al-sess">
@@ -1545,13 +1547,15 @@ function renderSchedeEdit(){
              ${blkEditorHTML('tri',wi,si,s.blocchi)}
            </div>`).join('')}
          <button class="al-btn" style="font-size:11.5px;padding:5px 11px;margin-top:6px" onclick="addSess('tri',${wi})">＋ disciplina</button>`
-      : blkEditorHTML('forza',wi,-1,w.blocchi);
-    return `<div class="al-wk">
-      <div class="al-wk-row" style="cursor:default;gap:7px">
+      : blkEditorHTML('forza',wi,-1,w.blocchi));
+    return `<div class="al-wk ${wi===cur?'cur':''}">
+      <div class="al-wk-row" style="gap:7px">
+        <span class="al-arrow ${op?'op':'cl'}" onclick="toggleEditWk('${prog}',${wi})" style="cursor:pointer;flex-shrink:0">▾</span>
         <input class="sch-title" value="${esc(w.titolo||'')}" placeholder="Titolo settimana" onchange="setSchedaTitolo('${prog}',${wi},this.value)">
+        ${wi===cur?'<span class="al-cur">corrente</span>':''}
         <button style="${EDIT_DEL}" onclick="delWeek('${prog}',${wi})" title="Elimina settimana">🗑</button>
       </div>
-      <div class="al-wk-body">${body}</div>
+      ${op?`<div class="al-wk-body">${body}</div>`:''}
     </div>`;
   }).join('');
   return `
@@ -1568,6 +1572,7 @@ function renderSchedeEdit(){
 function saveSchede(){ dbSet('allenamentiSchede', ALLENAMENTI); }
 window.openSchedeEdit  = p => { schedeEdit=p; renderContent(); window.scrollTo(0,0); };
 window.closeSchedeEdit = ()  => { schedeEdit=null; renderContent(); window.scrollTo(0,0); };
+window.toggleEditWk    = (p,wi) => { const shown = edOpen[p+wi]!==undefined ? edOpen[p+wi] : (wi===settCorrente(p)); edOpen[p+wi]=!shown; renderContent(); };
 window.setSchedaTop    = (p,v) => { if(p==='tri') ALLENAMENTI.tri.obiettivi=v; else ALLENAMENTI.forza.note=v; saveSchede(); toast(MSG_SAVED); };
 window.setSchedaTitolo = (p,wi,v) => { ALLENAMENTI[p].weeks[wi].titolo=v; saveSchede(); toast(MSG_SAVED); };
 window.setWeekNote     = (p,wi,v) => { v=(v||'').trim(); if(v) ALLENAMENTI[p].weeks[wi].note=v; else delete ALLENAMENTI[p].weeks[wi].note; saveSchede(); toast(MSG_SAVED); };
