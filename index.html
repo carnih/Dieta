@@ -561,6 +561,9 @@
     .ddet-date{flex:none;font-size:11px;font-weight:800;color:#94A3B8;width:42px}
     .ddet-name{flex:1;min-width:0;font-size:13px;font-weight:700;color:#1F2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .ddet-meta{flex:none;font-size:11.5px;color:#64748B;font-weight:600}
+    .ddet-brick{flex:none;font-size:10.5px;font-weight:800;color:#B45309;background:#FEF3C7;border:1px solid #FDE68A;border-radius:50px;padding:2px 8px;cursor:pointer}
+    .ddet-brick:active{background:#FDE68A}
+    .brick-banner{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font-size:13px;color:#92400E;background:#FEF3C7;border:1px solid #FDE68A;border-radius:12px;padding:10px 13px;margin-bottom:12px;cursor:pointer;font-family:inherit;line-height:1.35}
     .dc-ic{font-size:18px;line-height:1}
     .dc-val{font-family:var(--font-head);font-size:21px;font-weight:850;color:#111827;line-height:1.1;margin-top:3px}
     .dc-lab{font-size:10.5px;color:#9CA3AF;font-weight:800;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
@@ -1688,7 +1691,22 @@ function computeDash(){
   A.forEach(a=>{ if(!MAIN.includes(a.disciplina)){ const hh=_n(a.durata_min)/60; altri.h+=hh; altri.n++; altri.km+=_n(a.distanza_km);
     const lab=ALTRI_LBL(a.tipo_garmin); (altri.byType[lab]=altri.byType[lab]||{h:0,n:0}); altri.byType[lab].h+=hh; altri.byType[lab].n++;
     const mi=months.indexOf(a.mese); if(mi>=0) volAltri[mi]+=hh; } });
-  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri,avgWkMonth,avgWkRecent,avgWkPrev,peakWk};
+  // ── BRICK: bici→corsa stesso giorno con la corsa che parte entro ~35' dalla fine bici ──
+  const brick={};
+  { const toMin=s=>{ const m=/^(\d{1,2}):(\d{2})$/.exec(s||''); return m?(+m[1]*60+ +m[2]):null; };
+    const byDay={}; A.forEach(a=>{ if(a.data) (byDay[a.data]=byDay[a.data]||[]).push(a); });
+    Object.values(byDay).forEach(day=>{
+      const ev=day.map(a=>({a,st:toMin(a.ora)})).filter(x=>x.st!=null).sort((x,y)=>x.st-y.st);
+      for(let i=0;i<ev.length;i++){ const b=ev[i].a; if(b.disciplina!=='bici') continue;
+        const bEnd=ev[i].st+_n(b.durata_min);
+        for(let j=i+1;j<ev.length;j++){ const r=ev[j].a, gap=ev[j].st-bEnd;
+          if(gap>35) break;
+          if(r.disciplina==='corsa' && gap>=-10){
+            brick[b.id]={idx:A.indexOf(r), disc:'corsa', nome:r.nome, km:_n(r.distanza_km), min:Math.round(_n(r.durata_min))};
+            brick[r.id]={idx:A.indexOf(b), disc:'bici',  nome:b.nome, km:_n(b.distanza_km), min:Math.round(_n(b.durata_min))};
+            break; } } } });
+  }
+  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri,avgWkMonth,avgWkRecent,avgWkPrev,peakWk,brick};
 }
 
 function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><div class="dch-title">${title}</div><div class="dch-canvas"><canvas id="${id}"></canvas></div></div>`; }
@@ -1794,6 +1812,7 @@ function renderDashDetail(D){
       <span class="ddet-date">${(a.data||'').slice(5)}</span>
       <span class="ddet-name">${esc(a.nome||'')}</span>
       <span class="ddet-meta">${_n(a.distanza_km)>0?_n(a.distanza_km).toFixed(1)+' km · ':''}${Math.round(_n(a.durata_min))}' ${_n(a.fc_media)>0?'· ❤️'+Math.round(_n(a.fc_media)):''}</span>
+      ${D.brick[a.id]?`<span class="ddet-brick" onclick="event.stopPropagation();openActivityDetail(${D.brick[a.id].idx})" title="Brick · apri la ${esc(D.brick[a.id].disc)}">🔥 ${D.brick[a.id].disc==='corsa'?'🏃':'🚴'} ${D.brick[a.id].km>0.1?D.brick[a.id].km.toFixed(1)+'km':D.brick[a.id].min+"'"}</span>`:''}
       <span class="ddet-go">›</span>
     </button>`).join('');
   return `${back}
@@ -1839,7 +1858,12 @@ function renderActivityDetail(D){
   const zbar = ztot>1?`<div class="dash-sec-title" style="margin-top:8px">Minuti per zona FC</div>
     <div class="zbar">${zmin.map((m,i)=>m>0?`<div class="zseg" style="flex:${m};background:${ZCOL[i]}"></div>`:'').join('')}</div>
     <div class="zleg">${zmin.map((m,i)=>m>0?`<span><i style="background:${ZCOL[i]}"></i>Z${i+1} ${Math.round(m)}'</span>`:'').join('')}</div>`:'';
+  const bk = D && D.brick && D.brick[a.id];
+  const brickBanner = bk?`<button class="brick-banner" onclick="openActivityDetail(${bk.idx})">
+    🔥 <b>Brick</b> — ${a.disciplina==='bici'?'seguita dalla corsa':'preceduta dalla bici'}: ${bk.disc==='corsa'?'🏃':'🚴'} ${esc(bk.nome||'')} ${bk.km>0.1?'· '+bk.km.toFixed(1)+' km':''} · ${bk.min}' <span style="margin-left:auto">›</span>
+  </button>`:'';
   return `${back}
+    ${brickBanner}
     <div class="dash-cards">${cards}</div>
     ${zbar}
     ${a.id ? `<div id="actMap" class="act-map"></div><div id="actElevWrap"></div><div id="actClimbs"></div><div id="actLaps"></div>` : ''}`;
