@@ -60,7 +60,8 @@ export default function App() {
 
   return (
     // Su desktop (lg) riservo lo spazio per il rail laterale a sinistra.
-    <div className="min-h-full lg:pl-[78px]">
+    // h-full + main scroller interno: lo scroll non e' sul documento (fix iOS).
+    <div className="h-full lg:pl-[78px]">
       {/* Copre la safe-area in alto (notch/Dynamic Island): evita che il contenuto
           che scorre "trapeli" sopra i titoli sticky in modalità standalone/PWA. */}
       <div
@@ -109,7 +110,14 @@ export default function App() {
         {name.slice(0, 1).toUpperCase()}
       </button>
 
-      <main className="mx-auto max-w-2xl px-4 pb-28 pt-3 lg:max-w-none lg:px-8 lg:pb-10">
+      <main
+        className={
+          'mx-auto h-full max-w-2xl overflow-y-auto overscroll-y-none px-4 ' +
+          'pt-[calc(0.75rem_+_env(safe-area-inset-top))] pb-[calc(7rem_+_env(safe-area-inset-bottom))] ' +
+          'lg:max-w-none lg:px-8 lg:pt-3 lg:pb-10'
+        }
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {renderTab()}
       </main>
     </div>

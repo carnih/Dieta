@@ -35,11 +35,13 @@ body,
   height: 100%;
 }
 
-/* Niente "rubber-band" iOS che a fine pagina rimbalza e scopre il contenuto
-   sotto la barra inferiore. */
+/* Lo scroll avviene dentro <main> (scroller interno), NON sul documento: su iOS
+   solo cosi' l'overscroll-behavior viene rispettato → niente "rubber-band" che a
+   fine pagina rimbalza e scopre il contenuto sopra/sotto le barre fisse. */
 html,
 body {
-  overscroll-behavior-y: none;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {

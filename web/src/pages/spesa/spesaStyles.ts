@@ -40,7 +40,7 @@ export const SPESA_CSS = `
 .spesa-scope .shop-tool:active{transform:scale(.96)}
 
 /* barra filtri (sticky pulito) */
-.spesa-scope .vsub{position:sticky;top:0;z-index:20;background:var(--bg,#f1faf6);background:color-mix(in srgb, var(--bg,#f1faf6) 95%, transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding-top:6px;margin:0 -2px}
+.spesa-scope .vsub{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg,#f1faf6);background:color-mix(in srgb, var(--bg,#f1faf6) 95%, transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding-top:6px;margin:0 -2px}
 .spesa-scope .shop-filters{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
 .spesa-scope .shop-filters::-webkit-scrollbar{display:none}
 .spesa-scope .shop-filter{flex-shrink:0;border:1.5px solid transparent;background:#fff;color:#9CA3AF;font-size:13px;font-weight:800;padding:8px 16px;border-radius:9999px;cursor:pointer;box-shadow:var(--shadow-soft);transition:transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease}

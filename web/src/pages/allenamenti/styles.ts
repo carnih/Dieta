@@ -12,8 +12,8 @@ const CSS = `
 .al-scope{ --font-head:var(--font-round); --ease:cubic-bezier(.4,0,.2,1); }
 
 /* page titles / sub */
-.al-scope .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;color:#111827;position:sticky;top:0;z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 6px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
-.al-scope .vsub{position:sticky;top:48px;z-index:9;background:var(--bg);margin:0 -16px;padding:6px 16px 8px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
+.al-scope .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;color:#111827;position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 6px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
+.al-scope .vsub{position:sticky;top:calc(env(safe-area-inset-top,0px) + 48px);z-index:9;background:var(--bg);margin:0 -16px;padding:6px 16px 8px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
 /* titolo a colore pieno (opaco): cosi' lo sticky copre il contenuto sotto e il
    testo resta visibile (il gradiente-su-testo rendeva trasparente il box). */
 .al-scope .page-title.n{color:var(--n);background:var(--bg);font-family:var(--font-head)}
@@ -101,7 +101,7 @@ const CSS = `
 .al-scope .dash-cta-arr{font-size:26px;opacity:.85;flex:none}
 
 /* head editor (back) */
-.al-scope .dash-head{display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 10px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
+.al-scope .dash-head{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 10px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
 .al-scope .dash-back{flex:none;width:40px;height:40px;border:none;background:#fff;box-shadow:var(--shadow-soft);border-radius:50%;font-size:19px;cursor:pointer;color:#1F2937}
 .al-scope .dash-back:active{background:#F1F5F9}
 
