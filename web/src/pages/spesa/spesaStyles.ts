@@ -138,4 +138,15 @@ export const SPESA_CSS = `
   .spesa-scope .shop-tool,.spesa-scope .shop-filter,.spesa-scope .shop-hist button,.spesa-scope .catman-add{transition:background .2s ease, color .2s ease}
   .spesa-scope .shop-tool:hover,.spesa-scope .shop-filter:hover,.spesa-scope .shop-hist button:hover,.spesa-scope .catman-add:hover{transform:none}
 }
+
+/* ── DESKTOP: categorie come card a colonne (masonry) per vedere tutta la spesa
+   a colpo d'occhio. Mobile invariato (resta la card unica continua). ── */
+@media (min-width:1024px){
+  .spesa-scope .shop{background:transparent;box-shadow:none;overflow:visible;padding:0;column-count:2;column-gap:16px}
+  .spesa-scope .shop-sec{background:#fff;border-radius:16px;box-shadow:var(--shadow-soft);break-inside:avoid;margin:0 0 16px;overflow:hidden}
+  .spesa-scope .shop-sec[style]{border-bottom:none!important} /* masterRow "Seleziona tutto" */
+  .spesa-scope .shop-sec-h{padding-top:14px}
+  .spesa-scope .shop-row:first-of-type{border-top-color:transparent}
+}
+@media (min-width:1500px){ .spesa-scope .shop{column-count:3} }
 `;
