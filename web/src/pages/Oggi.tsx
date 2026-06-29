@@ -274,20 +274,25 @@ export default function Oggi({ onOpenScheda }: OggiProps) {
     <div className="oggi">
       <div className="page-title">{isT ? 'Oggi' : NOEMI_FULL[wd]}</div>
       <div className="page-sub">
-        {sel ? fmtFull(sel.obj) : NOEMI_FULL[wd]} · {trainTag}
+        <span className="ps-date">{sel ? fmtFull(sel.obj) : NOEMI_FULL[wd]}</span>
+        {trainTag ? <span className="ps-train">{trainTag}</span> : null}
       </div>
       {calendar}
 
       <div className="cmp-top">
-        <div className="cmp-top-col e">🍓 Noemi</div>
+        <div className="cmp-top-col e">
+          <span className="ctc-name">🍓 Noemi</span>
+        </div>
         <div className="cmp-top-col n">
-          <span>💪 Nicholas</span>
-          <span className="train-tag">{trainTag}</span>
-          {hasScheda ? (
-            <button className="train-scheda" onClick={() => onOpenScheda?.()}>
-              📋 Scheda
-            </button>
-          ) : null}
+          <span className="ctc-name">💪 Nicholas</span>
+          <div className="ctc-meta">
+            <span className="train-tag">{trainTag}</span>
+            {hasScheda ? (
+              <button className="train-scheda" onClick={() => onOpenScheda?.()}>
+                📋 Scheda
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
 

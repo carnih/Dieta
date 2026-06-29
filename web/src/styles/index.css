@@ -35,6 +35,13 @@ body,
   height: 100%;
 }
 
+/* Niente "rubber-band" iOS che a fine pagina rimbalza e scopre il contenuto
+   sotto la barra inferiore. */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
 body {
   margin: 0;
   background: var(--bg);

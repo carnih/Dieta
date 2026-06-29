@@ -76,6 +76,7 @@ export default function App() {
           'lg:inset-y-0 lg:left-0 lg:right-auto lg:w-[78px] lg:flex-col lg:justify-start ' +
           'lg:gap-1 lg:border-r lg:border-t-0 lg:px-2 lg:py-4'
         }
+        style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))' }}
       >
         {TABS.map((t) => {
           const active = tab === t.key;
