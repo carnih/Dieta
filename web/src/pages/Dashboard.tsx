@@ -137,7 +137,8 @@ function DashboardMain({
     <div className="dash">
       {back}
       <div className="dash-sec-title">
-        🏊🚴🏃 Preparazione tri <span className="dash-sec-sum">{triH.toFixed(0)}h totali (incl. forza)</span>
+        <span className="dss-ic dss-tri">🔱</span>Preparazione tri{' '}
+        <span className="dash-sec-sum">{triH.toFixed(0)}h totali (incl. forza)</span>
       </div>
       <div className="dash-cards">
         {card('bici', '🚴', 'Bici', g('bici', 'h').toFixed(0) + 'h', g('bici', 'km').toFixed(0) + ' km · ' + g('bici', 'n') + ' uscite')}
@@ -159,7 +160,8 @@ function DashboardMain({
       </div>
 
       <div className="dash-sec-title">
-        🎾🏂 Altri sport <span className="dash-sec-sum">{(padelH + D.altri.h).toFixed(0)}h totali</span>
+        <span className="dss-ic dss-other">🎾</span>Altri sport{' '}
+        <span className="dash-sec-sum">{(padelH + D.altri.h).toFixed(0)}h totali</span>
       </div>
       <div className="dash-cards">
         {card('padel', '🎾', 'Padel', padelH.toFixed(0) + 'h', (D.tot.padel ? D.tot.padel.n : 0) + ' partite')}

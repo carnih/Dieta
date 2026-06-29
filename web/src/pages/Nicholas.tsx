@@ -54,8 +54,11 @@ export default function Nicholas() {
       </div>
       <div className="mb-1 text-sm text-muted">Pianifica la settimana e consulta la tua dieta</div>
 
-      <div className="mb-2 mt-3 text-base font-bold" style={{ color: 'var(--n)' }}>
-        📅 Pianifica la settimana
+      <div className="mb-2 mt-3 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-xl bg-nic-light text-base">📅</span>
+        <span className="font-round text-[15px]" style={{ color: 'var(--n)' }}>
+          Pianifica la settimana
+        </span>
       </div>
       <Schedule schedule={schedule} />
 
@@ -63,7 +66,7 @@ export default function Nicholas() {
         <button
           type="button"
           onClick={resetNicWeek}
-          className="rounded-full bg-card px-3 py-1.5 text-sm font-semibold text-ink shadow-sm"
+          className="rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-ink shadow-soft transition-transform duration-200 hover:-translate-y-px motion-reduce:transform-none motion-reduce:transition-none"
         >
           ↺ Reset
         </button>
@@ -73,7 +76,7 @@ export default function Nicholas() {
             setEditBase(true);
             window.scrollTo(0, 0);
           }}
-          className="rounded-full bg-card px-3 py-1.5 text-sm font-semibold text-ink shadow-sm"
+          className="rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-ink shadow-soft transition-transform duration-200 hover:-translate-y-px motion-reduce:transform-none motion-reduce:transition-none"
         >
           ⚙︎ Modifica dieta base
         </button>
@@ -84,8 +87,11 @@ export default function Nicholas() {
         className="sticky z-[9] -mx-4 mt-3 flex flex-col gap-2 bg-bg px-4 py-2"
         style={{ top: 'calc(env(safe-area-inset-top,0px) + 48px)' }}
       >
-        <div className="text-base font-bold" style={{ color: 'var(--n)' }}>
-          🍽️ La tua dieta
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-nic-light text-base">🍽️</span>
+          <span className="font-round text-[15px]" style={{ color: 'var(--n)' }}>
+            La tua dieta
+          </span>
         </div>
         <ChipRow
           items={nic.days.map((x) => ({ id: x.id, label: x.label }))}
@@ -110,20 +116,25 @@ function Schedule({ schedule }: { schedule: Schedule }) {
   const t = todayId();
 
   return (
-    <div className="rounded-card bg-card p-3 shadow-sm">
+    <div className="rounded-card bg-card p-4 shadow-soft">
       {NOEMI_DAYS.map((wd) => {
         const days = getSchedDays(schedule, wd);
         const p = days[0] || 'riposo';
         const s2 = days[1] || '';
+        const isToday = wd === t;
         return (
-          <div key={wd} className="flex items-center gap-2 border-b border-line py-2 last:border-0">
+          <div
+            key={wd}
+            className="flex items-center gap-2 border-b border-line py-2 pl-3 last:border-0"
+            style={{ borderLeft: `2px solid ${isToday ? 'var(--n)' : 'transparent'}` }}
+          >
             <span className="w-12 text-sm font-bold text-ink">
               {NOEMI_LABELS[wd]}
-              {wd === t ? ' •' : ''}
+              {isToday ? ' •' : ''}
             </span>
             <div className="min-w-0 flex-1">
               <select
-                className="w-full rounded-lg border border-line bg-white px-2 py-1.5 text-sm"
+                className="w-full rounded-xl border border-line bg-white px-2.5 py-1.5 text-sm"
                 value={p}
                 onChange={(e) => setSchedDay(schedule, wd, 0, e.target.value, setSched2Open)}
               >
@@ -136,7 +147,7 @@ function Schedule({ schedule }: { schedule: Schedule }) {
             </div>
             {p !== 'riposo' &&
               (s2 ? (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-nic-light px-2 py-1 text-xs font-bold text-nic">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-nic-light px-2.5 py-1 text-xs font-bold text-nic">
                   {schedOpt(s2).label}
                   <button
                     type="button"
@@ -149,7 +160,7 @@ function Schedule({ schedule }: { schedule: Schedule }) {
                 </span>
               ) : sched2Open[wd] ? (
                 <select
-                  className="shrink-0 rounded-lg border border-line bg-white px-2 py-1.5 text-sm"
+                  className="shrink-0 rounded-xl border border-line bg-white px-2.5 py-1.5 text-sm"
                   defaultValue=""
                   onChange={(e) => setSchedDay(schedule, wd, 1, e.target.value, setSched2Open)}
                 >
@@ -165,7 +176,7 @@ function Schedule({ schedule }: { schedule: Schedule }) {
                   type="button"
                   title="Aggiungi 2° allenamento"
                   onClick={() => setSched2Open((s) => ({ ...s, [wd]: true }))}
-                  className="shrink-0 rounded-full bg-nic-light px-2.5 py-1 text-sm font-bold text-nic"
+                  className="shrink-0 rounded-full bg-nic-light px-2.5 py-1 text-sm font-bold text-nic transition-transform duration-200 hover:-translate-y-px motion-reduce:transform-none motion-reduce:transition-none"
                 >
                   ＋
                 </button>
@@ -249,7 +260,7 @@ function NicBaseEdit({
           onClose();
           window.scrollTo(0, 0);
         }}
-        className="mb-2 rounded-full px-3 py-1.5 text-sm font-bold text-white"
+        className="mb-2 rounded-full px-3.5 py-1.5 text-sm font-bold text-white shadow-soft transition-transform duration-200 hover:-translate-y-px motion-reduce:transform-none motion-reduce:transition-none"
         style={{ background: 'var(--n)' }}
       >
         ✓ Fatto
@@ -262,12 +273,14 @@ function NicBaseEdit({
         color="n"
       />
 
-      <div className="rounded-card bg-card px-3.5 pb-2 pt-4 shadow-sm">
+      <div className="rounded-card bg-card px-4 pb-3 pt-4 shadow-soft">
         {day.pasti.map((p, pi) => (
           <div key={pi} className="mb-4">
-            <div className="mb-2 flex items-center gap-2 font-bold text-ink">
-              <span className="text-lg">{p.icon}</span>
-              {p.nome}
+            <div className="mb-2 flex items-center gap-2 text-ink">
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-nic-light text-base">
+                {p.icon}
+              </span>
+              <span className="font-round text-[15px]">{p.nome}</span>
             </div>
             {p.items.map((it, ii) => (
               <NicItemEditor
@@ -322,7 +335,7 @@ function NicBaseEdit({
                   dd.pasti[pi].items.push({ cat: 'carbo', v: 'nuova voce' });
                 })
               }
-              className="mt-1 rounded-lg border border-dashed border-line px-2.5 py-1.5 text-xs font-semibold text-muted"
+              className="mt-1 rounded-xl border border-dashed border-line px-2.5 py-1.5 text-xs font-semibold text-muted transition-colors duration-200 hover:bg-nic-light/40"
             >
               + aggiungi voce
             </button>
@@ -355,10 +368,10 @@ function NicItemEditor({
   onMakeAlts: () => void;
 }) {
   return (
-    <div className="mb-3 rounded-xl border border-line p-2.5">
+    <div className="mb-3 rounded-xl border border-line border-l-2 border-l-nic/40 bg-[#FAFCFB] p-3">
       <div className="mb-1.5 flex items-center gap-2">
         <select
-          className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm"
+          className="rounded-xl border border-line bg-white px-2.5 py-1.5 text-sm"
           value={it.cat}
           onChange={(e) => onCat(e.target.value as CategoriaKey)}
         >
@@ -378,7 +391,7 @@ function NicItemEditor({
           {it.alts.map((a, ai) => (
             <div key={ai} className="mb-1 flex items-center gap-1.5">
               <input
-                className="flex-1 rounded-lg border border-line px-2.5 py-1.5 text-sm"
+                className="flex-1 rounded-xl border border-line bg-white px-2.5 py-1.5 text-sm"
                 defaultValue={a}
                 onChange={(e) => onAlt(ai, e.target.value)}
               />
@@ -390,7 +403,7 @@ function NicItemEditor({
           <button
             type="button"
             onClick={onAltAdd}
-            className="rounded-lg border border-dashed border-line px-2.5 py-1 text-xs font-semibold text-muted"
+            className="rounded-xl border border-dashed border-line px-2.5 py-1 text-xs font-semibold text-muted transition-colors duration-200 hover:bg-nic-light/40"
           >
             + opzione
           </button>
@@ -399,7 +412,7 @@ function NicItemEditor({
         <>
           <div className="mb-1 flex items-center gap-1.5">
             <input
-              className="flex-1 rounded-lg border border-line px-2.5 py-1.5 text-sm"
+              className="flex-1 rounded-xl border border-line bg-white px-2.5 py-1.5 text-sm"
               defaultValue={it.v ?? ''}
               onChange={(e) => onVal(e.target.value)}
             />
@@ -407,7 +420,7 @@ function NicItemEditor({
           <button
             type="button"
             onClick={onMakeAlts}
-            className="rounded-lg border border-dashed border-line px-2.5 py-1 text-xs font-semibold text-muted"
+            className="rounded-xl border border-dashed border-line px-2.5 py-1 text-xs font-semibold text-muted transition-colors duration-200 hover:bg-nic-light/40"
           >
             + opzione
           </button>

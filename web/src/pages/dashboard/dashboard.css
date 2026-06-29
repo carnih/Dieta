@@ -1,10 +1,22 @@
-/* Stili DASHBOARD allenamenti, portati FEDELI dal monolite index.html.
-   Co-locati con la pagina (il task tocca solo i propri file: non modifico
-   src/styles/index.css). Fallback per le var storiche non ancora globali. */
+/* Stili DASHBOARD allenamenti — "vestito" allineato ai mockup approvati
+   (mockups/oggi.html, mockups/allenamenti.html): card bianche radius 20,
+   ombra MORBIDA (--shadow-soft), badge icona pastello, chip pill arrotondate,
+   accenti a bordo sinistro, hover leggero. Logica/struttura invariate.
+   Co-locato con la pagina (non tocco src/styles/index.css). */
 .dash {
-  --font-head: 'Nunito Sans', system-ui, sans-serif;
-  --sh-1: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --sh-2: 0 6px 18px rgba(0, 0, 0, 0.12);
+  --font-head: var(--font-round, 'Varela Round', 'Nunito Sans', system-ui, sans-serif);
+  /* ombra morbida unica (rimpiazza le vecchie --sh-1/--sh-2 pesanti) */
+  --sh-1: var(--shadow-soft, 0 1px 2px rgba(60, 80, 70, 0.04), 0 8px 24px -12px rgba(60, 80, 70, 0.12));
+  --sh-2: var(--shadow-soft, 0 1px 2px rgba(60, 80, 70, 0.04), 0 8px 24px -12px rgba(60, 80, 70, 0.12));
+  --r-card: var(--r, 20px);
+}
+
+/* griglia desktop: sfrutta la larghezza (il contenuto resta centrato dal layout) */
+@media (min-width: 880px) {
+  .dash {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
 }
 
 .dash-head {
@@ -14,10 +26,11 @@
   position: sticky;
   top: env(safe-area-inset-top, 0px);
   z-index: 15;
-  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
   margin: 0 -16px;
-  padding: 8px 18px 10px;
-  box-shadow: 0 8px 12px -10px rgba(0, 0, 0, 0.12);
+  padding: 8px 18px 12px;
+  box-shadow: 0 10px 14px -12px rgba(60, 80, 70, 0.18);
 }
 .dash-back {
   flex: none;
@@ -25,20 +38,25 @@
   height: 40px;
   border: none;
   background: #fff;
-  box-shadow: var(--sh-1);
-  border-radius: 50%;
+  box-shadow: var(--shadow-soft);
+  border-radius: 9999px;
   font-size: 19px;
   cursor: pointer;
   color: #1f2937;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.dash-back:hover {
+  transform: translateY(-1px);
 }
 .dash-back:active {
   background: #f1f5f9;
+  transform: scale(0.96);
 }
 .dash-title {
   font-family: var(--font-head);
-  font-weight: 800;
-  font-size: 19px;
-  letter-spacing: -0.3px;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.2px;
   color: var(--n);
   line-height: 1.15;
 }
@@ -47,65 +65,91 @@
   color: var(--muted);
   font-weight: 600;
 }
+
+/* intestazione sezione: badge icona pastello (~32px) + titolo round */
 .dash-sec-title {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 9px;
   font-family: var(--font-head);
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748b;
-  padding: 6px 2px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #374151;
+  padding: 10px 2px 8px;
+}
+/* badge icona pastello (~32px) per le intestazioni sezione */
+.dss-ic {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+}
+.dss-ic.dss-tri {
+  background: #eff6ff;
+}
+.dss-ic.dss-other {
+  background: #fdf2f8;
 }
 .dash-sec-sum {
+  margin-left: auto;
   font-size: 11px;
   font-weight: 700;
   color: #94a3b8;
   text-transform: none;
   letter-spacing: 0;
+  font-family: 'Nunito Sans', system-ui, sans-serif;
 }
+
+/* KPI cards */
 .dash-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 9px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 .dash-card {
   background: #fff;
   border: none;
   font-family: inherit;
-  border-radius: 14px;
-  padding: 12px 8px;
-  box-shadow: var(--sh-1);
+  border-radius: var(--r-card);
+  padding: 16px 12px;
+  box-shadow: var(--shadow-soft);
   text-align: center;
 }
 .dash-card.clickable {
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.dash-card.clickable:hover {
+  transform: translateY(-1px);
 }
 .dash-card.clickable:active {
-  transform: scale(0.97);
-  box-shadow: var(--sh-2);
+  transform: scale(0.98);
 }
 .dc-more {
-  font-size: 9.5px;
+  font-size: 10px;
   color: #3b82f6;
   font-weight: 800;
-  margin-top: 5px;
+  margin-top: 6px;
 }
 .dc-ic {
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
 }
 .dc-val {
   font-family: var(--font-head);
-  font-size: 21px;
-  font-weight: 850;
+  font-size: 22px;
+  font-weight: 700;
   color: #111827;
   line-height: 1.1;
-  margin-top: 3px;
+  margin-top: 5px;
 }
 .dc-lab {
   font-size: 10.5px;
@@ -113,18 +157,21 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 .dc-sub {
   font-size: 11px;
   color: #64748b;
   font-weight: 600;
   min-height: 14px;
+  margin-top: 2px;
 }
+
+/* liste (attività / salite / lap): card morbida, righe con accento sinistro */
 .ddet-list {
   background: #fff;
-  border-radius: 16px;
-  box-shadow: var(--sh-1);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-soft);
   padding: 4px 0;
   overflow: hidden;
 }
@@ -132,20 +179,26 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 11px 14px;
   border: none;
-  border-top: 1px solid #f4f5f7;
+  border-top: 1px solid #f1f5f3;
+  border-left: 2px solid transparent;
   width: 100%;
   background: #fff;
   font-family: inherit;
   cursor: pointer;
   text-align: left;
+  transition: background 0.18s ease, border-color 0.18s ease;
 }
 .ddet-row:first-child {
   border-top: none;
 }
+.ddet-row:hover {
+  background: #fafcfb;
+  border-left-color: var(--n);
+}
 .ddet-row:active {
-  background: #f8fafc;
+  background: #f3f8f6;
 }
 .ddet-go {
   flex: none;
@@ -177,49 +230,64 @@
   color: #64748b;
   font-weight: 600;
 }
+
+/* chip brick: pill pastello ambra (carbo) */
 .ddet-brick {
   flex: none;
   font-size: 10.5px;
   font-weight: 800;
   color: #b45309;
-  background: #fef3c7;
-  border: 1px solid #fde68a;
-  border-radius: 50px;
-  padding: 2px 8px;
+  background: #fff7e6;
+  border: none;
+  border-radius: 9999px;
+  padding: 3px 9px;
   cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.ddet-brick:hover {
+  transform: translateY(-1px);
 }
 .ddet-brick:active {
   background: #fde68a;
 }
+
+/* banner brick: coerente col linguaggio pastello ambra */
 .brick-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   width: 100%;
   text-align: left;
   font-size: 13px;
   color: #92400e;
-  background: #fef3c7;
-  border: 1px solid #fde68a;
-  border-radius: 12px;
-  padding: 10px 13px;
-  margin-bottom: 12px;
+  background: #fff7e6;
+  border: none;
+  border-radius: var(--r-card);
+  padding: 13px 16px;
+  margin-bottom: 14px;
   cursor: pointer;
   font-family: inherit;
   line-height: 1.35;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.brick-banner:hover {
+  transform: translateY(-1px);
+}
+
+/* card "lettura rapida" / insights */
 .dash-insights {
   background: #fff;
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: var(--sh-1);
-  margin-bottom: 12px;
+  border-radius: var(--r-card);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 14px;
 }
 .di-title {
   font-family: var(--font-head);
-  font-weight: 800;
-  font-size: 14px;
-  margin-bottom: 7px;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 9px;
 }
 .dash-insights ul {
   margin: 0;
@@ -228,19 +296,21 @@
 .dash-insights li {
   font-size: 13px;
   color: #374151;
-  line-height: 1.5;
-  margin-bottom: 6px;
+  line-height: 1.55;
+  margin-bottom: 7px;
 }
+
+/* grafici: card morbida; desktop a 2 colonne, larghi a piena riga */
 .dash-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 11px;
+  gap: 12px;
 }
 .dash-chart {
   background: #fff;
-  border-radius: 16px;
-  padding: 13px 13px 10px;
-  box-shadow: var(--sh-1);
+  border-radius: var(--r-card);
+  padding: 16px 16px 12px;
+  box-shadow: var(--shadow-soft);
   min-width: 0;
 }
 .dash-chart.dash-wide {
@@ -248,10 +318,10 @@
 }
 .dch-title {
   font-family: var(--font-head);
-  font-weight: 800;
-  font-size: 13px;
+  font-weight: 700;
+  font-size: 14px;
   color: #374151;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .dch-canvas {
   position: relative;
@@ -262,6 +332,13 @@
   text-align: center;
   color: #9ca3af;
   font-weight: 700;
+}
+
+/* desktop: KPI a 4 colonne, sfrutta la larghezza */
+@media (min-width: 880px) {
+  .dash-cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 @media (max-width: 560px) {
   .dash-cards {
@@ -276,7 +353,7 @@
 .zbar {
   display: flex;
   height: 14px;
-  border-radius: 7px;
+  border-radius: 9999px;
   overflow: hidden;
   margin: 2px 0 8px;
   background: #f1f5f9;
@@ -301,26 +378,28 @@
 .zleg i {
   width: 9px;
   height: 9px;
-  border-radius: 2px;
+  border-radius: 3px;
   display: inline-block;
 }
 
 /* mappa + salite + lap */
 .act-map {
-  height: 240px;
-  border-radius: 14px;
+  height: 260px;
+  border-radius: var(--r-card);
   overflow: hidden;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   background: #e8edf2;
   position: relative;
   z-index: 0;
+  box-shadow: var(--shadow-soft);
 }
 .climb-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  border-top: 1px solid #f4f5f7;
+  padding: 11px 14px;
+  border-top: 1px solid #f1f5f3;
+  border-left: 2px solid transparent;
 }
 .climb-row:first-child {
   border-top: none;
@@ -358,17 +437,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 14px;
-  border-top: 1px solid #f4f5f7;
+  padding: 10px 14px;
+  border-top: 1px solid #f1f5f3;
+  border-left: 2px solid transparent;
 }
 .lap-row:first-child {
   border-top: none;
 }
 .lap-n {
   flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
   background: var(--n-l);
   color: var(--n);
   font-size: 11px;
@@ -391,4 +471,23 @@
   color: #94a3b8;
   font-weight: 600;
   margin-top: 2px;
+}
+
+/* rispetta prefers-reduced-motion: nessun lift/scala */
+@media (prefers-reduced-motion: reduce) {
+  .dash-back,
+  .dash-card.clickable,
+  .ddet-row,
+  .ddet-brick,
+  .brick-banner {
+    transition: none;
+  }
+  .dash-back:hover,
+  .dash-card.clickable:hover,
+  .ddet-brick:hover,
+  .brick-banner:hover,
+  .dash-card.clickable:active,
+  .dash-back:active {
+    transform: none;
+  }
 }

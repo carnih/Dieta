@@ -81,7 +81,7 @@ function NoemiWeek({ onOpenBase }: { onOpenBase: () => void }) {
           <button
             type="button"
             onClick={onOpenBase}
-            className="shrink-0 rounded-full bg-card px-3 py-1.5 text-sm font-semibold shadow-sm"
+            className="shrink-0 rounded-full bg-card px-3 py-1.5 text-sm font-semibold shadow-soft transition-transform duration-200 motion-safe:hover:-translate-y-px"
             style={{ color: 'var(--e)' }}
           >
             📖 Dieta base
@@ -93,22 +93,28 @@ function NoemiWeek({ onOpenBase }: { onOpenBase: () => void }) {
         {NOEMI_DAYS.map((wd) => {
           const isOpen = open[wd] !== false; // default aperto
           return (
-            <div key={wd} className="mb-2 overflow-hidden rounded-card bg-card shadow-sm">
+            <div key={wd} className="mb-3 overflow-hidden rounded-card bg-card shadow-soft">
               <button
                 type="button"
                 onClick={() => setOpen((o) => ({ ...o, [wd]: !(o[wd] !== false) }))}
-                className="flex w-full items-center gap-2 px-4 py-3 text-left"
+                className="flex w-full items-center gap-2.5 px-5 py-3.5 text-left"
               >
                 <span
-                  className="text-muted transition-transform"
+                  className="grid h-8 w-8 place-items-center rounded-xl text-base"
+                  style={{ background: 'var(--e-l, #FDF2F8)' }}
+                >
+                  🍓
+                </span>
+                <span className="font-round text-[15px] text-ink">{NOEMI_FULL[wd]}</span>
+                <span
+                  className="ml-auto text-muted transition-transform duration-200"
                   style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}
                 >
                   ▾
                 </span>
-                <span className="font-bold text-ink">{NOEMI_FULL[wd]}</span>
               </button>
               {isOpen && (
-                <div className="px-4 pb-3">
+                <div className="px-5 pb-4">
                   {NOEMI_PAGE_MEALS.map(([mk, em, lab]) => (
                     <MealTextarea
                       key={mk}
@@ -153,13 +159,14 @@ function MealTextarea({
     void repo.set('noemiSettimana/' + wd + '/' + mk, v || null);
   };
   return (
-    <div className="mb-2.5">
-      <div className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-ink">
+    <div className="mb-3">
+      <div className="mb-1.5 flex items-center gap-1.5 font-round text-sm text-ink">
         <span>{emoji}</span>
         {label}
       </div>
       <textarea
-        className="w-full resize-none rounded-lg border border-line px-2.5 py-2 text-sm leading-snug"
+        className="w-full resize-none rounded-xl border border-line border-l-2 bg-[#FAFCFB] px-3 py-2 text-sm leading-snug transition-colors duration-200 focus:bg-white focus:outline-none"
+        style={{ borderLeftColor: 'var(--e)' }}
         rows={1}
         placeholder="…"
         defaultValue={initial}
@@ -179,22 +186,46 @@ function MealTextarea({
 function NotesAndRef() {
   return (
     <>
-      <div className="mt-2.5 text-base font-bold" style={{ color: 'var(--e)' }}>
-        📋 Promemoria settimana
+      <div className="mb-1.5 mt-3 flex items-center gap-2">
+        <span
+          className="grid h-8 w-8 place-items-center rounded-xl text-base"
+          style={{ background: 'var(--e-l, #FDF2F8)' }}
+        >
+          📋
+        </span>
+        <span className="font-round text-[15px]" style={{ color: 'var(--e)' }}>
+          Promemoria settimana
+        </span>
       </div>
-      <div className="rounded-card bg-card p-3.5 shadow-sm">
+      <div className="rounded-card bg-card p-4 shadow-soft">
         {NOEMI_NOTES.map((n, i) => (
-          <div key={i} className="py-1 text-sm text-ink">
+          <div
+            key={i}
+            className="my-1 border-l-2 pl-3 text-sm text-ink"
+            style={{ borderLeftColor: 'var(--e)' }}
+          >
             {n}
           </div>
         ))}
       </div>
-      <div className="mt-1.5 text-base font-bold" style={{ color: 'var(--e)' }}>
-        🔎 Alimenti ammessi
+      <div className="mb-1.5 mt-3 flex items-center gap-2">
+        <span
+          className="grid h-8 w-8 place-items-center rounded-xl text-base"
+          style={{ background: 'var(--e-l, #FDF2F8)' }}
+        >
+          🔎
+        </span>
+        <span className="font-round text-[15px]" style={{ color: 'var(--e)' }}>
+          Alimenti ammessi
+        </span>
       </div>
-      <div className="rounded-card bg-card p-3.5 shadow-sm">
+      <div className="rounded-card bg-card p-4 shadow-soft">
         {NOEMI_REF.map(([t, d], i) => (
-          <div key={i} className="py-1 text-sm text-ink">
+          <div
+            key={i}
+            className="my-1 border-l-2 pl-3 text-sm text-ink"
+            style={{ borderLeftColor: 'var(--e)' }}
+          >
             <b>{t}</b> {d}
           </div>
         ))}
@@ -227,7 +258,7 @@ function NoemiBaseConsult({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full px-3 py-1.5 text-sm font-bold text-white"
+          className="rounded-full px-3 py-1.5 text-sm font-bold text-white transition-transform duration-200 motion-safe:hover:-translate-y-px"
           style={{ background: 'var(--e)' }}
         >
           ← Indietro
@@ -235,7 +266,7 @@ function NoemiBaseConsult({
         <button
           type="button"
           onClick={onEdit}
-          className="rounded-full bg-card px-3 py-1.5 text-sm font-semibold shadow-sm"
+          className="rounded-full bg-card px-3 py-1.5 text-sm font-semibold shadow-soft transition-transform duration-200 motion-safe:hover:-translate-y-px"
           style={{ color: 'var(--e)' }}
         >
           ✏️ Modifica
@@ -246,29 +277,40 @@ function NoemiBaseConsult({
         const m = base[mk];
         if (!m || !Array.isArray(m.slots)) return null;
         return (
-          <div key={mk} className="mb-3 rounded-card bg-card px-3.5 py-3.5 shadow-sm">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-lg">{m.icon}</span>
-              <span className="font-bold text-ink">{m.nome}</span>
+          <div key={mk} className="mb-3 overflow-hidden rounded-card bg-card shadow-soft">
+            <div className="flex items-center gap-2.5 border-b border-line px-5 py-3">
+              <span
+                className="grid h-8 w-8 place-items-center rounded-xl text-base"
+                style={{ background: 'var(--e-l, #FDF2F8)' }}
+              >
+                {m.icon}
+              </span>
+              <span className="font-round text-[15px] text-ink">{m.nome}</span>
             </div>
-            {m.slots.map((s, si) => (
-              <div key={si} className="mb-2.5">
-                <div className="mb-1 flex items-center gap-2">
-                  <CatPill cat={s.cat} catLabels={catLabels} />
-                  <b className="text-sm text-ink">{s.label}</b>
-                </div>
-                {s.opts.map((o, oi) => (
-                  <div key={oi} className="py-0.5 pl-1 text-sm text-ink">
-                    {o}
+            <div className="px-5 py-3.5">
+              {m.slots.map((s, si) => (
+                <div key={si} className="mb-2.5 last:mb-0">
+                  <div className="mb-1 flex items-center gap-2">
+                    <CatPill cat={s.cat} catLabels={catLabels} />
+                    <b className="text-sm text-ink">{s.label}</b>
                   </div>
-                ))}
-              </div>
-            ))}
-            {(m.fixed || []).map((f, fi) => (
-              <div key={fi} className="py-0.5 text-sm font-semibold text-muted">
-                + {f.v}
-              </div>
-            ))}
+                  {s.opts.map((o, oi) => (
+                    <div
+                      key={oi}
+                      className="my-0.5 border-l-2 pl-3 text-sm text-ink"
+                      style={{ borderLeftColor: 'var(--e)' }}
+                    >
+                      {o}
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {(m.fixed || []).map((f, fi) => (
+                <div key={fi} className="py-0.5 text-sm font-semibold text-muted">
+                  + {f.v}
+                </div>
+              ))}
+            </div>
           </div>
         );
       })}
@@ -315,24 +357,33 @@ function NoemiBaseEdit({
       <button
         type="button"
         onClick={onClose}
-        className="mb-2 rounded-full px-3 py-1.5 text-sm font-bold text-white"
+        className="mb-2 rounded-full px-3 py-1.5 text-sm font-bold text-white transition-transform duration-200 motion-safe:hover:-translate-y-px"
         style={{ background: 'var(--e)' }}
       >
         ✓ Fatto
       </button>
 
-      <div className="rounded-card bg-card px-3.5 pb-2 pt-4 shadow-sm">
+      <div className="rounded-card bg-card px-4 pb-3 pt-4 shadow-soft">
         {NOEMI_MEALS.map((mk) => {
           const m = draft[mk];
           if (!m || !Array.isArray(m.slots)) return null;
           return (
             <div key={mk} className="mb-4">
-              <div className="mb-2 flex items-center gap-2 font-bold text-ink">
-                <span className="text-lg">{m.icon}</span>
-                {m.nome}
+              <div className="mb-2 flex items-center gap-2.5">
+                <span
+                  className="grid h-8 w-8 place-items-center rounded-xl text-base"
+                  style={{ background: 'var(--e-l, #FDF2F8)' }}
+                >
+                  {m.icon}
+                </span>
+                <span className="font-round text-[15px] text-ink">{m.nome}</span>
               </div>
               {m.slots.map((s, si) => (
-                <div key={si} className="mb-3 rounded-xl border border-line p-2.5">
+                <div
+                  key={si}
+                  className="mb-3 rounded-xl border border-line border-l-2 bg-[#FAFCFB] p-3"
+                  style={{ borderLeftColor: 'var(--e)' }}
+                >
                   <div className="mb-1.5 flex items-center gap-2">
                     <input
                       className="min-w-0 flex-1 rounded-lg border border-line px-2.5 py-1.5 text-sm font-semibold"
@@ -403,7 +454,7 @@ function NoemiBaseEdit({
                         b[mk].slots[si].opts.push('nuova opzione');
                       })
                     }
-                    className="rounded-lg border border-dashed border-line px-2.5 py-1 text-xs font-semibold text-muted"
+                    className="rounded-full border border-dashed border-line px-3 py-1 text-xs font-semibold text-muted transition-transform duration-200 motion-safe:hover:-translate-y-px"
                   >
                     + opzione
                   </button>
@@ -421,7 +472,7 @@ function NoemiBaseEdit({
                     });
                   })
                 }
-                className="mt-1 rounded-lg border border-dashed border-line px-2.5 py-1.5 text-xs font-semibold text-muted"
+                className="mt-1 rounded-full border border-dashed border-line px-3 py-1.5 text-xs font-semibold text-muted transition-transform duration-200 motion-safe:hover:-translate-y-px"
               >
                 + aggiungi categoria
               </button>

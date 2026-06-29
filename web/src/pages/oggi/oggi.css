@@ -6,14 +6,15 @@
   --n-l: #eff6ff;
   --n-g: linear-gradient(135deg, #2563eb, #60a5fa);
   --e-g: linear-gradient(135deg, #db2777, #f472b6);
-  --sh-1: 0 6px 18px -10px rgba(17, 24, 39, 0.18);
+  /* ombra morbida coerente col mockup (var globale --shadow-soft) */
+  --sh-soft: var(--shadow-soft);
 }
 
 /* ── intestazione pagina ── */
 .oggi .page-title {
-  font-size: 28px;
-  font-weight: 850;
-  letter-spacing: -0.6px;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
   color: #111827;
   position: sticky;
   top: env(safe-area-inset-top, 0px);
@@ -32,33 +33,41 @@
 
 /* ── calendario settimana ── */
 .oggi .cal {
-  display: flex;
-  gap: 3px;
-  padding: 4px 0 2px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  padding: 6px 0 2px;
 }
 .oggi .cal-day {
-  flex: 1 1 0;
   min-width: 0;
   border: none;
   background: transparent;
-  padding: 4px 0;
+  padding: 6px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
   cursor: pointer;
+  border-radius: 16px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+@media (hover: hover) {
+  .oggi .cal-day:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.6);
+  }
 }
 .oggi .cal-day:active .cal-dt {
   transform: scale(0.94);
 }
 .oggi .cal-wd {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: #b6bcc6;
   letter-spacing: 0.01em;
 }
 .oggi .cal-dt {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #374151;
   width: 36px;
@@ -69,17 +78,21 @@
   border-radius: 50%;
   transition: all 0.18s;
 }
+/* "oggi" evidenziato: anello tenue rosa + testo rosa */
 .oggi .cal-day.today .cal-dt {
   color: var(--e);
+  box-shadow: inset 0 0 0 1.5px rgba(232, 121, 160, 0.4);
 }
 .oggi .cal-day.today .cal-wd {
   color: var(--e);
+  font-weight: 800;
 }
+/* giorno selezionato: gradiente rosa pieno + ombra morbida rosa */
 .oggi .cal-day.sel .cal-dt {
   background: var(--e-g);
   color: #fff;
   font-weight: 800;
-  box-shadow: 0 5px 14px rgba(219, 39, 119, 0.4);
+  box-shadow: 0 6px 14px -4px rgba(219, 39, 119, 0.5);
 }
 .oggi .cal-day.sel .cal-wd {
   color: var(--e);
@@ -99,86 +112,107 @@
   gap: 6px;
 }
 .oggi .cmp-top-col {
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-family: var(--font-round);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  padding: 7px 10px;
-  border-radius: 10px;
+  padding: 9px 14px;
+  border-radius: 16px;
 }
 .oggi .cmp-top-col.e {
   color: var(--e);
-  background: #fce7f3;
-  border-bottom: 2px solid var(--e);
+  background: var(--e-l);
+  border: 1px solid rgba(232, 121, 160, 0.3);
 }
 .oggi .cmp-top-col.n {
   color: var(--n);
   background: var(--n-l);
-  border-bottom: 2px solid var(--n);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 .oggi .train-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   width: fit-content;
-  font-size: 10px;
+  font-family: 'Nunito Sans', system-ui, sans-serif;
+  font-size: 11px;
   font-weight: 800;
-  background: rgba(255, 255, 255, 0.7);
+  background: #fff;
   color: var(--n);
-  padding: 2px 8px;
-  border-radius: 20px;
+  padding: 3px 9px;
+  border-radius: 999px;
   text-transform: none;
-  letter-spacing: 0;
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 .oggi .train-scheda {
-  border: 1.5px solid var(--n);
-  background: #fff;
-  color: var(--n);
+  margin-left: auto;
+  border: none;
+  background: var(--n);
+  color: #fff;
+  font-family: 'Nunito Sans', system-ui, sans-serif;
   font-weight: 800;
-  font-size: 10px;
-  border-radius: 20px;
-  padding: 2px 9px;
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 3px 11px;
   cursor: pointer;
   text-transform: none;
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+@media (hover: hover) {
+  .oggi .train-scheda:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -4px rgba(59, 130, 246, 0.5);
+  }
 }
 .oggi .train-scheda:active {
-  background: var(--n-l);
+  transform: scale(0.96);
 }
 
-/* ── card di confronto a 2 colonne ── */
+/* ── card di confronto a 2 colonne (soft, mockup) ── */
 .oggi .cmp-card {
   background: #fff;
-  border-radius: 16px;
-  box-shadow: var(--sh-1);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-soft);
   overflow: hidden;
   margin-bottom: 12px;
 }
 .oggi .cmp-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--border);
-  font-size: 12.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #9ca3af;
-}
-.oggi .cmp-head .em {
+  font-family: var(--font-round);
   font-size: 15px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #111827;
+}
+/* icona dentro quadratino arrotondato tinta pastello (~32px) */
+.oggi .cmp-head .em {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background: #f4eefb; /* fallback viola tenue */
+  font-size: 16px;
+  flex-shrink: 0;
 }
 .oggi .cmp-cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 .oggi .cmp-col {
-  padding: 11px 10px;
+  padding: 16px 18px;
   min-width: 0;
   overflow: hidden;
 }
@@ -197,16 +231,27 @@
   justify-content: flex-end;
   margin-bottom: 6px;
 }
+/* pulsantino 🍕 pasto libero: tondo con anello tenue ambra */
 .oggi .col-free {
-  border: 1.5px solid var(--border);
-  background: #fff;
-  border-radius: 50px;
-  font-size: 14px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  box-shadow: inset 0 0 0 1px #fde68a;
+  background: #fefce8;
+  border-radius: 999px;
+  font-size: 13px;
   line-height: 1;
-  padding: 3px 8px;
+  padding: 0;
   cursor: pointer;
-  opacity: 0.6;
-  transition: all 0.15s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+@media (hover: hover) {
+  .oggi .col-free:hover {
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 1px #fcd34d, 0 4px 10px -4px rgba(180, 130, 9, 0.4);
+  }
 }
 .oggi .col-free:active {
   transform: scale(0.9);
@@ -218,90 +263,97 @@
   color: #854d0e;
   background: #fefce8;
   font-size: 13px;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
+  transition: transform 0.2s ease;
+}
+@media (hover: hover) {
+  .oggi .cmp-free:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* ── colonna Noemi: righe testo libero ── */
 .oggi .nm-line {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: #4b5563;
-  line-height: 1.4;
-  background: #fff5fa;
-  border-left: 3px solid #f0a9c8;
-  border-radius: 8px;
-  padding: 7px 10px;
+  color: #374151;
+  line-height: 1.45;
+  background: rgba(253, 242, 248, 0.5);
+  border-left: 2px solid rgba(232, 121, 160, 0.4);
+  border-radius: 12px;
+  padding: 8px 12px;
   margin-bottom: 5px;
   overflow-wrap: anywhere;
 }
 .oggi .nm-line.dolce {
-  background: #f6f0ff;
+  background: rgba(246, 240, 255, 0.6);
   border-left-color: #c4a7e7;
   color: #5b4670;
 }
 
 /* ── pill categorie ── */
+/* chip categoria: piccole, radius 8px, pastello tenue + testo stesso tono */
 .oggi .cat-pill {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   flex-shrink: 0;
-  padding: 3px 9px 3px 7px;
-  border-radius: 20px;
-  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 .oggi .cat-pill.carbo {
-  background: #fef3c7;
-  color: #92400e;
+  background: #fff7e6;
+  color: #b45309;
 }
 .oggi .cat-pill.prot {
-  background: #ede9fe;
-  color: #5b21b6;
+  background: #fef2f4;
+  color: #be2e54;
 }
 .oggi .cat-pill.frutta {
-  background: #fce7f3;
-  color: #be185d;
+  background: #fdf2f8;
+  color: #be2e54;
 }
 .oggi .cat-pill.latte {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 .oggi .cat-pill.grasso {
-  background: #ffedd5;
-  color: #9a3412;
+  background: #fff7e6;
+  color: #b45309;
 }
 .oggi .cat-pill.sfizio {
-  background: #f3e5d0;
-  color: #92400e;
+  background: #fff7e6;
+  color: #b45309;
 }
 .oggi .cat-pill.verdura {
-  background: #d1fae5;
-  color: #065f46;
+  background: #ecfdf5;
+  color: #059669;
 }
 .oggi .cat-pill.bevanda {
-  background: #f1f5f9;
-  color: #64748b;
+  background: #fdf2f8;
+  color: #be2e54;
 }
 .oggi .cat-pill.olio {
-  background: #ecfccb;
-  color: #4d7c0f;
+  background: #ecfdf5;
+  color: #059669;
 }
 .oggi .cat-pill.integra {
-  background: #ccfbf1;
-  color: #0f766e;
+  background: #ecfdf5;
+  color: #059669;
 }
 .oggi .cat-pill.scegli {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #f4eefb;
+  color: #7c5cd6;
 }
 .oggi .cat-pill.altro {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #f4eefb;
+  color: #7c5cd6;
 }
 
 /* ── riga cibo ── */
@@ -321,8 +373,9 @@
 
 /* ── choice box (alternative) ── */
 .oggi .choice {
-  border: 1.5px solid #eef0f3;
-  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: #fafcfb;
+  border-radius: 12px;
   overflow: hidden;
 }
 .oggi .choice-head {
@@ -332,10 +385,10 @@
   padding: 9px 11px;
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s;
+  transition: background 0.2s ease;
 }
 .oggi .choice-head:active {
-  background: #fafafa;
+  background: #f4eefb;
 }
 .oggi .choice-count {
   font-size: 11.5px;
@@ -374,7 +427,8 @@
   font-size: 13.5px;
   color: #374151;
   padding: 7px 11px;
-  background: #fafbfc;
+  background: #fff;
+  border-left: 2px solid rgba(124, 92, 214, 0.35);
   border-radius: 9px;
   line-height: 1.4;
   display: flex;
@@ -386,7 +440,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #d5dae2;
+  background: #c4b5ec;
   flex-shrink: 0;
   transform: translateY(-1px);
 }
@@ -400,11 +454,11 @@
 .oggi .extra-item {
   margin-top: 2px;
   padding: 8px 12px;
-  background: #fff7ed;
-  border-radius: 10px;
-  border: 1px solid #fed7aa;
+  background: #fefce8;
+  border-radius: 12px;
+  border-left: 2px solid #fde047;
   font-size: 13px;
-  color: #92400e;
+  color: #854d0e;
   line-height: 1.4;
 }
 

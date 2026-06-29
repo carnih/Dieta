@@ -533,6 +533,17 @@ export default function Spesa() {
   const alpha = (a: { t?: string }, b: { t?: string }) =>
     (a.t || '').localeCompare(b.t || '', 'it', { sensitivity: 'base' });
 
+  // intestazione categoria: emoji in quadratino pastello (~32px) + nome round
+  const catName = (label: string) => {
+    const [emoji, name] = splitLabel(label);
+    return (
+      <>
+        {emoji ? <span className="sec-ico">{emoji}</span> : null}
+        <span className="shop-sec-name">{name}</span>
+      </>
+    );
+  };
+
   // ── render lista ──
   const masterRow =
     total > 0 && !filtered ? (
@@ -652,9 +663,7 @@ export default function Spesa() {
           if (isEmpty) {
             return (
               <div className="shop-sec" key={c.key}>
-                <div className="shop-sec-h" style={{ color: '#CDD1D9' }}>
-                  <span className="shop-sec-name">{c.label}</span>
-                </div>
+                <div className="shop-sec-h sec-empty">{catName(c.label)}</div>
                 <div className="shop-addrow">
                   <span className="shop-plus">+</span>
                   <input
@@ -683,7 +692,7 @@ export default function Spesa() {
                   onClick={() => toggleCatAll(c.key)}
                   aria-label="tutto"
                 />
-                <span className="shop-sec-name">{c.label}</span>
+                {catName(c.label)}
                 {toBuy ? <span className="shop-sec-n">{toBuy}</span> : null}
               </div>
 

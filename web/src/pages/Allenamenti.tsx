@@ -178,9 +178,9 @@ export default function Allenamenti({ onOpenDashboard, onToast }: AllenamentiPro
     const cfg = alCfg(allenamentiCfg, prog);
     const icon = prog === 'forza' ? '🏋️' : '🔱';
     return (
-      <div className="card">
+      <div className={'card' + (prog === 'tri' ? ' tri-prog' : '')}>
         <div className="al-prog-h">
-          {icon} {P.nome.split(' · ')[0]}
+          <span className="al-ic">{icon}</span> {P.nome.split(' · ')[0]}
           <span className="al-badge">
             Sett. {cur + 1} / {P.durata}
           </span>
@@ -265,8 +265,9 @@ export default function Allenamenti({ onOpenDashboard, onToast }: AllenamentiPro
         <span className="dash-cta-arr">›</span>
       </button>
 
+      <div className="al-grid">
       <div className="card today-al">
-        <div className="al-today-h">📋 Scheda di oggi · {tlabel}</div>
+        <div className="al-today-h"><span className="al-ic">📋</span> Scheda di oggi · {tlabel}</div>
         {oggi.length ? (
           oggi.map((g, gi) => (
             <div key={gi} style={{ padding: '10px 15px 4px' }}>
@@ -283,8 +284,11 @@ export default function Allenamenti({ onOpenDashboard, onToast }: AllenamentiPro
         )}
       </div>
 
-      {progCard('forza', forzaBody)}
-      {progCard('tri', triBody)}
+        <div className="al-progs">
+          {progCard('forza', forzaBody)}
+          {progCard('tri', triBody)}
+        </div>
+      </div>
 
       {pdfProg && (
         <PdfViewer
