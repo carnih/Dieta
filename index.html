@@ -1512,13 +1512,13 @@ function renderAllenamentiTab(){
   </div>`;
   return `
     <div class="page-title n">Allenamenti</div>
-    <div class="page-sub">🎯 <input class="obj-in" value="${esc(coachConfig.obiettivo||'')}" placeholder="Imposta obiettivo (es. IM 70.3 Cervia · set)" onchange="setObiettivo(this.value)"></div>
+    <div class="vsub"><div class="page-sub" style="padding:0">🎯 <input class="obj-in" value="${esc(coachConfig.obiettivo||'')}" placeholder="Imposta obiettivo (es. IM 70.3 Cervia · set)" onchange="setObiettivo(this.value)"></div></div>
     <button class="dash-cta" onclick="openDash()">
       <span class="dash-cta-ic">📊</span>
       <span><b>Vuoi capire come sta andando?</b><small>Analisi e grafici dei tuoi allenamenti</small></span>
       <span class="dash-cta-arr">›</span>
     </button>
-    <div class="vsub">${oggi}</div>
+    ${oggi}
     ${progCard('forza', forzaBody)}
     ${progCard('tri', triBody)}
   `;
