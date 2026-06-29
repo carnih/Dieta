@@ -61,6 +61,13 @@ export default function App() {
   return (
     // Su desktop (lg) riservo lo spazio per il rail laterale a sinistra.
     <div className="min-h-full lg:pl-[78px]">
+      {/* Copre la safe-area in alto (notch/Dynamic Island): evita che il contenuto
+          che scorre "trapeli" sopra i titoli sticky in modalità standalone/PWA. */}
+      <div
+        aria-hidden
+        className="fixed inset-x-0 top-0 z-30 bg-bg"
+        style={{ height: 'env(safe-area-inset-top, 0px)' }}
+      />
       {/* Navigazione: bottom-bar su mobile, rail verticale a sinistra su desktop */}
       <nav
         className={
@@ -94,7 +101,8 @@ export default function App() {
           if (confirm('Uscire da Dieta?')) void logout();
         }}
         title={user.email ?? ''}
-        className="fixed right-3 top-3 z-50 grid h-9 w-9 place-items-center rounded-full bg-nic text-sm font-bold text-white shadow-md"
+        className="fixed right-3 z-50 grid h-9 w-9 place-items-center rounded-full bg-nic text-sm font-bold text-white shadow-md"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}
         aria-label={`Account: ${name}`}
       >
         {name.slice(0, 1).toUpperCase()}
