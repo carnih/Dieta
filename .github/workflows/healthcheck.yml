@@ -5,16 +5,16 @@ name: Health check sito Dieta
 on:
   schedule:
     - cron: '0 5 * * *'      # ~07:00 Europe/Rome in estate (06:00 in inverno)
-  workflow_dispatch: {}        # permette l'avvio manuale dalla tab "Actions" per testare
+  workflow_dispatch: {}        # avvio manuale dalla tab "Actions"
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Scarica la pagina e controlla i contenuti
+      - name: Controlla che il sito sia su e sano
         run: |
           python3 - <<'PY'
-          import urllib.request, re, sys
+          import urllib.request, sys
           URL = "https://dieta-livid.vercel.app/"
           problems = []
           try:
@@ -28,21 +28,15 @@ jobs:
 
           if code != 200:
               problems.append(f"HTTP {code} invece di 200")
-          if len(html) < 500:
+          if len(html) < 300:
               problems.append("HTML troppo corto o vuoto")
 
-          for k in ["Nicholas", "Noemi", "firebasejs", "databaseURL"]:
-              if k not in html:
-                  problems.append(f"manca '{k}' nella pagina")
-
-          m = re.search(r'<script type="module">(.*?)</script>', html, re.S)
-          if not m:
-              problems.append("blocco <script type=module> assente")
-          else:
-              # Salva il modulo per la validazione di sintassi (step successivo).
-              # NB: NON contiamo le parentesi a mano: dentro le stringhe (faccine,
-              # etichette come "(126')") sono naturalmente sbilanciate -> falsi allarmi.
-              open("app.mjs", "w", encoding="utf-8").write(m.group(1))
+          # Tollerante alla migrazione: va bene sia il monolite (firebasejs inline) sia
+          # la nuova app React (Vite monta su <div id="root"> + bundle in /assets/).
+          monolite = "firebasejs" in html
+          react = ('id="root"' in html) and ("/assets/" in html)
+          if not (monolite or react):
+              problems.append("la pagina non sembra ne' il monolite ne' l'app React (markup inatteso)")
 
           if problems:
               print("PROBLEMI sul sito Dieta:")
@@ -50,16 +44,5 @@ jobs:
                   print("  -", p)
               sys.exit(1)   # fallisce -> GitHub invia email
 
-          print("Contenuti pagina ok")
+          print("OK · variante:", "react" if react else "monolite")
           PY
-
-      - name: Valida la sintassi del modulo JS
-        run: |
-          if [ ! -f app.mjs ]; then echo "app.mjs assente (vedi step precedente)"; exit 1; fi
-          # node --check valida la sintassi ESM senza eseguire ne' risolvere gli import (CDN).
-          if node --check app.mjs; then
-            echo "Sintassi JS ok"
-          else
-            echo "PROBLEMA: errore di sintassi nel modulo JS del sito"
-            exit 1
-          fi
