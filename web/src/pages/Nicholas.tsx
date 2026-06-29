@@ -49,7 +49,7 @@ export default function Nicholas() {
 
   return (
     <div>
-      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-extrabold tracking-tight text-ink">
+      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-round font-extrabold tracking-tight text-ink">
         <span style={{ color: 'var(--n)' }}>Nicholas</span>
       </div>
       <div className="mb-1 text-sm text-muted">Pianifica la settimana e consulta la tua dieta</div>
@@ -239,7 +239,7 @@ function NicBaseEdit({
 
   return (
     <div>
-      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-extrabold tracking-tight">
+      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-round font-extrabold tracking-tight">
         <span style={{ color: 'var(--n)' }}>Dieta base · Nicholas</span>
       </div>
       <div className="mb-1 text-sm text-muted">Modifica voci e categorie</div>

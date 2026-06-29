@@ -67,7 +67,7 @@ function NoemiWeek({ onOpenBase }: { onOpenBase: () => void }) {
 
   return (
     <div>
-      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-extrabold tracking-tight">
+      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-round font-extrabold tracking-tight">
         <span style={{ color: 'var(--e)' }}>Noemi</span>
       </div>
       <div
@@ -219,7 +219,7 @@ function NoemiBaseConsult({
 }) {
   return (
     <div>
-      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-extrabold tracking-tight">
+      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-round font-extrabold tracking-tight">
         <span style={{ color: 'var(--e)' }}>Dieta base · Noemi</span>
       </div>
       <div className="mb-1 text-sm text-muted">Le opzioni del nutrizionista</div>
@@ -308,7 +308,7 @@ function NoemiBaseEdit({
 
   return (
     <div>
-      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-extrabold tracking-tight">
+      <div className="sticky top-0 z-20 -mx-4 bg-bg px-4.5 py-2 text-[28px] font-round font-extrabold tracking-tight">
         <span style={{ color: 'var(--e)' }}>Dieta base · Noemi</span>
       </div>
       <div className="mb-1 text-sm text-muted">Opzioni del nutrizionista — consulta e modifica</div>

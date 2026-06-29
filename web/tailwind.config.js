@@ -16,9 +16,13 @@ export default {
       },
       fontFamily: {
         sans: ['"Nunito Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        round: ['"Varela Round"', '"Nunito Sans"', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        card: '18px',
+        card: '20px',
+      },
+      boxShadow: {
+        soft: '0 1px 2px rgba(60,80,70,.04), 0 8px 24px -12px rgba(60,80,70,.12)',
       },
     },
   },

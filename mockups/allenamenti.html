@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Allenamenti</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      nic:{DEFAULT:'#3B82F6',light:'#EFF6FF'}, noemi:{DEFAULT:'#E879A0',light:'#FDF2F8'},
+      spesa:'#059669', bg:'#F1FAF6', card:'#fff', ink:'#111827', muted:'#8B97A6', line:'#E6EFEA',
+    },
+    fontFamily:{ sans:['"Nunito Sans"','system-ui','sans-serif'], round:['"Varela Round"','"Nunito Sans"','sans-serif'] },
+    borderRadius:{ card:'20px' },
+    boxShadow:{ soft:'0 1px 2px rgba(60,80,70,.04), 0 8px 24px -12px rgba(60,80,70,.12)' },
+  }}
+}
+</script>
+<style>
+  body{font-family:'Nunito Sans',sans-serif;background:#F1FAF6;color:#111827}
+  .h-round{font-family:'Varela Round',sans-serif}
+  .pill{font-size:11px;font-weight:800;letter-spacing:.02em;padding:4px 11px;border-radius:999px;display:inline-flex;align-items:center;gap:6px}
+  .blk-n{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#94A3B8}
+  .press{transition:transform .18s ease, box-shadow .2s ease, background .2s ease}
+  .press:hover{transform:translateY(-1px)}
+</style>
+</head>
+<body class="min-h-screen">
+<div class="lg:pl-[84px]">
+  <nav class="hidden lg:flex fixed inset-y-0 left-0 w-[84px] flex-col items-center gap-1 border-r border-line/70 bg-white/70 backdrop-blur py-5 z-40">
+    <div class="mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-nic to-[#60A5FA] text-white text-lg shadow-soft">🏋️</div>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-bold text-muted press"><span class="text-xl">🍽️</span>Dieta</a>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-bold text-muted press"><span class="text-xl">🏃</span>Nicholas</a>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-bold text-muted press"><span class="text-xl">🍓</span>Noemi</a>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-bold text-muted press"><span class="text-xl">🛒</span>Spesa</a>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-extrabold text-nic bg-nic-light press"><span class="text-xl">🏋️</span>Allen.</a>
+  </nav>
+  <button class="fixed right-4 top-4 z-50 grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-nic to-[#60A5FA] text-white font-extrabold shadow-soft press">N</button>
+
+  <main class="mx-auto max-w-2xl px-4 pb-24 pt-5 lg:max-w-6xl lg:px-10 lg:pt-8">
+    <!-- header sticky: titolo + obiettivo -->
+    <header class="sticky top-0 z-20 -mx-4 lg:-mx-10 px-4 lg:px-10 pt-1 pb-3 bg-bg/95 backdrop-blur">
+      <h1 class="h-round text-[34px] leading-none text-nic">Allenamenti</h1>
+      <div class="mt-2 flex items-center gap-2 rounded-2xl border border-nic/20 bg-nic-light px-4 py-2 text-[13.5px] font-semibold text-[#2b4a7e]">
+        🎯 <span>IM 70.3 Cervia · 20/09/2026</span>
+      </div>
+    </header>
+
+    <!-- CTA dashboard -->
+    <a class="press mt-3 flex items-center gap-4 rounded-card bg-gradient-to-r from-[#2563EB] to-[#5B8DEF] p-5 text-white shadow-soft">
+      <span class="grid h-11 w-11 place-items-center rounded-2xl bg-white/20 text-xl">📊</span>
+      <span class="flex-1"><b class="h-round text-[17px]">Vuoi capire come sta andando?</b><br><span class="text-[13px] text-white/85">Analisi e grafici dei tuoi allenamenti</span></span>
+      <span class="text-2xl text-white/80">›</span>
+    </a>
+
+    <!-- desktop: 2 colonne (scheda oggi | programmi) -->
+    <div class="mt-3 grid gap-3 lg:grid-cols-5">
+      <!-- Scheda di oggi -->
+      <section class="lg:col-span-2 rounded-card bg-card shadow-soft ring-2 ring-nic/50 overflow-hidden self-start">
+        <div class="flex items-center gap-2.5 bg-nic-light px-5 py-3.5">
+          <span class="text-base">📋</span>
+          <h2 class="h-round text-[14px] uppercase tracking-wide text-nic">Scheda di oggi · 🏋️ Palestra</h2>
+        </div>
+        <div class="px-5 py-4">
+          <span class="pill bg-[#F4EEFB] text-[#7C5CD6]">Forza · Settimana 6</span>
+          <div class="mt-3 space-y-3">
+            <div><div class="blk-n">Warm-up 2×</div><p class="mt-0.5 border-l-2 border-line pl-3 text-[14px] text-ink">1' corda · 10m affondi · 8 thruster · 8 box jump</p></div>
+            <div><div class="blk-n">EMOM 10'</div><p class="mt-0.5 border-l-2 border-line pl-3 text-[14px] text-ink">6-5-4-4-3 back squat · 8 push press manubri</p></div>
+            <div><div class="blk-n">Ogni 2'30" ×4</div><p class="mt-0.5 border-l-2 border-line pl-3 text-[14px] text-ink">7 hip thrust (2 reps dal cedimento) + 6 chin ups</p></div>
+            <div><div class="blk-n">Finisher</div><p class="mt-0.5 border-l-2 border-line pl-3 text-[14px] text-ink">3×10 stacco da terra · 1' rest</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Programmi -->
+      <div class="lg:col-span-3 space-y-3">
+        <!-- FORZA -->
+        <section class="rounded-card bg-card shadow-soft overflow-hidden">
+          <div class="flex items-center gap-2.5 px-5 pt-4">
+            <span class="text-lg">🏋️</span><h2 class="h-round text-[18px] text-ink">Forza · S&amp;C</h2>
+            <span class="ml-auto pill bg-nic-light text-nic">Sett. 6 / 8</span>
+          </div>
+          <div class="mx-5 mt-3 h-2 overflow-hidden rounded-full bg-[#E7EEF6]"><div class="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#60A5FA]" style="width:75%"></div></div>
+          <div class="flex flex-wrap items-center gap-2 px-5 py-3.5">
+            <span class="pill border border-line bg-white text-muted">📅 18/05/2026</span>
+            <button class="pill border border-line bg-white text-nic press">⏭️ Salta</button>
+            <button class="pill border border-line bg-white text-nic press">✏️ Modifica</button>
+            <button class="pill border border-line bg-white text-nic press">📎 PDF</button>
+          </div>
+          <div class="mx-5 mb-3 rounded-xl bg-[#F4EEFB]/60 px-3.5 py-2.5 text-[12.5px] leading-snug text-[#5b4a86]">📝 NIC S&amp;C Program · PT Paolo Morosini. Cue riportate fedeli (carichi, reps dal cedimento, progressioni).</div>
+          <!-- settimane accordion -->
+          <div class="border-t border-line">
+            <div class="flex items-center gap-2 px-5 py-3 text-[14px] font-bold text-muted"><span class="text-[11px]">›</span> Settimana 5</div>
+            <div class="border-t border-line bg-[#FAFCFB]">
+              <div class="flex items-center gap-2 px-5 py-3 text-[14px] font-extrabold text-nic"><span class="text-[11px]">▾</span> Settimana 6 <span class="ml-auto pill bg-nic-light text-nic">corrente</span></div>
+              <div class="space-y-3 px-5 pb-4">
+                <div><div class="blk-n">Plyo · EMOM 10'</div><p class="mt-0.5 border-l-2 border-line pl-3 text-[14px] text-ink">4 balzi ostacoli · 4 slam ball</p></div>
+                <div><div class="blk-n">Ogni 3' ×4</div><p class="mt-0.5 border-l-2 border-line pl-3 text-[14px] text-ink">7 rematore presa prona bilanciere · 6 alzate laterali</p></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 border-t border-line px-5 py-3 text-[14px] font-bold text-muted"><span class="text-[11px]">›</span> Settimana 7</div>
+          </div>
+        </section>
+
+        <!-- TRI -->
+        <section class="rounded-card bg-card shadow-soft overflow-hidden">
+          <div class="flex items-center gap-2.5 px-5 pt-4">
+            <span class="text-lg">🔱</span><h2 class="h-round text-[18px] text-ink">Triathlon · Mesociclo 9</h2>
+            <span class="ml-auto pill bg-noemi-light text-noemi">Sett. 4 / 4</span>
+          </div>
+          <div class="mx-5 mt-3 h-2 overflow-hidden rounded-full bg-[#FCE7F0]"><div class="h-full rounded-full bg-gradient-to-r from-[#DB2777] to-[#F472B6]" style="width:100%"></div></div>
+          <div class="mx-5 my-3 rounded-xl bg-noemi-light/60 px-3.5 py-2.5 text-[12.5px] leading-snug text-[#9c4f78]">🎯 Durabilità e resistenza specifica · ↑ tempo in sella · nutrizione gara (40→60 g CHO/h nei brick)</div>
+          <div class="border-t border-line px-5 py-3 text-[14px] font-bold text-muted flex items-center gap-2"><span class="text-[11px]">›</span> Settimana 3 · chiave</div>
+        </section>
+      </div>
+    </div>
+    <p class="mt-6 text-center text-[12px] text-muted">Mockup statico · stessa palette, look più rifinito 🌿</p>
+  </main>
+</div>
+</body>
+</html>

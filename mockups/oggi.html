@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Oggi</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      nic:{DEFAULT:'#3B82F6',light:'#EFF6FF'}, noemi:{DEFAULT:'#E879A0',light:'#FDF2F8'},
+      spesa:'#059669', bg:'#F1FAF6', card:'#fff', ink:'#111827', muted:'#8B97A6', line:'#E6EFEA',
+    },
+    fontFamily:{ sans:['"Nunito Sans"','system-ui','sans-serif'], round:['"Varela Round"','"Nunito Sans"','sans-serif'] },
+    borderRadius:{ card:'20px' },
+    boxShadow:{ soft:'0 1px 2px rgba(60,80,70,.04), 0 8px 24px -12px rgba(60,80,70,.12)', softer:'0 1px 2px rgba(60,80,70,.05)' },
+  }}
+}
+</script>
+<style>
+  body{font-family:'Nunito Sans',sans-serif;background:#F1FAF6;color:#111827}
+  .h-round{font-family:'Varela Round',sans-serif}
+  .pill{font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+  .meal-pill{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:8px}
+  .press{transition:transform .18s ease, box-shadow .2s ease, background .2s ease}
+  .press:hover{transform:translateY(-1px)}
+  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#dfeee7;border-radius:9px;border:3px solid #F1FAF6}
+</style>
+</head>
+<body class="min-h-screen">
+<div class="lg:pl-[84px]">
+  <!-- RAIL desktop -->
+  <nav class="hidden lg:flex fixed inset-y-0 left-0 w-[84px] flex-col items-center gap-1 border-r border-line/70 bg-white/70 backdrop-blur py-5 z-40">
+    <div class="mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-nic to-[#60A5FA] text-white text-lg shadow-soft">🍽️</div>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-extrabold text-nic bg-nic-light press">
+      <span class="text-xl">🍽️</span>Dieta</a>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-bold text-muted press"><span class="text-xl">🏃</span>Nicholas</a>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-bold text-muted press"><span class="text-xl">🍓</span>Noemi</a>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-bold text-muted press"><span class="text-xl">🛒</span>Spesa</a>
+    <a class="w-[68px] flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-bold text-muted press"><span class="text-xl">🏋️</span>Allen.</a>
+  </nav>
+
+  <!-- account chip -->
+  <button class="fixed right-4 top-4 z-50 grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-nic to-[#60A5FA] text-white font-extrabold shadow-soft press">N</button>
+
+  <main class="mx-auto max-w-2xl px-4 pb-24 pt-5 lg:max-w-6xl lg:px-10 lg:pt-8">
+    <!-- Header sticky -->
+    <header class="sticky top-0 z-20 -mx-4 lg:-mx-10 px-4 lg:px-10 pt-1 pb-3 bg-bg/95 backdrop-blur">
+      <div class="flex items-end gap-3">
+        <h1 class="h-round text-[34px] leading-none text-ink">Oggi</h1>
+        <span class="mb-1 pill bg-noemi-light text-noemi">🍽️ Palestra</span>
+      </div>
+      <p class="mt-1 text-[15px] font-semibold text-muted">Lunedì 29 giugno · confronto della giornata</p>
+      <!-- calendario -->
+      <div class="mt-3 grid grid-cols-7 gap-1.5">
+        <button class="press rounded-2xl py-2 text-center"><div class="text-[11px] font-bold text-muted">Dom</div><div class="mx-auto mt-1 grid h-9 w-9 place-items-center rounded-full text-[15px] font-bold text-ink">28</div></button>
+        <button class="press rounded-2xl py-2 text-center"><div class="text-[11px] font-extrabold text-noemi">Lun</div><div class="mx-auto mt-1 grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#DB2777] to-[#F472B6] text-[15px] font-extrabold text-white shadow-[0_6px_14px_-4px_rgba(219,39,119,.5)]">29</div></button>
+        <button class="press rounded-2xl py-2 text-center"><div class="text-[11px] font-bold text-muted">Mar</div><div class="mx-auto mt-1 grid h-9 w-9 place-items-center rounded-full text-[15px] font-bold text-ink">30</div></button>
+        <button class="press rounded-2xl py-2 text-center"><div class="text-[11px] font-bold text-muted">Mer</div><div class="mx-auto mt-1 grid h-9 w-9 place-items-center rounded-full text-[15px] font-bold text-ink">1</div></button>
+        <button class="press rounded-2xl py-2 text-center"><div class="text-[11px] font-bold text-muted">Gio</div><div class="mx-auto mt-1 grid h-9 w-9 place-items-center rounded-full text-[15px] font-bold text-ink">2</div></button>
+        <button class="press rounded-2xl py-2 text-center"><div class="text-[11px] font-bold text-muted">Ven</div><div class="mx-auto mt-1 grid h-9 w-9 place-items-center rounded-full text-[15px] font-bold text-ink">3</div></button>
+        <button class="press rounded-2xl py-2 text-center"><div class="text-[11px] font-bold text-muted">Sab</div><div class="mx-auto mt-1 grid h-9 w-9 place-items-center rounded-full text-[15px] font-bold text-ink">4</div></button>
+      </div>
+    </header>
+
+    <!-- intestazione colonne -->
+    <div class="sticky top-[150px] z-10 -mx-1 mt-2 grid grid-cols-2 gap-3 bg-bg/95 py-1.5 backdrop-blur lg:top-[156px]">
+      <div class="flex items-center gap-2 rounded-2xl border border-noemi/30 bg-noemi-light px-4 py-2.5">
+        <span class="grid h-7 w-7 place-items-center rounded-full bg-white text-sm">🍓</span>
+        <span class="h-round text-[15px] text-noemi">Noemi</span>
+      </div>
+      <div class="flex items-center gap-2 rounded-2xl border border-nic/30 bg-nic-light px-4 py-2.5">
+        <span class="grid h-7 w-7 place-items-center rounded-full bg-white text-sm">💪</span>
+        <span class="h-round text-[15px] text-nic">Nicholas</span>
+        <span class="ml-auto pill bg-white text-nic border border-nic/20">🏋️ Palestra</span>
+        <button class="pill bg-nic text-white press">📋 Scheda</button>
+      </div>
+    </div>
+
+    <!-- meal cards -->
+    <section class="mt-3 space-y-3">
+      <!-- INTEGRAZIONE -->
+      <article class="rounded-card bg-card shadow-soft overflow-hidden">
+        <div class="flex items-center gap-2.5 border-b border-line px-5 py-3">
+          <span class="grid h-8 w-8 place-items-center rounded-xl bg-[#F4EEFB] text-base">💊</span>
+          <h3 class="h-round text-[15px] text-ink">Integrazione</h3>
+        </div>
+        <div class="grid grid-cols-2 divide-x divide-line">
+          <div class="px-5 py-4 text-[14px] text-muted">—</div>
+          <div class="px-5 py-4 space-y-2.5">
+            <div><span class="meal-pill bg-[#ECFDF5] text-[#059669]">PRE</span><p class="mt-1 text-[14px] text-ink">1 g carnitina</p></div>
+            <div><span class="meal-pill bg-[#ECFDF5] text-[#059669]">POST</span><p class="mt-1 text-[14px] text-ink">3 g creatina</p></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- COLAZIONE (con toggle pasto libero) -->
+      <article class="rounded-card bg-card shadow-soft overflow-hidden">
+        <div class="flex items-center gap-2.5 border-b border-line px-5 py-3">
+          <span class="grid h-8 w-8 place-items-center rounded-xl bg-[#FFF7E6] text-base">☀️</span>
+          <h3 class="h-round text-[15px] text-ink">Colazione</h3>
+        </div>
+        <div class="grid grid-cols-2 divide-x divide-line">
+          <div class="px-5 py-4">
+            <div class="mb-2 flex justify-end"><button class="grid h-7 w-7 place-items-center rounded-full bg-[#FEFCE8] text-[13px] ring-1 ring-[#FDE68A] press" title="Pasto libero">🍕</button></div>
+            <p class="rounded-xl border-l-2 border-noemi/40 bg-noemi-light/40 px-3 py-2 text-[14px] text-ink">pancake proteico (1 banana + 1 uovo) + frutta</p>
+          </div>
+          <div class="px-5 py-4">
+            <div class="mb-2 flex justify-end"><button class="grid h-7 w-7 place-items-center rounded-full bg-[#FEFCE8] text-[13px] ring-1 ring-[#FDE68A] press" title="Pasto libero">🍕</button></div>
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2"><span class="meal-pill bg-noemi-light text-noemi">🍓 Bevanda</span><span class="text-[14px] text-ink">Tè</span></div>
+              <button class="press flex w-full items-center justify-between rounded-xl border border-line bg-[#FAFCFB] px-3 py-2 text-left">
+                <span class="flex items-center gap-2"><span class="meal-pill bg-[#F4EEFB] text-[#7C5CD6]">🍽️ Scegli tra</span><span class="text-[13px] text-muted">3 scelte</span></span>
+                <span class="text-muted">▾</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- PRANZO -->
+      <article class="rounded-card bg-card shadow-soft overflow-hidden">
+        <div class="flex items-center gap-2.5 border-b border-line px-5 py-3">
+          <span class="grid h-8 w-8 place-items-center rounded-xl bg-[#FEF2F4] text-base">🍽️</span>
+          <h3 class="h-round text-[15px] text-ink">Pranzo</h3>
+        </div>
+        <div class="grid grid-cols-2 divide-x divide-line">
+          <div class="px-5 py-4 text-[14px] leading-relaxed text-ink">80 g pasta / 90 g riso · sugo di verdure · 30 g grana · porzione di verdura</div>
+          <div class="px-5 py-4 space-y-2.5">
+            <div class="flex flex-wrap items-center gap-2"><span class="meal-pill bg-[#FFF7E6] text-[#B45309]">🌾 Carbo</span><span class="text-[14px] text-ink">130 g riso basmati</span></div>
+            <div class="flex flex-wrap items-center gap-2"><span class="meal-pill bg-[#FEF2F4] text-[#BE2E54]">🥩 Proteine</span><span class="text-[14px] text-ink">150 g pesce bianco</span></div>
+            <div class="flex flex-wrap items-center gap-2"><span class="meal-pill bg-[#ECFDF5] text-[#059669]">🥦 Verdura</span><span class="text-[14px] text-ink">a scelta</span></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <p class="mt-6 text-center text-[12px] text-muted">Mockup statico · stessa palette, look più rifinito 🌿</p>
+  </main>
+</div>
+</body>
+</html>

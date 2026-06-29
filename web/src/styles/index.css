@@ -17,7 +17,16 @@
   --muted: #8b97a6;
   --border: #e6efea;
   --grn: #059669;
-  --r: 18px;
+  --r: 20px;
+  --font-round: 'Varela Round', 'Nunito Sans', system-ui, sans-serif;
+  --shadow-soft: 0 1px 2px rgba(60, 80, 70, 0.04), 0 8px 24px -12px rgba(60, 80, 70, 0.12);
+}
+
+/* Titoli morbidi/rotondi (look mockup approvato), corpo resta Nunito Sans. */
+.h-round,
+.page-title,
+.dash-head .page-title {
+  font-family: var(--font-round);
 }
 
 html,
