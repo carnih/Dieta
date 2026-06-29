@@ -93,6 +93,8 @@ export default function Spesa() {
   const [spesaOwners, setSpesaOwners] = useState<OwnerKey[]>([]);
   const [listView, setListView] = useState<ListView>(null);
   const [categoryManager, setCategoryManager] = useState(false);
+  const [openRow, setOpenRow] = useState<string | null>(null); // riga con azioni 🏠/✕ rivelate
+  const [showEmpty, setShowEmpty] = useState(false); // mostra categorie vuote
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // input "aggiungi…" per categoria (non controllato dallo store)
@@ -166,6 +168,12 @@ export default function Spesa() {
   }, [cats, spesa]);
   const pct = total ? Math.round((done / total) * 100) : 0;
   const histCount = Object.keys(spesaHistory || {}).length;
+  // categorie senza articoli né dispensa attiva (per il toggle "mostra vuote")
+  const emptyCount = cats.filter(
+    (c) =>
+      !(spesa[c.key] || []).length &&
+      !pantry.some((p) => (p.cat || 'dispensa') === c.key && p.active !== false),
+  ).length;
 
   const ownerFilter = spesaOwners.length > 0;
   const matchOwner = (it: { owners?: string[] }) =>
@@ -592,7 +600,31 @@ export default function Spesa() {
             ⚙️
           </button>
         </div>
-        <div className="shop-filters">
+        {/* viste: segmented control (niente tab "Persone") */}
+        <div className="seg">
+          <button
+            className={listView === null ? 'on' : ''}
+            onClick={() => {
+              setListView(null);
+            }}
+          >
+            Tutti
+          </button>
+          <button
+            className={listView === 'tocomprare' ? 'on' : ''}
+            onClick={() => setListViewToggle('tocomprare')}
+          >
+            🛒 Da comprare
+          </button>
+          <button
+            className={listView === 'dispensa' ? 'on' : ''}
+            onClick={() => setListViewToggle('dispensa')}
+          >
+            🏠 Dispensa
+          </button>
+        </div>
+        {/* filtro persone: chip discreti (non un tab) */}
+        <div className="shop-filters owners">
           <button
             className={`shop-filter f-nicholas ${spesaOwners.includes('nicholas') ? 'on' : ''}`}
             onClick={() => toggleOwnerFilter('nicholas')}
@@ -616,20 +648,6 @@ export default function Spesa() {
             onClick={() => toggleOwnerFilter('coniglio')}
           >
             🐰 Ginger
-          </button>
-        </div>
-        <div className="shop-filters">
-          <button
-            className={`shop-filter f-tobuy ${listView === 'tocomprare' ? 'on' : ''}`}
-            onClick={() => setListViewToggle('tocomprare')}
-          >
-            🛒 Da comprare
-          </button>
-          <button
-            className={`shop-filter f-pantry ${listView === 'dispensa' ? 'on' : ''}`}
-            onClick={() => setListViewToggle('dispensa')}
-          >
-            🏠 Dispensa
           </button>
         </div>
       </div>
@@ -658,7 +676,7 @@ export default function Spesa() {
           pantryItems.sort(alpha);
 
           const isEmpty = items.length === 0 && pantryItems.length === 0;
-          if (filtered && isEmpty) return null;
+          if (isEmpty && (filtered || !showEmpty)) return null;
 
           if (isEmpty) {
             return (
@@ -696,42 +714,71 @@ export default function Spesa() {
                 {toBuy ? <span className="shop-sec-n">{toBuy}</span> : null}
               </div>
 
-              {items.map((it) => (
-                <div className={`shop-row ${it.d ? 'done' : ''}`} key={'i' + it.idx}>
-                  <button
-                    className={`sp-circle ${it.d ? 'on' : ''}`}
-                    onClick={() => toggleSpesa(c.key, it.idx)}
-                  />
-                  <button
-                    className="shop-pantry-btn"
-                    onClick={() => toPantry(c.key, it.idx)}
-                    title="Ho già in casa"
+              {items.map((it) => {
+                const rk = c.key + ':' + it.idx;
+                const open = openRow === rk;
+                return (
+                  <div
+                    className={`shop-row ${it.d ? 'done' : ''} ${open ? 'open' : ''}`}
+                    key={'i' + it.idx}
                   >
-                    🏠
-                  </button>
-                  <span
-                    className="shop-name"
-                    contentEditable
-                    suppressContentEditableWarning
-                    spellCheck={false}
-                    onBlur={(e) =>
-                      renameSpesaItem(c.key, it.idx, e.currentTarget.textContent || '')
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.currentTarget.blur();
+                    <button
+                      className={`sp-circle ${it.d ? 'on' : ''}`}
+                      onClick={() => toggleSpesa(c.key, it.idx)}
+                      aria-label="preso"
+                    />
+                    <span
+                      className="shop-name"
+                      contentEditable
+                      suppressContentEditableWarning
+                      spellCheck={false}
+                      onBlur={(e) =>
+                        renameSpesaItem(c.key, it.idx, e.currentTarget.textContent || '')
                       }
-                    }}
-                  >
-                    {it.t}
-                  </span>
-                  {ownerBadges(it.owners, c.key, it.idx)}
-                  <button className="shop-x" onClick={() => delSpesa(c.key, it.idx)}>
-                    ✕
-                  </button>
-                </div>
-              ))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }
+                      }}
+                    >
+                      {it.t}
+                    </span>
+                    {ownerBadges(it.owners, c.key, it.idx)}
+                    {open ? (
+                      <span className="row-actions">
+                        <button
+                          className="ra pantry"
+                          onClick={() => {
+                            toPantry(c.key, it.idx);
+                            setOpenRow(null);
+                          }}
+                          title="Ho già in casa"
+                        >
+                          🏠
+                        </button>
+                        <button
+                          className="ra del"
+                          onClick={() => {
+                            delSpesa(c.key, it.idx);
+                            setOpenRow(null);
+                          }}
+                          title="Elimina"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ) : null}
+                    <button
+                      className="row-handle"
+                      onClick={() => setOpenRow(open ? null : rk)}
+                      aria-label="azioni"
+                    >
+                      {open ? '‹' : '⋯'}
+                    </button>
+                  </div>
+                );
+              })}
 
               {pantryItems.map((p) => (
                 <div className="shop-row pantry-row" key={'p' + p.pi}>
@@ -767,6 +814,14 @@ export default function Spesa() {
           );
         })}
       </div>
+
+      {!filtered && emptyCount > 0 ? (
+        <button className="show-empty" onClick={() => setShowEmpty((v) => !v)}>
+          {showEmpty
+            ? '▴ nascondi categorie vuote'
+            : `▾ mostra ${emptyCount} categorie vuote`}
+        </button>
+      ) : null}
 
       {histCount ? (
         <div className="shop-hist">

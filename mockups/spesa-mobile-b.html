@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="it"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Spesa mobile · B</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet"/>
+<style>
+ body{font-family:'Nunito Sans',sans-serif;background:#e7ecea;margin:0;padding:24px 0}
+ .round{font-family:'Varela Round',sans-serif}
+ .phone{width:390px;margin:0 auto;background:#F1FAF6;border-radius:38px;box-shadow:0 30px 70px -20px rgba(0,0,0,.4);overflow:hidden;border:10px solid #11181f}
+ .scroll{height:760px;overflow-y:auto}.scroll::-webkit-scrollbar{display:none}
+ .grn{color:#059669}
+ .card{background:#fff;border-radius:18px;box-shadow:0 1px 2px rgba(60,80,70,.04),0 8px 22px -14px rgba(60,80,70,.16)}
+ .chk{width:28px;height:28px;border-radius:50%;border:2px solid #D7DCE2;flex:none;position:relative;background:#fff}
+ .chk.on{background:#059669;border-color:#059669}
+ .chk.on::after{content:'';position:absolute;left:9px;top:5px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+ .dot{width:16px;height:16px;border-radius:50%;font-size:8px;font-weight:900;display:grid;place-items:center}
+ /* riga "swipe": azioni rivelate a sinistra dietro la riga */
+ .swipe{position:relative;overflow:hidden;border-top:1px solid #F4F5F7}
+ .swipe .actions{position:absolute;inset:0 0 0 auto;display:flex;align-items:stretch}
+ .swipe .actions button{width:56px;display:grid;place-items:center;font-size:17px;color:#fff}
+ .swipe .front{position:relative;background:#fff;display:flex;align-items:center;gap:13px;padding:14px 16px;transition:transform .2s}
+ .swipe.open .front{transform:translateX(-112px)}
+</style></head>
+<body>
+<div class="phone"><div class="scroll">
+  <div class="sticky top-0 z-20 px-4 pt-4 pb-2.5" style="background:rgba(241,250,246,.95);backdrop-filter:blur(8px)">
+    <div class="flex items-center justify-between">
+      <h1 class="round text-[30px] leading-none">Spesa</h1>
+      <button class="grid h-9 w-9 place-items-center rounded-full bg-white text-[#6B7280] shadow-sm">⚙️</button>
+    </div>
+    <!-- segmented control viste -->
+    <div class="mt-3 flex rounded-full bg-[#E8EEEB] p-1 text-[13px] font-extrabold">
+      <button class="flex-1 rounded-full bg-white py-2 text-[#15803D] shadow-sm">Da comprare</button>
+      <button class="flex-1 rounded-full py-2 text-[#8B97A6]">Dispensa</button>
+      <button class="flex-1 rounded-full py-2 text-[#8B97A6]">Persone</button>
+    </div>
+    <div class="mt-2.5 flex items-center gap-2 text-[12.5px] font-extrabold text-[#9CA3AF]">
+      <div class="flex-1 h-2 rounded-full bg-[#E2E8E5] overflow-hidden"><div class="h-full rounded-full" style="width:30%;background:linear-gradient(90deg,#16A34A,#4ADE80)"></div></div>
+      <span><b class="grn">12</b>/17</span>
+    </div>
+  </div>
+
+  <div class="px-4 pb-28 space-y-3">
+    <div class="card overflow-hidden">
+      <div class="flex items-center gap-2.5 px-4 pt-3.5 pb-1.5">
+        <span class="grid h-8 w-8 place-items-center rounded-xl bg-[#ECFDF5] text-base">🥦</span>
+        <span class="round text-[15px] text-[#374151]">Verdure</span>
+        <span class="ml-auto text-[11px] font-extrabold grn bg-[#E9F9EE] rounded-full px-2.5 py-0.5">3</span>
+      </div>
+      <!-- riga pulita; azioni a tap (qui mostrata "aperta" come esempio) -->
+      <div class="swipe open">
+        <div class="actions"><button style="background:#F59E0B">🏠</button><button style="background:#EF8A8A">✕</button></div>
+        <div class="front"><span class="chk"></span><span class="flex-1 text-[16px]">Zucchine</span><span class="dot" style="background:#EFF6FF;color:#3B82F6">N</span><span class="text-[#C5CAD2]">‹</span></div>
+      </div>
+      <div class="swipe"><div class="front"><span class="chk on"></span><span class="flex-1 text-[16px] line-through text-[#C5CAD2]">Pomodori</span></div></div>
+      <div class="swipe"><div class="front"><span class="chk"></span><span class="flex-1 text-[16px]">Insalata</span></div></div>
+      <!-- add inline discreto -->
+      <div class="flex items-center gap-2 px-4 py-2.5 border-t border-[#F4F5F7] text-[#C5CAD2]"><span class="text-lg">＋</span><input class="flex-1 bg-transparent outline-none text-[14.5px]" placeholder="aggiungi a Verdure…"/></div>
+    </div>
+
+    <div class="card overflow-hidden">
+      <div class="flex items-center gap-2.5 px-4 pt-3.5 pb-1.5">
+        <span class="grid h-8 w-8 place-items-center rounded-xl bg-[#FEF2F4] text-base">🥩</span>
+        <span class="round text-[15px] text-[#374151]">Macelleria</span>
+        <span class="ml-auto text-[11px] font-extrabold grn bg-[#E9F9EE] rounded-full px-2.5 py-0.5">1</span>
+      </div>
+      <div class="swipe"><div class="front"><span class="chk"></span><span class="flex-1 text-[16px]">Petto di pollo</span><span class="dot" style="background:#FCE7F3;color:#E879A0">N</span></div></div>
+    </div>
+
+    <button class="w-full text-center text-[13px] font-bold text-[#9CA3AF] py-2">▾ mostra 8 categorie vuote</button>
+  </div>
+</div></div>
+
+<!-- FAB aggiunta rapida + Spesa fatta -->
+<div style="width:390px;margin:-84px auto 0;position:relative;z-index:30" class="px-4 flex items-center gap-3 justify-end">
+  <button class="flex-1 round text-[16px] text-white rounded-full py-3.5 shadow-lg" style="background:linear-gradient(135deg,#059669,#34D399)">✓ Spesa fatta</button>
+  <button class="grid place-items-center h-[56px] w-[56px] rounded-full text-white text-2xl shadow-lg" style="background:linear-gradient(135deg,#2563EB,#60A5FA)">＋</button>
+</div>
+<p class="text-center text-[12px] text-[#5b6b64] mt-4">Variante B · "Righe pulite, azioni a scorrimento/tap + segmented"</p>
+</body></html>

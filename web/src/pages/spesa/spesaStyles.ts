@@ -139,6 +139,29 @@ export const SPESA_CSS = `
   .spesa-scope .shop-tool:hover,.spesa-scope .shop-filter:hover,.spesa-scope .shop-hist button:hover,.spesa-scope .catman-add:hover{transform:none}
 }
 
+/* ── viste come segmented control (niente tab "Persone") ── */
+.spesa-scope .seg{display:flex;gap:4px;background:#E8EEEB;border-radius:9999px;padding:4px;margin-bottom:10px}
+.spesa-scope .seg button{flex:1;border:none;background:transparent;color:#8B97A6;font-size:13px;font-weight:800;padding:9px 6px;border-radius:9999px;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.spesa-scope .seg button.on{background:#fff;color:#15803D;box-shadow:var(--shadow-soft)}
+/* filtro persone: chip discreti, più piccoli */
+.spesa-scope .shop-filters.owners .shop-filter{font-size:12px;padding:6px 12px}
+
+/* ── righe: azioni 🏠/✕ a TOCCO (no hover, fix touch) ── */
+.spesa-scope .row-handle{flex:none;border:none;background:transparent;color:#C5CAD2;font-size:18px;line-height:1;cursor:pointer;padding:0;width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
+.spesa-scope .row-handle:active{background:#F1F5F9;color:#6B7280}
+.spesa-scope .row-actions{display:flex;gap:6px;flex:none}
+.spesa-scope .row-actions .ra{border:none;width:36px;height:36px;border-radius:11px;font-size:15px;cursor:pointer;display:grid;place-items:center;transition:transform .15s}
+.spesa-scope .row-actions .ra:active{transform:scale(.9)}
+.spesa-scope .row-actions .ra.pantry{background:#FEF3C7}
+.spesa-scope .row-actions .ra.del{background:#FEE2E2;color:#DC2626}
+.spesa-scope .shop-row.open{background:#FAFCFB;border-left-color:#E6EFEA}
+/* check leggermente più grande (tocco) */
+.spesa-scope .sp-circle{width:27px;height:27px}
+
+/* toggle categorie vuote */
+.spesa-scope .show-empty{display:block;width:100%;text-align:center;border:none;background:transparent;color:#9CA3AF;font-size:13px;font-weight:800;padding:12px;cursor:pointer;border-radius:12px}
+.spesa-scope .show-empty:active{background:#fff}
+
 /* ── DESKTOP: categorie come card a colonne (masonry) per vedere tutta la spesa
    a colpo d'occhio. Mobile invariato (resta la card unica continua). ── */
 @media (min-width:1024px){
