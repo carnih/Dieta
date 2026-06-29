@@ -1,12 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import type { User } from 'firebase/auth';
-import { auth, signInWithEmailAndPassword, signOut } from '@/lib/firebase';
+import { repo } from '@/data';
+import type { AuthUser } from '@/data';
 
 interface AuthCtx {
-  user: User | null;
-  ready: boolean; // true quando il primo onAuthStateChanged è arrivato
+  user: AuthUser | null;
+  ready: boolean; // true quando il primo evento auth è arrivato
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -14,11 +13,11 @@ interface AuthCtx {
 const Ctx = createContext<AuthCtx | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (u) => {
+    return repo.onAuthChange((u) => {
       setUser(u);
       setReady(true);
     });
@@ -28,12 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       ready,
-      login: async (email, password) => {
-        await signInWithEmailAndPassword(auth, email, password);
-      },
-      logout: async () => {
-        await signOut(auth);
-      },
+      login: (email, password) => repo.login(email, password),
+      logout: () => repo.logout(),
     }),
     [user, ready],
   );

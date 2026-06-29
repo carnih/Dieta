@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { onValue, ref } from 'firebase/database';
-import { db } from '@/lib/firebase';
+import { repo } from '@/data';
 import { useAuth } from '@/hooks/useAuth';
 import type { Activity, StoreState } from '@/lib/types';
 
@@ -22,8 +21,8 @@ const EMPTY: StoreState = {
   overrides: null,
 };
 
-// Tabella dichiarativa delle sottoscrizioni: [percorso Firebase, come mappare nello stato].
-// Erede del pattern `SUBS` del vecchio index.html.
+// Tabella dichiarativa delle sottoscrizioni: [percorso, come mappare nello stato].
+// Erede del pattern `SUBS` del monolite; passa per `repo.subscribe` (backend-agnostico).
 type Assign = (val: unknown, prev: StoreState) => Partial<StoreState>;
 const SUBS: Array<[string, Assign]> = [
   [
@@ -59,14 +58,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<StoreState>(EMPTY);
 
   useEffect(() => {
-    // Le regole RTDB richiedono auth: sottoscrivo solo da loggato.
+    // Le regole del backend richiedono auth: sottoscrivo solo da loggato.
     if (!user) {
       setState(EMPTY);
       return;
     }
     const unsubs = SUBS.map(([path, assign]) =>
-      onValue(ref(db, path), (snap) => {
-        setState((prev) => ({ ...prev, ...assign(snap.val(), prev) }));
+      repo.subscribe(path, (val) => {
+        setState((prev) => ({ ...prev, ...assign(val, prev) }));
       }),
     );
     return () => unsubs.forEach((u) => u());
