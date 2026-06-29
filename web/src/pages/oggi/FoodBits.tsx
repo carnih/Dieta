@@ -91,7 +91,7 @@ export function RenderItem({
   return <FoodRow cat={it.cat} text={it.v ?? ''} catLabels={catLabels} />;
 }
 
-/** Placeholder "—" (come `dash`). */
+/** Stato vuoto garbato della colonna (al posto del vecchio "—"). */
 export function Dash() {
-  return <div className="food-text" style={{ color: '#C9D0D9' }}>—</div>;
+  return <div className="cmp-empty">niente oggi</div>;
 }

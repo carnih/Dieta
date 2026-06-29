@@ -280,12 +280,18 @@ export default function Oggi({ onOpenScheda }: OggiProps) {
       {calendar}
 
       <div className="cmp-top">
-        <div className="cmp-top-col e">
-          <span className="ctc-name">🍓 Noemi</span>
+        <div className="ct-half e">
+          <div className="ct-id">
+            <span className="ct-av e">🍓</span>
+            <span className="ct-name">Noemi</span>
+          </div>
         </div>
-        <div className="cmp-top-col n">
-          <span className="ctc-name">💪 Nicholas</span>
-          <div className="ctc-meta">
+        <div className="ct-half n">
+          <div className="ct-id">
+            <span className="ct-av n">💪</span>
+            <span className="ct-name">Nicholas</span>
+          </div>
+          <div className="ct-meta">
             <span className="train-tag">{trainTag}</span>
             {hasScheda ? (
               <button className="train-scheda" onClick={() => onOpenScheda?.()}>
@@ -307,7 +313,7 @@ export default function Oggi({ onOpenScheda }: OggiProps) {
               <span>{r.title}</span>
             </div>
             <div className="cmp-cols">
-              <div className="cmp-col">
+              <div className="cmp-col e">
                 <CmpColumn
                   row={r}
                   who="e"
@@ -323,7 +329,7 @@ export default function Oggi({ onOpenScheda }: OggiProps) {
                   onToggle={togglePastoLibero}
                 />
               </div>
-              <div className="cmp-col">
+              <div className="cmp-col n">
                 <CmpColumn
                   row={r}
                   who="n"
