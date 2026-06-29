@@ -14,7 +14,9 @@ const CSS = `
 /* page titles / sub */
 .al-scope .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;color:#111827;position:sticky;top:0;z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 6px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
 .al-scope .vsub{position:sticky;top:48px;z-index:9;background:var(--bg);margin:0 -16px;padding:6px 16px 8px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
-.al-scope .page-title.n{background:var(--n-g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:var(--font-head)}
+/* titolo a colore pieno (opaco): cosi' lo sticky copre il contenuto sotto e il
+   testo resta visibile (il gradiente-su-testo rendeva trasparente il box). */
+.al-scope .page-title.n{color:var(--n);background:var(--bg);font-family:var(--font-head)}
 .al-scope .page-sub{font-size:14px;color:#9CA3AF;font-weight:600;padding:2px 2px 6px}
 
 /* card generica (nel monolite .card non aveva regola propria: usiamo lo stesso look di .cmp-card) */

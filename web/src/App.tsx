@@ -10,11 +10,11 @@ import Allenamenti from '@/pages/Allenamenti';
 import Dashboard from '@/pages/Dashboard';
 
 const TABS = [
-  { key: 'oggi', label: 'Oggi', icon: '🍽️' },
+  { key: 'oggi', label: 'Dieta', icon: '🍽️' },
   { key: 'nicholas', label: 'Nicholas', icon: '🏃' },
   { key: 'noemi', label: 'Noemi', icon: '🍓' },
   { key: 'spesa', label: 'Spesa', icon: '🛒' },
-  { key: 'allenamenti', label: 'Allenamenti', icon: '🏋️' },
+  { key: 'allenamenti', label: 'Allen.', icon: '🏋️' },
 ] as const;
 type TabKey = (typeof TABS)[number]['key'];
 
@@ -53,38 +53,56 @@ export default function App() {
     }
   }
 
+  const go = (k: TabKey) => {
+    setTab(k);
+    if (k !== 'allenamenti') setDashboard(false);
+  };
+
   return (
-    <div className="mx-auto flex min-h-full max-w-xl flex-col">
-      <header className="flex items-center justify-between px-4 py-3">
-        <div className="text-lg font-extrabold text-ink">Dieta</div>
-        <button
-          onClick={() => void logout()}
-          className="rounded-full bg-card px-3 py-1.5 text-sm font-semibold text-ink shadow-sm"
-          title={user.email ?? ''}
-        >
-          {name.slice(0, 1).toUpperCase()} · esci
-        </button>
-      </header>
-
-      <main className="flex-1 px-4 pb-24">{renderTab()}</main>
-
-      <nav className="fixed inset-x-0 bottom-0 mx-auto flex max-w-xl justify-around border-t border-line bg-card/95 py-2 backdrop-blur">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => {
-              setTab(t.key);
-              if (t.key !== 'allenamenti') setDashboard(false);
-            }}
-            className={`flex flex-col items-center gap-0.5 px-2 text-xs ${
-              tab === t.key ? 'font-bold text-nic' : 'text-muted'
-            }`}
-          >
-            <span className="text-lg">{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
+    // Su desktop (lg) riservo lo spazio per il rail laterale a sinistra.
+    <div className="min-h-full lg:pl-[78px]">
+      {/* Navigazione: bottom-bar su mobile, rail verticale a sinistra su desktop */}
+      <nav
+        className={
+          'fixed z-40 border-line bg-card/95 backdrop-blur ' +
+          'inset-x-0 bottom-0 flex justify-around border-t py-2 ' +
+          'lg:inset-y-0 lg:left-0 lg:right-auto lg:w-[78px] lg:flex-col lg:justify-start ' +
+          'lg:gap-1 lg:border-r lg:border-t-0 lg:px-2 lg:py-4'
+        }
+      >
+        {TABS.map((t) => {
+          const active = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => go(t.key)}
+              className={
+                'flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-semibold lg:w-full ' +
+                (active ? 'text-nic lg:bg-nic-light' : 'text-muted')
+              }
+            >
+              <span className="text-xl leading-none">{t.icon}</span>
+              {t.label}
+            </button>
+          );
+        })}
       </nav>
+
+      {/* Chip account fisso in alto a destra (entrambi i layout) */}
+      <button
+        onClick={() => {
+          if (confirm('Uscire da Dieta?')) void logout();
+        }}
+        title={user.email ?? ''}
+        className="fixed right-3 top-3 z-50 grid h-9 w-9 place-items-center rounded-full bg-nic text-sm font-bold text-white shadow-md"
+        aria-label={`Account: ${name}`}
+      >
+        {name.slice(0, 1).toUpperCase()}
+      </button>
+
+      <main className="mx-auto max-w-2xl px-4 pb-28 pt-3 lg:max-w-none lg:px-8 lg:pb-10">
+        {renderTab()}
+      </main>
     </div>
   );
 }
