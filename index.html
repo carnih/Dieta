@@ -106,9 +106,14 @@
     }
 
     /* ── PAGE TITLES ── */
-    .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;padding:8px 2px 0;color:#111827}
+    .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;color:#111827;position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 6px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
+    /* sotto-intestazione fissa per pagina (barra controlli sticky sotto il titolo) */
+    .vsub{position:sticky;top:calc(env(safe-area-inset-top,0px) + 48px);z-index:9;background:var(--bg);margin:0 -16px;padding:6px 16px 8px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
     .page-title.n{background:var(--n-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .page-title.e{background:var(--e-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    /* il gradiente-su-testo rende trasparente il box: ripristino uno sfondo opaco
+       dietro (pseudo-elemento) cosi' lo sticky copre il contenuto che scorre sotto */
+    .page-title.n::before,.page-title.e::before{content:"";position:absolute;inset:0;background:var(--bg);z-index:-1}
     .page-sub{font-size:14px;color:#9CA3AF;font-weight:600;padding:2px 2px 6px}
     .sec-title{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:8px 2px 2px}
     .sec-title.n{color:var(--n)}
@@ -130,7 +135,7 @@
 
     /* ── OGGI: header colonne (una volta) ── */
     .cmp-top{
-      position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:grid;grid-template-columns:1fr 1fr;
+      position:sticky;top:calc(env(safe-area-inset-top,0px) + 48px);z-index:10;display:grid;grid-template-columns:1fr 1fr;
       background:var(--bg);padding:6px 2px 8px;margin-bottom:-2px;gap:6px;
     }
     .cmp-top-col{
@@ -368,6 +373,21 @@
     .al-blk-n{font-size:11px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
     .al-blk-r{font-size:13.5px;color:#374151;line-height:1.5;padding-left:10px;border-left:2px solid var(--border)}
     .al-note{font-size:12px;color:#9A6B1E;background:#FEF6E7;border:1px solid #F6E2BD;border-radius:9px;padding:7px 10px;margin-top:8px;line-height:1.4}
+    /* editor schede: campi chiaramente modificabili, in stile pagina */
+    .sch-title{flex:1;min-width:0;border:none;border-bottom:1px dashed #93C5FD;background:transparent;font-family:var(--font-head);font-weight:800;font-size:14px;color:#1F2937;outline:none;padding:0 0 2px}
+    .sch-title:focus{border-bottom-color:var(--n)}
+    .sch-name{width:100%;border:1px solid #DCE6F5;border-radius:8px;background:#fff;padding:5px 9px;outline:none;font-size:11.5px;font-weight:800;color:#2563EB;text-transform:uppercase;letter-spacing:.03em;font-family:inherit}
+    .sch-name:focus{border-color:var(--n);box-shadow:0 0 0 3px var(--n-l)}
+    .sch-righe{display:block;width:100%;border:1px solid transparent;border-left:2px solid var(--border);background:transparent;resize:none;font-family:inherit;font-size:13.5px;color:#374151;line-height:1.5;outline:none;padding:4px 0 2px 10px;margin-top:4px;border-radius:0 8px 8px 0}
+    .sch-righe:focus{border-left-color:var(--n);background:#FAFCFF}
+    /* viewer PDF scheda (Firebase Storage) */
+    .pdf-ov{position:fixed;inset:0;background:rgba(20,20,30,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:14px}
+    .pdf-card{background:#fff;border-radius:16px;width:100%;max-width:780px;height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+    .pdf-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;border-bottom:1px solid var(--border);font-size:15px;color:#1F2937}
+    .pdf-x{border:none;background:transparent;font-size:18px;cursor:pointer;color:#9CA3AF;padding:2px 6px}
+    .pdf-frame{flex:1;width:100%;border:none}
+    .pdf-msg{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#6B7280;font-size:13.5px;text-align:center;padding:24px;line-height:1.5}
+    .pdf-actions{display:flex;gap:8px;padding:10px 15px;border-top:1px solid var(--border);justify-content:flex-end}
     /* link scheda accanto al tag allenamento (colonna Nicholas, tab Dieta) */
     .train-scheda{border:1.5px solid var(--n);background:#fff;color:var(--n);font-weight:800;font-size:10px;border-radius:20px;padding:2px 9px;cursor:pointer;text-transform:none;letter-spacing:0}
     .train-scheda:active{background:var(--n-l)}
@@ -528,7 +548,7 @@
     .dash-cta b{display:block;font-family:var(--font-head);font-size:15.5px;font-weight:800;letter-spacing:-.2px}
     .dash-cta small{display:block;font-size:12px;opacity:.9;font-weight:600;margin-top:1px}
     .dash-cta-arr{font-size:26px;opacity:.85;flex:none}
-    .dash-head{display:flex;align-items:center;gap:12px;padding:4px 2px 10px}
+    .dash-head{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 10px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
     .dash-back{flex:none;width:40px;height:40px;border:none;background:#fff;box-shadow:var(--sh-1);border-radius:50%;font-size:19px;cursor:pointer;color:#1F2937}
     .dash-back:active{background:#F1F5F9}
     .dash-sec-title{display:flex;align-items:baseline;gap:8px;font-family:var(--font-head);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#64748B;padding:6px 2px 8px}
@@ -546,6 +566,9 @@
     .ddet-date{flex:none;font-size:11px;font-weight:800;color:#94A3B8;width:42px}
     .ddet-name{flex:1;min-width:0;font-size:13px;font-weight:700;color:#1F2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .ddet-meta{flex:none;font-size:11.5px;color:#64748B;font-weight:600}
+    .ddet-brick{flex:none;font-size:10.5px;font-weight:800;color:#B45309;background:#FEF3C7;border:1px solid #FDE68A;border-radius:50px;padding:2px 8px;cursor:pointer}
+    .ddet-brick:active{background:#FDE68A}
+    .brick-banner{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font-size:13px;color:#92400E;background:#FEF3C7;border:1px solid #FDE68A;border-radius:12px;padding:10px 13px;margin-bottom:12px;cursor:pointer;font-family:inherit;line-height:1.35}
     .dc-ic{font-size:18px;line-height:1}
     .dc-val{font-family:var(--font-head);font-size:21px;font-weight:850;color:#111827;line-height:1.1;margin-top:3px}
     .dc-lab{font-size:10.5px;color:#9CA3AF;font-weight:800;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
@@ -955,70 +978,76 @@ const NOEMI_REF = [
   ['🍓 Frutta', 'albicocche, fragole, ciliegie, pesca, mela, melone, anguria, ananas, arancia, pera, kiwi… (1 porzione)'],
 ];
 
-const NOEMI_DAYS  = ['lun','mar','mer','gio','ven','sab','dom'];
+const NOEMI_DAYS  = ['dom','lun','mar','mer','gio','ven','sab'];   // settimana domenica→sabato
 const NOEMI_LABELS= {lun:'Lun',mar:'Mar',mer:'Mer',gio:'Gio',ven:'Ven',sab:'Sab',dom:'Dom'};
 const NOEMI_FULL  = {lun:'Lunedì',mar:'Martedì',mer:'Mercoledì',gio:'Giovedì',ven:'Venerdì',sab:'Sabato',dom:'Domenica'};
 
 // ══════════════════════════════════════════
 //  ALLENAMENTI (schede dal preparatore — generato dai PDF, aggiornato mensilmente)
 // ══════════════════════════════════════════
-const ALLENAMENTI = {
-  forza: { nome:'Forza · S&C', coach:'Paolo Morosini', durata:8, weeks:[
+let ALLENAMENTI = {
+  forza: { nome:'Forza · S&C', coach:'Paolo Morosini', durata:8,
+    note:'NIC S&C Program · preparatore atletico Paolo Morosini. Cue del PT riportate fedeli (carichi, reps dal cedimento, progressioni).', weeks:[
     { titolo:'Settimana 1', blocchi:[
       {nome:"Warm-up · EMOM 10'", righe:'10 burpees · 16 affondi avanti · 8 pull ups · 5 high jump squat · 30" wall sit'},
-      {nome:'Squat', righe:"1x6 box jump (atterraggio in accosciata) · front squat ogni 3' x4 round @80% 1RM"},
-      {nome:'Spinta', righe:"Shoulder press in superset · Hip thrust 3x10 · Panca piana manubri 3x10 · rest 1'"},
-      {nome:'Posteriori', righe:'6x6 single leg deadlift con 2 kb'},
-      {nome:'Tirata', righe:'Rematore bilanciere 4x8 + 5 dips parallele + 5+5 step ups manubri · rec 90"'},
-      {nome:'Core', righe:'Tabata: hollow rocks / superman'}]},
+      {nome:'Pliometria', righe:'1x6 box jump con atterraggio sulla box in accosciata'},
+      {nome:'Squat', righe:"10' per scaldare a front squat · poi front squat ogni 3' x4 round @ 80% 1RM"},
+      {nome:'Spinta (superset)', righe:"Shoulder press (stessa modalità: ogni 3' x4) in superset con Hip thrust 3x10 + Panca piana manubri 3x10 · rest 1'"},
+      {nome:'A chiudere', righe:'6x6 single leg deadlift con 2 kb'},
+      {nome:'Tirata (superset)', righe:'Rematore bilanciere 4x8 in superset con 5 dips parallele + 5+5 step ups manubri · recupero 90"'},
+      {nome:'Core · Tabata', righe:'hollow rocks / superman'}]},
     { titolo:'Settimana 2', blocchi:[
-      {nome:'Warm-up 2x', righe:"1' corda · 10m affondi camminati · 8 thruster manubri · 10 face pull · 10 push ups · 20\" hollow"},
-      {nome:"Fase 1 · EMOM 10'", righe:'dispari: 6-5-4-4-3 back squat · pari: 6/8 push ups (carichi graduali)'},
-      {nome:'Fase 2 · 3\'30" x4', righe:'8 squat (2 reps dal cedimento) + 6/8 hand release push ups'},
-      {nome:"Fase 3 · EMOM 10'", righe:'dispari: 6-5-4-3-3 bench press · pari: 8/10 alzate laterali (sali)'},
-      {nome:"Fase 4 · 3' x4", righe:'8 bench press (2 reps cedim.) + 6 alzate laterali'},
-      {nome:'Fase 5/6', righe:'2\'30"x4: 12 box step ups (6+6) · 3\'x4: 6/12 pull ups + 15 rdl manubri'}]},
+      {nome:'Warm-up 2x', righe:"1' salti corda · 10m affondi camminati · 8 thruster manubri · 10 face pull (elastico o cavi) · 10 push ups · 20\" hollow con disco"},
+      {nome:"Fase 1 · EMOM 10'", righe:'min dispari: 6-5-4-4-3 back squat · min pari: 6/8 push ups · carichi graduali'},
+      {nome:'Fase 2 · ogni 3\'30" x4', righe:'8 squat (almeno 2 reps prima del cedimento) in superset con 6/8 hand release push ups'},
+      {nome:"Fase 3 · EMOM 10'", righe:'min dispari: 6-5-4-3-3 bench press · min pari: 8/10 alzate laterali (leggero, sali graduale)'},
+      {nome:"Fase 4 · ogni 3' x4", righe:'8 bench press (2 reps al cedimento) in superset con 6 alzate laterali (più pesanti di prima)'},
+      {nome:'Fase 5 · ogni 2\'30" x4', righe:'12 box step ups heavy (6+6)'},
+      {nome:"Fase 6 · ogni 3' x4", righe:'6/12 pull ups · 15 rdl manubri'}]},
     { titolo:'Settimana 3', blocchi:[
-      {nome:'Warm-up', righe:'come settimana scorsa'},
-      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat (progressioni) · 6/8 push ups'},
-      {nome:'Strength · 3\'30" x4', righe:'8 back squat (2 reps dal cedimento) + 6/8 h/r push ups'},
-      {nome:"EMOM 10'", righe:'6-5-4-3-3 bench press (progressione) · 8/10 affondi avanti manubri'},
-      {nome:"3' x4", righe:'8 shoulder press + 6 alzate laterali pesanti'},
-      {nome:"3' x4", righe:'6-12 trazioni · 15 hip thrust'}]},
+      {nome:'Warm-up', righe:'vedi warm-up settimana scorsa'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-4-3 back squat (sali in progressioni) · 2) 6/8 push ups'},
+      {nome:'Strength · ogni 3\'30" x4', righe:'8 back squat (fermati almeno 2 reps prima del cedimento) in superset con 6/8 hand release push ups'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-3-3 bench press (sali in progressione) · 2) 8/10 affondi avanti manubri'},
+      {nome:"Ogni 3' x4", righe:'8 shoulder press (2 reps prima del cedimento) in superset con 6 alzate laterali pesanti'},
+      {nome:"Ogni 3' x4", righe:'6-12 trazioni · 15 hip thrust'}]},
     { titolo:'Settimana 4', blocchi:[
-      {nome:'Warm-up 2x', righe:"1' corda · 10m overhead lunges · 8 thruster · 10 banded face pull · 8 box jump 50cm"},
+      {nome:'Warm-up 2x', righe:"1' salti corda · 10m overhead walking lunges db/bb · 8 thruster manubri · 10 banded face pull · 8 box jump 50cm"},
       {nome:"EMOM 10'", righe:'4 seated box jump · 4 lanci palla medica dal petto'},
-      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat · 6/8 push ups'},
-      {nome:'3\'30" x4', righe:'8 trap bar deadlift (2 reps riserva) · 6/8 push press manubri'},
-      {nome:"3' x4", righe:'8 bench press (2 reps riserva) · 6+6 one leg rdl manubrio'},
-      {nome:'2\'30" x4', righe:'6+6 step ups'}]},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-4-3 back squat · 2) 6/8 push ups'},
+      {nome:'Ogni 3\'30" x4', righe:'8 trap bar deadlift (2 reps di riserva) · 6/8 push press manubri'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-3-3 bench press · 2) rest'},
+      {nome:"Ogni 3' x4", righe:'8 bench press (2 reps di riserva) · 6+6 one leg rdl manubrio'},
+      {nome:'Ogni 2\'30" x4', righe:'6+6 step ups'}]},
     { titolo:'Settimana 5', blocchi:[
-      {nome:'Warm-up 2x', righe:'corda · overhead lunges · thruster · banded face pull · box jump · 2x10+10 side plank clamshell'},
+      {nome:'Warm-up 2x', righe:"1' salti corda · 10m overhead w.lunges db/bb · 8 thruster manubri · 10 banded face pull · 8 box jump 50cm · 2x(10+10) side plank clamshell"},
       {nome:"EMOM 10'", righe:'4 seated box jump · 4 lat slam ball'},
-      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat (attivazione, carichi inferiori) · 6 push ups'},
-      {nome:'2\'30" x4', righe:'8 back squat (4-5 reps dal cedim.) + 8+8 rematore unilaterale manubrio'},
-      {nome:"EMOM / 3' x4", righe:'6-5-4-3-3 shoulder press · 8 bench press (4 reps cedim.) + 6 lateral raises'},
-      {nome:'2\'30" x4', righe:'6+6 step ups'}]},
+      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat (carichi inferiori alle scorse settimane, come attivazione) · min dispari: 6 push ups'},
+      {nome:'Ogni 2\'30" x4', righe:'8 back squat (4-5 reps prima del cedimento) subito seguito da 8+8 rematore unilaterale manubrio'},
+      {nome:"EMOM 10'", righe:'6-5-4-3-3 shoulder press · 2° minuto: rest'},
+      {nome:"Ogni 3' x4", righe:'8 bench press (4 reps al cedimento) + 6 lateral raises carico medio'},
+      {nome:'Ogni 2\'30" x4', righe:'6+6 step ups'}]},
     { titolo:'Settimana 6', blocchi:[
-      {nome:'Warm-up 2x + PLYO', righe:"EMOM 10': 4 balzi ostacoli · 4 slam ball"},
-      {nome:"EMOM 10'", righe:'6-5-4-4-3 back squat · 8 push press manubri'},
-      {nome:'2\'30" x4', righe:'7 hip thrust (2 reps cedim.) + 6 chin ups'},
-      {nome:"EMOM 10'", righe:'6-5-4-3-3 shoulder press · 15 croci manubri'},
-      {nome:"3' x4", righe:'7 rematore presa prona bilanciere · 6 alzate laterali medio'},
-      {nome:'Finisher', righe:"3x10 stacco da terra – 1' rest"}]},
+      {nome:'Warm-up 2x', righe:"1' salti corda · 10m overhead w.lunges db/bb · 8 thruster manubri · 10 banded face pull · 8 box jump 50cm"},
+      {nome:"PLYO · EMOM 10'", righe:'1) 4 balzi ostacoli · 2) 4 slam ball'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-4-3 back squat · 2) 8 push press manubri'},
+      {nome:'Ogni 2\'30" x4', righe:'7 hip thrust (2 reps prima del cedimento) subito seguito da 6 chin ups'},
+      {nome:"EMOM 10'", righe:'1) 6-5-4-3-3 shoulder press · 2) 15 croci con manubri'},
+      {nome:"Ogni 3' x4", righe:'7 rematore presa prona con bilanciere · 6 alzate laterali peso medio'},
+      {nome:'Finisher', righe:"3x10 stacco da terra · 1' rest"}]},
     { titolo:'Settimana 7', blocchi:[
-      {nome:"Warm-up · EMOM 6'", righe:"1' row · 12 ring row · 8 squat jumps"},
-      {nome:'Back squat', righe:"10' build up · 3x: 5 back squat 70%1RM o 8 rdl + 10 push ups + 10 bent row db · 2' rest"},
-      {nome:'4x (RPE 7-8)', righe:'40m farmer carry · 10 renegade row · 10 push press · 10 curl · 10 skullcrusher · 20m affondi manubri'}]},
+      {nome:"Warm-up · EMOM 6'", righe:"1' row · 12 ring row / aus. pull · 8 squat jumps"},
+      {nome:'Forza', righe:"10' back squat build up · poi 3x: 5 back squat 70% 1RM (o 8 rdl) subito seguito da 10 push ups + 10 bent over row db · 2' rest"},
+      {nome:'Metcon · 4x (RPE 7-8)', righe:'40m farmer carry · 10 renegade row · 10 push press manubri · 10 curl manubri · 10 skullcrusher manubri · 20m affondi con manubri'}]},
     { titolo:'Settimana 8', blocchi:[
-      {nome:'Warm-up', righe:"5' easy bike · 2x(10 goblet squat, 10 back lunges, 20m farmer carry) · 5' mobility"},
-      {nome:'4x', righe:"6+6 bulgarian split squat manubri · 6+6 one leg rdl manubrio · 1'30\" rest"},
+      {nome:'Warm-up', righe:"5' easy bike · 2x(10 goblet squat · 10 back lunges · 20m farmer carry) · 5' dynamic mobility"},
+      {nome:'4x', righe:"6+6 bulgarian split squat manubri · 6+6 one leg rdl con manubrio · 1'30\" rest"},
       {nome:'6x', righe:"6 trazioni · 6 dips · 1' rest"},
       {nome:'4x', righe:'12 hip thrust · 20 polpacci da rialzo'},
       {nome:'Finisher 28-21-15-9', righe:'push ups · band face pulls'}]}
   ]},
   tri: { nome:'Triathlon · Mesociclo 9', coach:'Paolo Morosini', durata:4,
-    obiettivi:'Durabilità e resistenza specifica · ↑ tempo in sella · corsa post-bike · nutrizione gara · continuità nuoto',
+    obiettivi:'Durabilità e resistenza specifica · ↑ tempo in sella · corsa post-bike · nutrizione gara · continuità nuoto. Nota PT: nei brick 40→60 g CHO/h crescenti (S1 40-50 · S2 50-60 · S3 60) per allenare l\'intestino, non per massimizzare l\'assorbimento.',
     weeks:[
     { titolo:'Settimana 1', note:'Brick: 40-50 g CHO/h', sessioni:[
       {disc:'nuoto', blocchi:[{nome:'Riscaldamento',righe:'300 easy · 100 tavoletta · 100 pull buoy'},{nome:'Tecnica',righe:'4x50 con pinnette · 20" rest'},{nome:'Main set',righe:'5x400 @ ritmo olimpico · rec 30-45"'},{nome:'Defaticamento',righe:'100 easy'}]},
@@ -1075,7 +1104,7 @@ function getSpesaCats(){
 //  STATE
 // ══════════════════════════════════════════
 let tab='oggi', nicType='corsa', oggiDay='lun', schedule={}, catLabels={}, spesa={}, spesaHistory={}, spesaCategories={}, pantry=[], _cid=0, editBase=null, baseNicDay='corsa', categoryManager=false, spesaOwners=[], listView=null, noemiSettimana={}, noemiOpen={}, baseView=null,
-    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={}, coachConfig={};
+    allenamentiCfg={}, alOpen={}, sched2Open={}, training=[], dashOpen=false, spesaMeta={}, overrides={}, coachConfig={}, schedeEdit=null, edOpen={};
 const AL_CFG_DEF = { forza:{start:'2026-05-18', shift:0}, tri:{start:'2026-06-01', shift:0} };
 
 // ── SOTTOSCRIZIONI FIREBASE (dichiarative) ──
@@ -1107,6 +1136,8 @@ const SUBS = [
   ['spesaMeta',  v => spesaMeta = v||{},  () => tab==='spesa'],
   ['overrides',  v => overrides = v||{},  () => tab==='oggi' && !editBase],
   ['coachConfig',v => coachConfig = v||{},() => tab==='allen' && !dashOpen],
+  ['allenamentiSchede', v => { if(v) ALLENAMENTI = v; else dbSet('allenamentiSchede', ALLENAMENTI); },
+    () => (tab==='allen'||tab==='oggi') && !dashOpen && !schedeEdit],
 ];
 function initFirebaseSubs(){
   SUBS.forEach(([path, assign, shouldRender]) => {
@@ -1189,7 +1220,7 @@ function noemiSideHTML(wd, mealKey){
 // ══════════════════════════════════════════
 //  ACTIONS
 // ══════════════════════════════════════════
-function todayId(){ const wd=new Date().getDay(); return NOEMI_DAYS[(wd+6)%7]; }
+function todayId(){ return NOEMI_DAYS[new Date().getDay()]; }   // getDay: 0=dom … 6=sab
 
 function chipRow(items, sel, fn, cls){
   return `<div class="chips-wrap"><div class="chips">${
@@ -1265,9 +1296,9 @@ function integCompact(integ){
 }
 function weekDates(){
   const now=new Date();
-  const dow=(now.getDay()+6)%7;            // 0 = lunedì
-  const monday=new Date(now); monday.setDate(now.getDate()-dow);
-  return NOEMI_DAYS.map((id,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return {id,label:NOEMI_LABELS[id],num:d.getDate(),obj:d}; });
+  const dow=now.getDay();                   // 0 = domenica
+  const sunday=new Date(now); sunday.setDate(now.getDate()-dow);
+  return NOEMI_DAYS.map((id,i)=>{ const d=new Date(sunday); d.setDate(sunday.getDate()+i); return {id,label:NOEMI_LABELS[id],num:d.getDate(),obj:d}; });
 }
 function fmtFull(d){ const s=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); }
 function calendarHTML(){
@@ -1368,8 +1399,10 @@ function renderNicholasTab(){
       <button class="reset-btn" onclick="resetNicWeek()">↺ Reset</button>
       <button class="reset-btn" onclick="openBase('nicholas')">⚙︎ Modifica dieta base</button>
     </div>
-    <div class="sec-title n" style="margin-top:10px">🍽️ La tua dieta</div>
-    ${nicChips(nicType,'setNicType')}
+    <div class="vsub">
+      <div class="sec-title n" style="margin:0">🍽️ La tua dieta</div>
+      ${nicChips(nicType,'setNicType')}
+    </div>
     <div class="day-block">${renderNicholasDay(d)}</div>
   `;
 }
@@ -1395,8 +1428,10 @@ function renderNoemiTab(){
   }).join('');
   return `
     <div class="page-title e">Noemi</div>
-    <div class="pl-hello">📝 Scrivi la settimana a mano, come sulle note — una volta al mese</div>
-    <button class="be-open" onclick="openBaseView()">📖 Dieta base</button>
+    <div class="vsub">
+      <div class="pl-hello" style="margin:0">📝 Scrivi la settimana a mano, come sulle note — una volta al mese</div>
+      <button class="be-open" onclick="openBaseView()">📖 Dieta base</button>
+    </div>
     ${days}
   `;
 }
@@ -1455,8 +1490,10 @@ function progCard(prog, bodyFn){
       <label class="al-date">📅 <input type="date" value="${cfg.start||''}" onchange="setAlStart('${prog}',this.value)"></label>
       <button class="al-btn" onclick="skipWeek('${prog}',1)">⏭️ Salta</button>
       ${cfg.shift?`<button class="al-btn" onclick="skipWeek('${prog}',-1)">↩︎ (-${cfg.shift})</button>`:''}
+      <button class="al-btn" onclick="openSchedeEdit('${prog}')">✏️ Modifica</button>
+      <button class="al-btn" onclick="openSchedaPdf('${prog}')">📎 PDF</button>
     </div>
-    ${prog==='tri'&&P.obiettivi?`<div class="al-obj">🎯 ${esc(P.obiettivi)}</div>`:''}
+    ${(P.obiettivi||P.note)?`<div class="al-obj">${prog==='tri'?'🎯':'📝'} ${esc(P.obiettivi||P.note)}</div>`:''}
     ${weeks}
   </div>`;
 }
@@ -1475,7 +1512,7 @@ function renderAllenamentiTab(){
   </div>`;
   return `
     <div class="page-title n">Allenamenti</div>
-    <div class="page-sub">🎯 <input class="obj-in" value="${esc(coachConfig.obiettivo||'')}" placeholder="Imposta obiettivo (es. IM 70.3 Cervia · set)" onchange="setObiettivo(this.value)"></div>
+    <div class="vsub"><div class="page-sub" style="padding:0">🎯 <input class="obj-in" value="${esc(coachConfig.obiettivo||'')}" placeholder="Imposta obiettivo (es. IM 70.3 Cervia · set)" onchange="setObiettivo(this.value)"></div></div>
     <button class="dash-cta" onclick="openDash()">
       <span class="dash-cta-ic">📊</span>
       <span><b>Vuoi capire come sta andando?</b><small>Analisi e grafici dei tuoi allenamenti</small></span>
@@ -1486,6 +1523,132 @@ function renderAllenamentiTab(){
     ${progCard('tri', triBody)}
   `;
 }
+
+// ── EDITOR SCHEDE (forza + tri) — stesso look della pagina Allenamenti; persistito su Firebase ──
+const EDIT_DEL = "flex-shrink:0;border:none;background:transparent;color:#C9D0D9;cursor:pointer;font-size:13px;padding:2px 4px";
+function blkEditorHTML(prog, wi, si, blocchi){
+  const rows = (blocchi||[]).map((b,bi)=>`
+    <div class="al-blk" style="display:flex;align-items:flex-start;gap:6px">
+      <div style="flex:1;min-width:0">
+        <input class="sch-name" value="${esc(b.nome||'')}" placeholder="NOME BLOCCO (es. Tecnica)" onchange="setBloccoField('${prog}',${wi},${si},${bi},'nome',this.value)">
+        <textarea class="ta-auto sch-righe" rows="1" placeholder="esercizi · serie · note del PT" oninput="nwGrow(this)" onchange="setBloccoField('${prog}',${wi},${si},${bi},'righe',this.value)">${esc(b.righe||'')}</textarea>
+      </div>
+      <button style="${EDIT_DEL}" onclick="delBlocco('${prog}',${wi},${si},${bi})" title="Elimina blocco">🗑</button>
+    </div>`).join('');
+  return `${rows}<button class="al-btn" style="font-size:11.5px;padding:5px 11px;margin-top:2px" onclick="addBlocco('${prog}',${wi},${si})">＋ blocco</button>`;
+}
+function renderSchedeEdit(){
+  const prog = schedeEdit, P = ALLENAMENTI[prog]; if(!P) return '';
+  const isTri = prog==='tri';
+  const top = isTri
+    ? `<div class="al-obj"><div style="font-size:11px;font-weight:800;color:var(--n);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">🎯 Obiettivi</div>
+        <textarea class="ta-auto" rows="2" style="display:block;width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:12.5px;color:#3a4a63;line-height:1.45;outline:none" placeholder="Obiettivi del mesociclo…" oninput="nwGrow(this)" onchange="setSchedaTop('tri',this.value)">${esc(P.obiettivi||'')}</textarea></div>`
+    : `<div class="al-obj"><div style="font-size:11px;font-weight:800;color:var(--n);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">📝 Nota programma</div>
+        <textarea class="ta-auto" rows="2" style="display:block;width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:12.5px;color:#3a4a63;line-height:1.45;outline:none" placeholder="Nota del PT…" oninput="nwGrow(this)" onchange="setSchedaTop('forza',this.value)">${esc(P.note||'')}</textarea></div>`;
+  const cur = settCorrente(prog);
+  const weeks = (P.weeks||[]).map((w,wi)=>{
+    const op = edOpen[prog+wi] !== undefined ? edOpen[prog+wi] : (wi===cur);
+    const body = !op ? '' : (isTri
+      ? `<textarea class="ta-auto al-note" rows="1" style="display:block;width:100%;resize:none;font-family:inherit;outline:none" placeholder="🍬 Nota settimana (opz.)" oninput="nwGrow(this)" onchange="setWeekNote('tri',${wi},this.value)">${esc(w.note||'')}</textarea>
+         ${(w.sessioni||[]).map((s,si)=>`
+           <div class="al-sess">
+             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+               <select class="al-btn" style="padding:5px 10px;font-size:12px" onchange="setSessDisc('tri',${wi},${si},this.value)">${['nuoto','bici','corsa','forza','brick'].map(d=>{const dd=DISC[d]||['•',d];return `<option value="${d}" ${s.disc===d?'selected':''}>${dd[0]} ${dd[1]}</option>`;}).join('')}</select>
+               <button style="${EDIT_DEL}" onclick="delSess('tri',${wi},${si})" title="Elimina disciplina">🗑</button>
+             </div>
+             ${blkEditorHTML('tri',wi,si,s.blocchi)}
+           </div>`).join('')}
+         <button class="al-btn" style="font-size:11.5px;padding:5px 11px;margin-top:6px" onclick="addSess('tri',${wi})">＋ disciplina</button>`
+      : blkEditorHTML('forza',wi,-1,w.blocchi));
+    return `<div class="al-wk ${wi===cur?'cur':''}">
+      <div class="al-wk-row" style="gap:7px">
+        <span class="al-arrow ${op?'op':'cl'}" onclick="toggleEditWk('${prog}',${wi})" style="cursor:pointer;flex-shrink:0">▾</span>
+        <input class="sch-title" value="${esc(w.titolo||'')}" placeholder="Titolo settimana" onchange="setSchedaTitolo('${prog}',${wi},this.value)">
+        ${wi===cur?'<span class="al-cur">corrente</span>':''}
+        <button style="${EDIT_DEL}" onclick="delWeek('${prog}',${wi})" title="Elimina settimana">🗑</button>
+      </div>
+      ${op?`<div class="al-wk-body">${body}</div>`:''}
+    </div>`;
+  }).join('');
+  return `
+    <div class="dash-head"><button class="dash-back" onclick="closeSchedeEdit()">←</button>
+      <div><div class="page-title n" style="padding:0">✏️ Modifica scheda</div><div class="page-sub" style="padding:0">${esc(P.nome)} · si salva da solo</div></div></div>
+    <div class="card">
+      <div class="al-prog-h">${prog==='forza'?'🏋️':'🔱'} ${esc(P.nome.split(' · ')[0])}<span class="al-badge">${(P.weeks||[]).length} sett.</span></div>
+      ${top}
+      ${weeks}
+      <div style="padding:8px 15px 16px"><button class="al-btn" onclick="addWeek('${prog}')">＋ Aggiungi settimana</button></div>
+    </div>
+    <div style="height:24px"></div>`;
+}
+function saveSchede(){ dbSet('allenamentiSchede', ALLENAMENTI); }
+window.openSchedeEdit  = p => { schedeEdit=p; renderContent(); window.scrollTo(0,0); };
+window.closeSchedeEdit = ()  => { schedeEdit=null; renderContent(); window.scrollTo(0,0); };
+window.toggleEditWk    = (p,wi) => { const shown = edOpen[p+wi]!==undefined ? edOpen[p+wi] : (wi===settCorrente(p)); edOpen[p+wi]=!shown; renderContent(); };
+window.setSchedaTop    = (p,v) => { if(p==='tri') ALLENAMENTI.tri.obiettivi=v; else ALLENAMENTI.forza.note=v; saveSchede(); toast(MSG_SAVED); };
+window.setSchedaTitolo = (p,wi,v) => { ALLENAMENTI[p].weeks[wi].titolo=v; saveSchede(); toast(MSG_SAVED); };
+window.setWeekNote     = (p,wi,v) => { v=(v||'').trim(); if(v) ALLENAMENTI[p].weeks[wi].note=v; else delete ALLENAMENTI[p].weeks[wi].note; saveSchede(); toast(MSG_SAVED); };
+function _blkArr(p,wi,si){ const w=ALLENAMENTI[p].weeks[wi]; return si<0 ? (w.blocchi||(w.blocchi=[])) : (w.sessioni[si].blocchi||(w.sessioni[si].blocchi=[])); }
+window.setBloccoField  = (p,wi,si,bi,f,v) => { _blkArr(p,wi,si)[bi][f]=v; saveSchede(); toast(MSG_SAVED); };
+window.addBlocco       = (p,wi,si) => { _blkArr(p,wi,si).push({nome:'',righe:''}); saveSchede(); renderContent(); };
+window.delBlocco       = (p,wi,si,bi) => { _blkArr(p,wi,si).splice(bi,1); saveSchede(); renderContent(); };
+window.setSessDisc     = (p,wi,si,v) => { ALLENAMENTI[p].weeks[wi].sessioni[si].disc=v; saveSchede(); toast(MSG_SAVED); };
+window.addSess         = (p,wi) => { const w=ALLENAMENTI[p].weeks[wi]; (w.sessioni||(w.sessioni=[])).push({disc:'bici',blocchi:[{nome:'',righe:''}]}); saveSchede(); renderContent(); };
+window.delSess         = (p,wi,si) => { ALLENAMENTI[p].weeks[wi].sessioni.splice(si,1); saveSchede(); renderContent(); };
+window.addWeek         = (p) => { const w = p==='tri' ? {titolo:'Nuova settimana', sessioni:[{disc:'bici',blocchi:[{nome:'',righe:''}]}]} : {titolo:'Nuova settimana', blocchi:[{nome:'',righe:''}]}; ALLENAMENTI[p].weeks.push(w); ALLENAMENTI[p].durata=ALLENAMENTI[p].weeks.length; saveSchede(); renderContent(); };
+window.delWeek         = (p,wi) => { if(!confirm('Eliminare questa settimana?')) return; ALLENAMENTI[p].weeks.splice(wi,1); ALLENAMENTI[p].durata=ALLENAMENTI[p].weeks.length; saveSchede(); renderContent(); };
+
+// ── VIEWER PDF SCHEDA (PDF come base64 nel Realtime DB: schedePdf/{prog}) ──
+// Niente Firebase Storage (richiede piano a pagamento): le schede PDF sono piccole
+// (<100KB), le teniamo come data-URL nel DB, protette dall'allowlist esistente.
+let pdfState = null;   // { prog, loading, url, error }
+let _pdfBlob = null;   // object URL da revocare
+function _revokePdf(){ if(_pdfBlob){ URL.revokeObjectURL(_pdfBlob); _pdfBlob=null; } }
+async function _dataUrlToObjUrl(dataUrl){ const b = await (await fetch(dataUrl)).blob(); _revokePdf(); _pdfBlob = URL.createObjectURL(b); return _pdfBlob; }
+function renderPdfModal(){
+  let ov = document.getElementById('pdfOverlay');
+  if(!pdfState){ if(ov) ov.remove(); return; }
+  if(!ov){ ov=document.createElement('div'); ov.id='pdfOverlay'; ov.className='pdf-ov'; ov.onclick=e=>{ if(e.target===ov) closeSchedaPdf(); }; document.body.appendChild(ov); }
+  const { prog, loading, url, error } = pdfState;
+  const P = ALLENAMENTI[prog] || {};
+  const body = loading ? `<div class="pdf-msg">Carico…</div>`
+    : url ? `<iframe class="pdf-frame" src="${url}"></iframe>
+             <div class="pdf-actions"><a class="al-btn" href="${url}" target="_blank" rel="noopener">↗ Apri</a><button class="al-btn" onclick="document.getElementById('pdfFile').click()">Sostituisci</button></div>`
+    : `<div class="pdf-msg">${error?esc(error):'Nessun PDF caricato per questa scheda.'}<button class="al-btn" style="margin-top:8px" onclick="document.getElementById('pdfFile').click()">📎 Carica PDF</button></div>`;
+  ov.innerHTML = `<div class="pdf-card">
+    <div class="pdf-head"><b>📎 ${esc(P.nome||prog)}</b><button class="pdf-x" onclick="closeSchedaPdf()">✕</button></div>
+    ${body}
+    <input id="pdfFile" type="file" accept="application/pdf" style="display:none" onchange="uploadSchedaPdf(event)">
+  </div>`;
+}
+window.openSchedaPdf = prog => {
+  pdfState = { prog, loading:true, url:null, error:null }; renderPdfModal();
+  get(ref(db, 'schedePdf/'+prog)).then(async snap => {
+    if(!pdfState || pdfState.prog!==prog) return;
+    const data = snap.val();
+    if(data){ const u = await _dataUrlToObjUrl(data); if(pdfState&&pdfState.prog===prog) pdfState={prog,loading:false,url:u,error:null}; }
+    else { pdfState={prog,loading:false,url:null,error:null}; }
+    renderPdfModal();
+  }).catch(e => { if(pdfState&&pdfState.prog===prog){ pdfState={prog,loading:false,url:null,error:'Errore lettura: '+((e&&e.message)||e)}; renderPdfModal(); } });
+};
+window.closeSchedaPdf = () => { pdfState=null; _revokePdf(); renderPdfModal(); };
+window.uploadSchedaPdf = (e) => {
+  const f = e.target.files && e.target.files[0]; if(!f || !pdfState) return;
+  const prog = pdfState.prog;
+  if(f.size > 1024*1024){ pdfState={prog,loading:false,url:null,error:'PDF troppo grande ('+Math.round(f.size/1024)+' KB). Max ~1 MB.'}; renderPdfModal(); return; }
+  pdfState = { prog, loading:true, url:null, error:null }; renderPdfModal();
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const dataUrl = String(r.result);
+      await dbSet('schedePdf/'+prog, dataUrl);
+      const u = await _dataUrlToObjUrl(dataUrl);
+      pdfState = { prog, loading:false, url:u, error:null }; renderPdfModal(); toast('PDF caricato ✓');
+    } catch(err) { pdfState={prog,loading:false,url:null,error:'Salvataggio non riuscito ('+((err&&err.code)||(err&&err.message)||err)+').'}; renderPdfModal(); }
+  };
+  r.onerror = () => { pdfState={prog,loading:false,url:null,error:'Lettura file non riuscita.'}; renderPdfModal(); };
+  r.readAsDataURL(f);
+};
 
 // ══════════════════════════════════════════
 //  DASHBOARD ALLENAMENTI (analisi + grafici)
@@ -1537,7 +1700,22 @@ function computeDash(){
   A.forEach(a=>{ if(!MAIN.includes(a.disciplina)){ const hh=_n(a.durata_min)/60; altri.h+=hh; altri.n++; altri.km+=_n(a.distanza_km);
     const lab=ALTRI_LBL(a.tipo_garmin); (altri.byType[lab]=altri.byType[lab]||{h:0,n:0}); altri.byType[lab].h+=hh; altri.byType[lab].n++;
     const mi=months.indexOf(a.mese); if(mi>=0) volAltri[mi]+=hh; } });
-  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri,avgWkMonth,avgWkRecent,avgWkPrev,peakWk};
+  // ── BRICK: bici→corsa stesso giorno con la corsa che parte entro ~35' dalla fine bici ──
+  const brick={};
+  { const toMin=s=>{ const m=/^(\d{1,2}):(\d{2})$/.exec(s||''); return m?(+m[1]*60+ +m[2]):null; };
+    const byDay={}; A.forEach(a=>{ if(a.data) (byDay[a.data]=byDay[a.data]||[]).push(a); });
+    Object.values(byDay).forEach(day=>{
+      const ev=day.map(a=>({a,st:toMin(a.ora)})).filter(x=>x.st!=null).sort((x,y)=>x.st-y.st);
+      for(let i=0;i<ev.length;i++){ const b=ev[i].a; if(b.disciplina!=='bici') continue;
+        const bEnd=ev[i].st+_n(b.durata_min);
+        for(let j=i+1;j<ev.length;j++){ const r=ev[j].a, gap=ev[j].st-bEnd;
+          if(gap>35) break;
+          if(r.disciplina==='corsa' && gap>=-10){
+            brick[b.id]={idx:A.indexOf(r), disc:'corsa', nome:r.nome, km:_n(r.distanza_km), min:Math.round(_n(r.durata_min))};
+            brick[r.id]={idx:A.indexOf(b), disc:'bici',  nome:b.nome, km:_n(b.distanza_km), min:Math.round(_n(b.durata_min))};
+            break; } } } });
+  }
+  return {A,discs,tot,months,vol,weeks,load,z,rmonths,pace,rhr,ctl,totH,altri,volAltri,avgWkMonth,avgWkRecent,avgWkPrev,peakWk,brick};
 }
 
 function chartCard(title,id,cls){ return `<div class="dash-chart ${cls||''}"><div class="dch-title">${title}</div><div class="dch-canvas"><canvas id="${id}"></canvas></div></div>`; }
@@ -1643,6 +1821,7 @@ function renderDashDetail(D){
       <span class="ddet-date">${(a.data||'').slice(5)}</span>
       <span class="ddet-name">${esc(a.nome||'')}</span>
       <span class="ddet-meta">${_n(a.distanza_km)>0?_n(a.distanza_km).toFixed(1)+' km · ':''}${Math.round(_n(a.durata_min))}' ${_n(a.fc_media)>0?'· ❤️'+Math.round(_n(a.fc_media)):''}</span>
+      ${D.brick[a.id]?`<span class="ddet-brick" onclick="event.stopPropagation();openActivityDetail(${D.brick[a.id].idx})" title="Brick · apri la ${esc(D.brick[a.id].disc)}">🔥 ${D.brick[a.id].disc==='corsa'?'🏃':'🚴'} ${D.brick[a.id].km>0.1?D.brick[a.id].km.toFixed(1)+'km':D.brick[a.id].min+"'"}</span>`:''}
       <span class="ddet-go">›</span>
     </button>`).join('');
   return `${back}
@@ -1688,7 +1867,12 @@ function renderActivityDetail(D){
   const zbar = ztot>1?`<div class="dash-sec-title" style="margin-top:8px">Minuti per zona FC</div>
     <div class="zbar">${zmin.map((m,i)=>m>0?`<div class="zseg" style="flex:${m};background:${ZCOL[i]}"></div>`:'').join('')}</div>
     <div class="zleg">${zmin.map((m,i)=>m>0?`<span><i style="background:${ZCOL[i]}"></i>Z${i+1} ${Math.round(m)}'</span>`:'').join('')}</div>`:'';
+  const bk = D && D.brick && D.brick[a.id];
+  const brickBanner = bk?`<button class="brick-banner" onclick="openActivityDetail(${bk.idx})">
+    🔥 <b>Brick</b> — ${a.disciplina==='bici'?'seguita dalla corsa':'preceduta dalla bici'}: ${bk.disc==='corsa'?'🏃':'🚴'} ${esc(bk.nome||'')} ${bk.km>0.1?'· '+bk.km.toFixed(1)+' km':''} · ${bk.min}' <span style="margin-left:auto">›</span>
+  </button>`:'';
   return `${back}
+    ${brickBanner}
     <div class="dash-cards">${cards}</div>
     ${zbar}
     ${a.id ? `<div id="actMap" class="act-map"></div><div id="actElevWrap"></div><div id="actClimbs"></div><div id="actLaps"></div>` : ''}`;
@@ -2173,20 +2357,22 @@ function renderSpesaTab(){
       <div class="shop-prog-txt">${total ? done+' / '+total+' presi' : 'lista vuota'}</div>
       <div class="shop-prog-track"><div class="shop-prog-fill" style="width:${pct}%"></div></div>
     </div>
-    <div class="shop-actions">
-      <button class="shop-tool gen" onclick="spesaFatta()">✓ Spesa fatta</button>
-      <button class="shop-tool sec" onclick="svuotaDispensa()">Svuota dispensa</button>
-      <button class="shop-tool icon" style="margin-left:auto" onclick="managerCategories()" title="Categorie">⚙️</button>
-    </div>
-    <div class="shop-filters">
-      <button class="shop-filter f-nicholas ${spesaOwners.includes('nicholas')?'on':''}" onclick="toggleOwnerFilter('nicholas')">🔵 Nicholas</button>
-      <button class="shop-filter f-noemi ${spesaOwners.includes('noemi')?'on':''}" onclick="toggleOwnerFilter('noemi')">🩷 Noemi</button>
-      <button class="shop-filter f-gatto ${spesaOwners.includes('gatto')?'on':''}" onclick="toggleOwnerFilter('gatto')">🐈 Mia</button>
-      <button class="shop-filter f-coniglio ${spesaOwners.includes('coniglio')?'on':''}" onclick="toggleOwnerFilter('coniglio')">🐰 Ginger</button>
-    </div>
-    <div class="shop-filters" style="margin-top:-4px">
-      <button class="shop-filter f-tobuy ${listView==='tocomprare'?'on':''}" onclick="setListView('tocomprare')">🛒 Da comprare</button>
-      <button class="shop-filter f-pantry ${listView==='dispensa'?'on':''}" onclick="setListView('dispensa')">🏠 Dispensa</button>
+    <div class="vsub">
+      <div class="shop-actions">
+        <button class="shop-tool gen" onclick="spesaFatta()">✓ Spesa fatta</button>
+        <button class="shop-tool sec" onclick="svuotaDispensa()">Svuota dispensa</button>
+        <button class="shop-tool icon" style="margin-left:auto" onclick="managerCategories()" title="Categorie">⚙️</button>
+      </div>
+      <div class="shop-filters">
+        <button class="shop-filter f-nicholas ${spesaOwners.includes('nicholas')?'on':''}" onclick="toggleOwnerFilter('nicholas')">🔵 Nicholas</button>
+        <button class="shop-filter f-noemi ${spesaOwners.includes('noemi')?'on':''}" onclick="toggleOwnerFilter('noemi')">🩷 Noemi</button>
+        <button class="shop-filter f-gatto ${spesaOwners.includes('gatto')?'on':''}" onclick="toggleOwnerFilter('gatto')">🐈 Mia</button>
+        <button class="shop-filter f-coniglio ${spesaOwners.includes('coniglio')?'on':''}" onclick="toggleOwnerFilter('coniglio')">🐰 Ginger</button>
+      </div>
+      <div class="shop-filters">
+        <button class="shop-filter f-tobuy ${listView==='tocomprare'?'on':''}" onclick="setListView('tocomprare')">🛒 Da comprare</button>
+        <button class="shop-filter f-pantry ${listView==='dispensa'?'on':''}" onclick="setListView('dispensa')">🏠 Dispensa</button>
+      </div>
     </div>
     ${body}
     ${histCount ? `<div class="shop-hist">
@@ -2350,7 +2536,7 @@ window.toggleOwner = (cat, idx, owner) => {
 };
 
 // ── ACTIONS ──
-window.setTab     = t => { tab=t; editBase=null; baseView=null; dashOpen=false; dashDetail=null; actDetail=null; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
+window.setTab     = t => { tab=t; editBase=null; baseView=null; schedeEdit=null; dashOpen=false; dashDetail=null; actDetail=null; _destroyCharts(); if(t==='nicholas'){ try{ nicType=getTrain(todayId()); }catch(e){} } closeNav(); updateTabbar(); renderContent(true); window.scrollTo(0,0); };
 window.toggleNav  = () => { const r=document.getElementById('rail'); const open=r.classList.toggle('exp'); document.body.classList.toggle('nav-open', open); };
 window.closeNav   = () => { document.getElementById('rail').classList.remove('exp'); document.body.classList.remove('nav-open'); };
 window.setNicType = id => { nicType=id; renderContent(); };
@@ -2395,7 +2581,8 @@ function updateTabbar(){
 function renderContent(animate){
   const el = document.getElementById('content');
   el.classList.remove('tab-anim');
-  el.innerHTML = editBase==='noemi'    ? renderNoemiBaseEdit()
+  el.innerHTML = schedeEdit            ? renderSchedeEdit()
+               : editBase==='noemi'    ? renderNoemiBaseEdit()
                : editBase==='nicholas' ? renderNicBaseEdit()
                : baseView==='noemi'    ? renderNoemiBaseConsult()
                : tab==='oggi'      ? renderOggi()
@@ -2406,7 +2593,7 @@ function renderContent(animate){
                :                     renderNoemiTab();
   if(animate){ void el.offsetWidth; el.classList.add('tab-anim'); }
   // autosize dei campi liberi di Noemi
-  el.querySelectorAll('textarea.nw-ta').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
+  el.querySelectorAll('textarea.nw-ta, textarea.ta-auto').forEach(t=>{ t.style.height='auto'; t.style.height=Math.max(38,t.scrollHeight)+'px'; });
   if(tab==='allen' && dashOpen) drawDashCharts();
   if(tab==='allen' && dashOpen && actDetail!=null) loadActivityTrack(training[actDetail]);
 }
