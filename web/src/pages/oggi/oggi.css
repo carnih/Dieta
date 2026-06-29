@@ -1,0 +1,443 @@
+/* Stili della vista OGGI — portati FEDELI dal monolite index.html.
+   Scoped a questo file (non tocco styles/index.css condiviso). Usano le CSS var
+   storiche (--n / --e / --bg / --border) definite in src/styles/index.css. */
+
+.oggi {
+  --n-l: #eff6ff;
+  --n-g: linear-gradient(135deg, #2563eb, #60a5fa);
+  --e-g: linear-gradient(135deg, #db2777, #f472b6);
+  --sh-1: 0 6px 18px -10px rgba(17, 24, 39, 0.18);
+}
+
+/* ── intestazione pagina ── */
+.oggi .page-title {
+  font-size: 28px;
+  font-weight: 850;
+  letter-spacing: -0.6px;
+  color: #111827;
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 15;
+  background: var(--bg);
+  margin: 0 -16px;
+  padding: 8px 18px 6px;
+  box-shadow: 0 8px 12px -10px rgba(0, 0, 0, 0.12);
+}
+.oggi .page-sub {
+  font-size: 14px;
+  color: #9ca3af;
+  font-weight: 600;
+  padding: 2px 2px 6px;
+}
+
+/* ── calendario settimana ── */
+.oggi .cal {
+  display: flex;
+  gap: 3px;
+  padding: 4px 0 2px;
+}
+.oggi .cal-day {
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.oggi .cal-day:active .cal-dt {
+  transform: scale(0.94);
+}
+.oggi .cal-wd {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b6bcc6;
+  letter-spacing: 0.01em;
+}
+.oggi .cal-dt {
+  font-size: 16px;
+  font-weight: 700;
+  color: #374151;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.18s;
+}
+.oggi .cal-day.today .cal-dt {
+  color: var(--e);
+}
+.oggi .cal-day.today .cal-wd {
+  color: var(--e);
+}
+.oggi .cal-day.sel .cal-dt {
+  background: var(--e-g);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 5px 14px rgba(219, 39, 119, 0.4);
+}
+.oggi .cal-day.sel .cal-wd {
+  color: var(--e);
+  font-weight: 800;
+}
+
+/* ── header colonne (riga sticky) ── */
+.oggi .cmp-top {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 48px);
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg);
+  padding: 6px 2px 8px;
+  margin-bottom: -2px;
+  gap: 6px;
+}
+.oggi .cmp-top-col {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 7px 10px;
+  border-radius: 10px;
+}
+.oggi .cmp-top-col.e {
+  color: var(--e);
+  background: #fce7f3;
+  border-bottom: 2px solid var(--e);
+}
+.oggi .cmp-top-col.n {
+  color: var(--n);
+  background: var(--n-l);
+  border-bottom: 2px solid var(--n);
+}
+.oggi .train-tag {
+  display: inline-block;
+  width: fit-content;
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--n);
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: none;
+  letter-spacing: 0;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+.oggi .train-scheda {
+  border: 1.5px solid var(--n);
+  background: #fff;
+  color: var(--n);
+  font-weight: 800;
+  font-size: 10px;
+  border-radius: 20px;
+  padding: 2px 9px;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.oggi .train-scheda:active {
+  background: var(--n-l);
+}
+
+/* ── card di confronto a 2 colonne ── */
+.oggi .cmp-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--sh-1);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.oggi .cmp-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+.oggi .cmp-head .em {
+  font-size: 15px;
+}
+.oggi .cmp-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.oggi .cmp-col {
+  padding: 11px 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+.oggi .cmp-col + .cmp-col {
+  border-left: 1px solid var(--border);
+}
+.oggi .cmp-items {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* ── pasto libero / fuori ── */
+.oggi .col-freebar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+.oggi .col-free {
+  border: 1.5px solid var(--border);
+  background: #fff;
+  border-radius: 50px;
+  font-size: 14px;
+  line-height: 1;
+  padding: 3px 8px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.15s;
+}
+.oggi .col-free:active {
+  transform: scale(0.9);
+}
+.oggi .cmp-free {
+  padding: 14px 6px;
+  text-align: center;
+  font-weight: 800;
+  color: #854d0e;
+  background: #fefce8;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* ── colonna Noemi: righe testo libero ── */
+.oggi .nm-line {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #4b5563;
+  line-height: 1.4;
+  background: #fff5fa;
+  border-left: 3px solid #f0a9c8;
+  border-radius: 8px;
+  padding: 7px 10px;
+  margin-bottom: 5px;
+  overflow-wrap: anywhere;
+}
+.oggi .nm-line.dolce {
+  background: #f6f0ff;
+  border-left-color: #c4a7e7;
+  color: #5b4670;
+}
+
+/* ── pill categorie ── */
+.oggi .cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 3px 9px 3px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.oggi .cat-pill.carbo {
+  background: #fef3c7;
+  color: #92400e;
+}
+.oggi .cat-pill.prot {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+.oggi .cat-pill.frutta {
+  background: #fce7f3;
+  color: #be185d;
+}
+.oggi .cat-pill.latte {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.oggi .cat-pill.grasso {
+  background: #ffedd5;
+  color: #9a3412;
+}
+.oggi .cat-pill.sfizio {
+  background: #f3e5d0;
+  color: #92400e;
+}
+.oggi .cat-pill.verdura {
+  background: #d1fae5;
+  color: #065f46;
+}
+.oggi .cat-pill.bevanda {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.oggi .cat-pill.olio {
+  background: #ecfccb;
+  color: #4d7c0f;
+}
+.oggi .cat-pill.integra {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+.oggi .cat-pill.scegli {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.oggi .cat-pill.altro {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ── riga cibo ── */
+.oggi .food-row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+.oggi .food-row .cat-pill {
+  margin-top: 2px;
+}
+.oggi .food-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+/* ── choice box (alternative) ── */
+.oggi .choice {
+  border: 1.5px solid #eef0f3;
+  border-radius: 13px;
+  overflow: hidden;
+}
+.oggi .choice-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.oggi .choice-head:active {
+  background: #fafafa;
+}
+.oggi .choice-count {
+  font-size: 11.5px;
+  color: #b6bcc6;
+  margin-left: auto;
+  font-weight: 500;
+}
+.oggi .choice-arrow {
+  font-size: 9px;
+  color: #c2c8d0;
+  transition: transform 0.24s;
+  flex-shrink: 0;
+}
+.oggi .choice.open .choice-arrow {
+  transform: rotate(180deg);
+}
+.oggi .choice-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.26s ease;
+}
+.oggi .choice.open .choice-body {
+  grid-template-rows: 1fr;
+}
+.oggi .choice-inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 9px;
+}
+.oggi .choice.open .choice-inner {
+  padding: 0 9px 10px;
+}
+.oggi .choice-opt {
+  font-size: 13.5px;
+  color: #374151;
+  padding: 7px 11px;
+  background: #fafbfc;
+  border-radius: 9px;
+  line-height: 1.4;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.oggi .choice-opt::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #d5dae2;
+  flex-shrink: 0;
+  transform: translateY(-1px);
+}
+.oggi .choice-shared {
+  font-size: 12.5px;
+  color: #6b7280;
+  padding: 6px 11px 0;
+}
+
+/* ── extra item (pasto libero default dieta) ── */
+.oggi .extra-item {
+  margin-top: 2px;
+  padding: 8px 12px;
+  background: #fff7ed;
+  border-radius: 10px;
+  border: 1px solid #fed7aa;
+  font-size: 13px;
+  color: #92400e;
+  line-height: 1.4;
+}
+
+/* ── override densità dentro le colonne di confronto (come nel monolite) ── */
+.oggi .cmp-items .food-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+.oggi .cmp-items .cat-pill {
+  padding: 2px 8px 2px 6px;
+  font-size: 9px;
+}
+.oggi .cmp-items .food-text {
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  width: 100%;
+}
+.oggi .cmp-items .choice-head {
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 9px;
+}
+.oggi .cmp-items .choice-count {
+  margin-left: 0;
+  font-size: 10.5px;
+}
+.oggi .cmp-items .choice-opt {
+  font-size: 12.5px;
+  padding: 6px 9px;
+}
+.oggi .cmp-items .extra-item {
+  font-size: 12px;
+  padding: 7px 10px;
+}
