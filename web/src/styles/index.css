@@ -29,12 +29,27 @@
   font-family: var(--font-round);
 }
 
-/* NIENTE overflow:hidden / height su html/body: su iOS standalone manda in tilt
-   il dimensionamento (prima 70%, poi zoom). Lo schermo pieno + lo scroll interno
-   sono gestiti dallo shell `position:fixed; inset:0` in App.tsx (vedi .app-shell). */
+/* ── Anti-zoom iOS (stesso approccio di NetWorth, che su mobile è ok) ──
+ * 1. -webkit-text-size-adjust:100% — disattiva l'auto-inflation del testo iOS
+ *    che durante il FOUT (caricamento Google Fonts) fa stimare a Safari una
+ *    pagina più larga → apertura "zoomata". È LA causa dello zoom brutto.
+ * 2. overflow-x:clip + max-width:100% su html/body/#root — assorbe overflow
+ *    orizzontale transitorio e ancora la larghezza al viewport (scala = 1).
+ * Niente trucchi di altezza/overflow:hidden: scroll normale del documento. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
 html,
 body {
   margin: 0;
+}
+body,
+#root {
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -42,4 +57,17 @@ body {
   color: var(--text);
   font-family: 'Nunito Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  /* notch laterali su iPhone (0 altrove) */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* iOS auto-zooma sui campi con font < 16px al focus: alzo i piccoli su mobile. */
+@media (max-width: 1023px) {
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
 }

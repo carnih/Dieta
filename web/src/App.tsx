@@ -59,10 +59,8 @@ export default function App() {
   };
 
   return (
-    // Shell fisso a tutto schermo (position:fixed inset-0): riempie lo schermo su
-    // iOS standalone SENZA overflow:hidden sul body (che rompeva il dimensionamento).
-    // Lo scroll avviene in <main>; il documento non scrolla → niente rubber-band.
-    <div className="fixed inset-0 overflow-hidden lg:pl-[78px]">
+    // Scroll normale del documento (come NetWorth): min-h-screen, niente shell fisso.
+    <div className="min-h-screen lg:pl-[78px]">
       {/* Copre la safe-area in alto (notch/Dynamic Island): evita che il contenuto
           che scorre "trapeli" sopra i titoli sticky in modalità standalone/PWA. */}
       <div
@@ -113,11 +111,10 @@ export default function App() {
 
       <main
         className={
-          'mx-auto h-full max-w-2xl overflow-y-auto overscroll-y-none px-4 ' +
+          'mx-auto max-w-2xl px-4 ' +
           'pt-[calc(0.75rem_+_env(safe-area-inset-top))] pb-[calc(7rem_+_env(safe-area-inset-bottom))] ' +
           'lg:max-w-none lg:px-8 lg:pt-3 lg:pb-10'
         }
-        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {renderTab()}
       </main>

@@ -8,6 +8,25 @@
     />
     <meta name="theme-color" content="#F1FAF6" />
     <title>Dieta</title>
+    <script>
+      /* iOS Safari: forza scala iniziale = 1 anche dopo il FOUT. Mentre i webfont
+       * (Google Fonts) caricano, Safari può fissare una scala errata → apertura
+       * "zoomata". Quando i font sono pronti ri-asseriamo il meta viewport. Non
+       * impostiamo mai maximum-scale/user-scalable=no (pinch-zoom resta attivo). */
+      (function () {
+        var BASE = 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+        var vp = document.querySelector('meta[name="viewport"]');
+        if (!vp) return;
+        function reassert() {
+          vp.setAttribute('content', BASE + ', minimum-scale=1');
+          requestAnimationFrame(function () {
+            vp.setAttribute('content', BASE);
+          });
+        }
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(reassert);
+        window.addEventListener('load', reassert);
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
