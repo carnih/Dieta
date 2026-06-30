@@ -173,13 +173,15 @@ export function MealCard({
   catLabels: Record<string, string>;
 }) {
   return (
-    <div className="mb-3 overflow-hidden rounded-card bg-card shadow-sm">
-      <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
-        <span className="text-lg">{pasto.icon}</span>
-        <span className="font-bold text-ink">{pasto.nome}</span>
-        {pasto.note && <span className="text-xs italic text-muted">{pasto.note}</span>}
+    <div className="mb-3 overflow-hidden rounded-card bg-card shadow-soft">
+      <div className="flex items-center gap-2.5 border-b border-line px-4 py-3">
+        <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-xl bg-[#F4EEFB] text-base">
+          {pasto.icon}
+        </span>
+        <span className="font-round text-[15px] text-ink">{pasto.nome}</span>
+        {pasto.note && <span className="ml-auto text-xs italic text-muted">{pasto.note}</span>}
       </div>
-      <div className="px-4 py-2">
+      <div className="px-4 py-2.5">
         {pasto.items.map((it, i) => (
           <DietItemView key={i} it={it} catLabels={catLabels} />
         ))}

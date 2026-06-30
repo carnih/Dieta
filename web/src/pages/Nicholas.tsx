@@ -52,7 +52,9 @@ export default function Nicholas() {
       <div className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 bg-bg px-[18px] pb-1.5 pt-2 text-[32px] font-round tracking-tight text-ink">
         <span style={{ color: 'var(--n)' }}>Nicholas</span>
       </div>
-      <div className="mb-1 text-sm text-muted">Pianifica la settimana e consulta la tua dieta</div>
+      <div className="mb-4 px-0.5 text-sm font-semibold text-[#4b5563]">
+        La tua settimana e la tua dieta
+      </div>
 
       <div className="mb-2 mt-3 flex items-center gap-2">
         <span className="grid h-8 w-8 place-items-center rounded-xl bg-nic-light text-base">📅</span>
@@ -116,7 +118,7 @@ function Schedule({ schedule }: { schedule: Schedule }) {
   const t = todayId();
 
   return (
-    <div className="rounded-card bg-card p-4 shadow-soft">
+    <div className="overflow-hidden rounded-card bg-card shadow-soft">
       {NOEMI_DAYS.map((wd) => {
         const days = getSchedDays(schedule, wd);
         const p = days[0] || 'riposo';
@@ -125,12 +127,18 @@ function Schedule({ schedule }: { schedule: Schedule }) {
         return (
           <div
             key={wd}
-            className="flex items-center gap-2 border-b border-line py-2 pl-3 last:border-0"
-            style={{ borderLeft: `2px solid ${isToday ? 'var(--n)' : 'transparent'}` }}
+            className={
+              'flex items-center gap-2.5 border-b border-line px-4 py-2.5 last:border-b-0' +
+              (isToday ? ' border-l-[3px] border-l-nic bg-nic-light/40' : '')
+            }
           >
-            <span className="w-12 text-sm font-bold text-ink">
+            <span
+              className={
+                'w-11 flex-shrink-0 text-sm font-extrabold ' + (isToday ? 'text-nic' : 'text-ink')
+              }
+            >
               {NOEMI_LABELS[wd]}
-              {isToday ? ' •' : ''}
+              {isToday ? ' ·' : ''}
             </span>
             <div className="min-w-0 flex-1">
               <select
