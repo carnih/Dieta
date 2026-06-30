@@ -59,8 +59,10 @@ export default function App() {
   };
 
   return (
-    // Schermo pieno (100dvh) + <main> scroller interno: niente rubber-band del documento.
-    <div className="h-[100dvh] lg:pl-[78px]">
+    // Shell fisso a tutto schermo (position:fixed inset-0): riempie lo schermo su
+    // iOS standalone SENZA overflow:hidden sul body (che rompeva il dimensionamento).
+    // Lo scroll avviene in <main>; il documento non scrolla → niente rubber-band.
+    <div className="fixed inset-0 overflow-hidden lg:pl-[78px]">
       {/* Copre la safe-area in alto (notch/Dynamic Island): evita che il contenuto
           che scorre "trapeli" sopra i titoli sticky in modalità standalone/PWA. */}
       <div

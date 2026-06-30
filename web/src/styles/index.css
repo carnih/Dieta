@@ -29,19 +29,12 @@
   font-family: var(--font-round);
 }
 
-/* Altezza schermo ESPLICITA con 100dvh (non 100% — su iOS standalone il 100%
-   non si risolveva e l'app copriva ~70%). Lo scroll avviene dentro <main>
-   (scroller interno): solo lì iOS rispetta overscroll-behavior → niente rubber-band
-   del documento (niente rimbalzo né testo che spunta dietro al titolo). */
-html,
-body,
-#root {
-  height: 100dvh;
-}
+/* NIENTE overflow:hidden / height su html/body: su iOS standalone manda in tilt
+   il dimensionamento (prima 70%, poi zoom). Lo schermo pieno + lo scroll interno
+   sono gestiti dallo shell `position:fixed; inset:0` in App.tsx (vedi .app-shell). */
 html,
 body {
   margin: 0;
-  overflow: hidden;
 }
 
 body {
