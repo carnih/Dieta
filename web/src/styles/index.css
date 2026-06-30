@@ -29,15 +29,19 @@
   font-family: var(--font-round);
 }
 
-/* Scroll del documento (standard). L'app riempie lo schermo con 100dvh:
-   su iOS standalone 'height:100%' non si risolve all'altezza reale → usavo
-   un'altezza sbagliata (l'app copriva ~70% dello schermo). 100dvh = schermo pieno. */
+/* Altezza schermo ESPLICITA con 100dvh (non 100% — su iOS standalone il 100%
+   non si risolveva e l'app copriva ~70%). Lo scroll avviene dentro <main>
+   (scroller interno): solo lì iOS rispetta overscroll-behavior → niente rubber-band
+   del documento (niente rimbalzo né testo che spunta dietro al titolo). */
+html,
+body,
+#root {
+  height: 100dvh;
+}
 html,
 body {
   margin: 0;
-}
-#root {
-  min-height: 100dvh;
+  overflow: hidden;
 }
 
 body {

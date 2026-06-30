@@ -59,9 +59,8 @@ export default function App() {
   };
 
   return (
-    // Su desktop (lg) riservo lo spazio per il rail laterale a sinistra.
-    // min-h-[100dvh]: l'app riempie sempre lo schermo (anche iOS standalone).
-    <div className="min-h-[100dvh] lg:pl-[78px]">
+    // Schermo pieno (100dvh) + <main> scroller interno: niente rubber-band del documento.
+    <div className="h-[100dvh] lg:pl-[78px]">
       {/* Copre la safe-area in alto (notch/Dynamic Island): evita che il contenuto
           che scorre "trapeli" sopra i titoli sticky in modalità standalone/PWA. */}
       <div
@@ -112,10 +111,11 @@ export default function App() {
 
       <main
         className={
-          'mx-auto max-w-2xl px-4 ' +
+          'mx-auto h-full max-w-2xl overflow-y-auto overscroll-y-none px-4 ' +
           'pt-[calc(0.75rem_+_env(safe-area-inset-top))] pb-[calc(7rem_+_env(safe-area-inset-bottom))] ' +
           'lg:max-w-none lg:px-8 lg:pt-3 lg:pb-10'
         }
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {renderTab()}
       </main>
