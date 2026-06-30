@@ -60,8 +60,8 @@ export default function App() {
 
   return (
     // Su desktop (lg) riservo lo spazio per il rail laterale a sinistra.
-    // h-full + main scroller interno: lo scroll non e' sul documento (fix iOS).
-    <div className="h-full lg:pl-[78px]">
+    // min-h-[100dvh]: l'app riempie sempre lo schermo (anche iOS standalone).
+    <div className="min-h-[100dvh] lg:pl-[78px]">
       {/* Copre la safe-area in alto (notch/Dynamic Island): evita che il contenuto
           che scorre "trapeli" sopra i titoli sticky in modalità standalone/PWA. */}
       <div
@@ -72,7 +72,7 @@ export default function App() {
       {/* Navigazione: bottom-bar su mobile, rail verticale a sinistra su desktop */}
       <nav
         className={
-          'fixed z-40 border-line bg-card/95 backdrop-blur ' +
+          'fixed z-40 border-line bg-card ' +
           'inset-x-0 bottom-0 flex justify-around border-t py-2 ' +
           'lg:inset-y-0 lg:left-0 lg:right-auto lg:w-[78px] lg:flex-col lg:justify-start ' +
           'lg:gap-1 lg:border-r lg:border-t-0 lg:px-2 lg:py-4'
@@ -112,11 +112,10 @@ export default function App() {
 
       <main
         className={
-          'mx-auto h-full max-w-2xl overflow-y-auto overscroll-y-none px-4 ' +
+          'mx-auto max-w-2xl px-4 ' +
           'pt-[calc(0.75rem_+_env(safe-area-inset-top))] pb-[calc(7rem_+_env(safe-area-inset-bottom))] ' +
           'lg:max-w-none lg:px-8 lg:pt-3 lg:pb-10'
         }
-        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {renderTab()}
       </main>
