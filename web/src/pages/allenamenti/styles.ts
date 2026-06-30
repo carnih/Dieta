@@ -12,7 +12,7 @@ const CSS = `
 .al-scope{ --font-head:var(--font-round); --ease:cubic-bezier(.4,0,.2,1); }
 
 /* page titles / sub */
-.al-scope .page-title{font-size:28px;font-weight:850;letter-spacing:-.6px;color:#111827;position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 6px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
+.al-scope .page-title{font-size:32px;font-weight:700;letter-spacing:-.4px;color:#111827;position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);margin:0 -16px;padding:8px 18px 6px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
 .al-scope .vsub{position:sticky;top:calc(env(safe-area-inset-top,0px) + 48px);z-index:9;background:var(--bg);margin:0 -16px;padding:6px 16px 8px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 12px -10px rgba(0,0,0,.12)}
 /* titolo a colore pieno (opaco): cosi' lo sticky copre il contenuto sotto e il
    testo resta visibile (il gradiente-su-testo rendeva trasparente il box). */
