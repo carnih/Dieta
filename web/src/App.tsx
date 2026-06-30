@@ -60,7 +60,8 @@ export default function App() {
 
   return (
     // Scroll normale del documento (come NetWorth): min-h-screen, niente shell fisso.
-    <div className="min-h-screen lg:pl-[78px]">
+    // `relative` per ancorare il chip account in cima alla PAGINA (non al viewport).
+    <div className="relative min-h-screen lg:pl-[78px]">
       {/* Copre la safe-area in alto (notch/Dynamic Island): evita che il contenuto
           che scorre "trapeli" sopra i titoli sticky in modalità standalone/PWA. */}
       <div
@@ -102,7 +103,7 @@ export default function App() {
           if (confirm('Uscire da Dieta?')) void logout();
         }}
         title={user.email ?? ''}
-        className="fixed right-3 z-50 grid h-9 w-9 place-items-center rounded-full bg-nic text-sm font-bold text-white shadow-md"
+        className="absolute right-3 z-30 grid h-9 w-9 place-items-center rounded-full bg-nic text-sm font-bold text-white shadow-md"
         style={{ top: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}
         aria-label={`Account: ${name}`}
       >
