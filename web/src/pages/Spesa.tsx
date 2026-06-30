@@ -90,7 +90,6 @@ export default function Spesa() {
   const spesaMeta = store.spesaMeta;
 
   // stato UI transitorio (erede delle globali non persistite del monolite)
-  const [spesaOwners, setSpesaOwners] = useState<OwnerKey[]>([]);
   const [listView, setListView] = useState<ListView>(null);
   const [categoryManager, setCategoryManager] = useState(false);
   const [openRow, setOpenRow] = useState<string | null>(null); // riga con azioni 🏠/✕ rivelate
@@ -166,7 +165,6 @@ export default function Spesa() {
     );
     return { total: t, done: d };
   }, [cats, spesa]);
-  const pct = total ? Math.round((done / total) * 100) : 0;
   const histCount = Object.keys(spesaHistory || {}).length;
   // categorie senza articoli né dispensa attiva (per il toggle "mostra vuote")
   const emptyCount = cats.filter(
@@ -175,12 +173,11 @@ export default function Spesa() {
       !pantry.some((p) => (p.cat || 'dispensa') === c.key && p.active !== false),
   ).length;
 
-  const ownerFilter = spesaOwners.length > 0;
-  const matchOwner = (it: { owners?: string[] }) =>
-    spesaOwners.some((o) => (it.owners || []).includes(o));
+  const daComprare = total - done;
+  const inDispensa = pantry.filter((p) => p.active !== false).length;
   const pantryView = listView === 'dispensa';
   const toBuyView = listView === 'tocomprare';
-  const filtered = ownerFilter || pantryView;
+  const filtered = pantryView;
 
   // ── handlers articoli (replicano i window.* del monolite) ──
   const addSpesa = (cat: string) => {
@@ -384,18 +381,8 @@ export default function Spesa() {
   };
 
   // ── filtri ──
-  const toggleOwnerFilter = (o: OwnerKey) => {
-    setListView(null); // gli owner azzerano la vista dispensa/da-comprare
-    setSpesaOwners((prev) =>
-      prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o],
-    );
-  };
   const setListViewToggle = (v: Exclude<ListView, null>) => {
-    setListView((prev) => {
-      const next = prev === v ? null : v;
-      if (next) setSpesaOwners([]);
-      return next;
-    });
+    setListView((prev) => (prev === v ? null : v));
   };
 
   // ── category manager ──
@@ -574,40 +561,67 @@ export default function Spesa() {
       <style>{SPESA_CSS}</style>
 
       <div className="page-title">Spesa</div>
-      <div className="shop-prog">
-        <div className="shop-prog-txt">
-          {total ? done + ' / ' + total + ' presi' : 'lista vuota'}
-        </div>
-        <div className="shop-prog-track">
-          <div className="shop-prog-fill" style={{ width: pct + '%' }} />
-        </div>
-      </div>
 
-      <div className="vsub">
-        <div className="shop-actions">
+      {/* riepilogo: anello presi + statistiche da-comprare/dispensa + azioni */}
+      <div className="shop-hero">
+        <div className="shop-hero-top">
+          <svg className="shop-ring" width="76" height="76" viewBox="0 0 76 76" aria-hidden="true">
+            <circle cx="38" cy="38" r="30" fill="none" stroke="#E9F3EE" strokeWidth="10" />
+            <circle
+              cx="38"
+              cy="38"
+              r="30"
+              fill="none"
+              stroke="var(--grn)"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={188.5}
+              strokeDashoffset={total ? 188.5 * (1 - done / total) : 188.5}
+              transform="rotate(-90 38 38)"
+            />
+            <text x="38" y="35" textAnchor="middle" className="shop-ring-n">
+              {total ? done + '/' + total : '0'}
+            </text>
+            <text x="38" y="49" textAnchor="middle" className="shop-ring-l">
+              PRESI
+            </text>
+          </svg>
+          <div className="shop-hero-stats">
+            <div className="shop-stat buy">
+              <span className="ic">🛒</span>
+              <div>
+                <span className="n">{daComprare}</span> <span className="t">da comprare</span>
+              </div>
+            </div>
+            <div className="shop-stat pan">
+              <span className="ic">🏠</span>
+              <div>
+                <span className="n">{inDispensa}</span> <span className="t">in dispensa</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="shop-hero-actions">
           <button className="shop-tool gen" onClick={spesaFatta}>
             ✓ Spesa fatta
           </button>
           <button className="shop-tool sec" onClick={svuotaDispensa}>
-            Svuota dispensa
+            🏠 Svuota
           </button>
           <button
             className="shop-tool icon"
-            style={{ marginLeft: 'auto' }}
             onClick={() => setCategoryManager((v) => !v)}
             title="Categorie"
           >
             ⚙️
           </button>
         </div>
-        {/* viste: segmented control (niente tab "Persone") */}
+      </div>
+
+      {/* filtro vista (sticky) */}
+      <div className="vsub">
         <div className="seg">
-          <button
-            className={listView === null ? 'on' : ''}
-            onClick={() => {
-              setListView(null);
-            }}
-          >
+          <button className={listView === null ? 'on' : ''} onClick={() => setListView(null)}>
             Tutti
           </button>
           <button
@@ -623,33 +637,6 @@ export default function Spesa() {
             🏠 Dispensa
           </button>
         </div>
-        {/* filtro persone: chip discreti (non un tab) */}
-        <div className="shop-filters owners">
-          <button
-            className={`shop-filter f-nicholas ${spesaOwners.includes('nicholas') ? 'on' : ''}`}
-            onClick={() => toggleOwnerFilter('nicholas')}
-          >
-            🔵 Nicholas
-          </button>
-          <button
-            className={`shop-filter f-noemi ${spesaOwners.includes('noemi') ? 'on' : ''}`}
-            onClick={() => toggleOwnerFilter('noemi')}
-          >
-            🩷 Noemi
-          </button>
-          <button
-            className={`shop-filter f-gatto ${spesaOwners.includes('gatto') ? 'on' : ''}`}
-            onClick={() => toggleOwnerFilter('gatto')}
-          >
-            🐈 Mia
-          </button>
-          <button
-            className={`shop-filter f-coniglio ${spesaOwners.includes('coniglio') ? 'on' : ''}`}
-            onClick={() => toggleOwnerFilter('coniglio')}
-          >
-            🐰 Ginger
-          </button>
-        </div>
       </div>
 
       <div className="shop">
@@ -658,7 +645,6 @@ export default function Spesa() {
           let items = pantryView
             ? []
             : (spesa[c.key] || []).map((it, idx) => ({ ...it, idx }));
-          if (ownerFilter) items = items.filter(matchOwner);
           items.sort(alpha);
           const allc = items.length > 0 && items.every((i) => i.d);
           const toBuy = items.filter((i) => !i.d).length;
@@ -672,7 +658,6 @@ export default function Spesa() {
                     (p.cat || 'dispensa') === c.key &&
                     (pantryView || p.active !== false),
                 );
-          if (ownerFilter) pantryItems = pantryItems.filter(matchOwner);
           pantryItems.sort(alpha);
 
           const isEmpty = items.length === 0 && pantryItems.length === 0;

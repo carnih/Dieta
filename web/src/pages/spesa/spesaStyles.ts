@@ -39,6 +39,25 @@ export const SPESA_CSS = `
 .spesa-scope .shop-tool.icon{width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:16px}
 .spesa-scope .shop-tool:active{transform:scale(.96)}
 
+/* hero riepilogo (anello presi + statistiche da-comprare/dispensa) */
+.spesa-scope .shop-hero{background:#fff;border-radius:18px;box-shadow:var(--shadow-soft);padding:15px 16px;margin:0 0 12px}
+.spesa-scope .shop-hero-top{display:flex;align-items:center;gap:16px}
+.spesa-scope .shop-ring{flex:none}
+.spesa-scope .shop-ring-n{font-family:var(--font-round);font-size:18px;fill:#1F2937}
+.spesa-scope .shop-ring-l{font-size:9px;font-weight:800;fill:#9CA3AF;letter-spacing:.05em}
+.spesa-scope .shop-hero-stats{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.spesa-scope .shop-stat{display:flex;align-items:center;gap:9px}
+.spesa-scope .shop-stat .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:15px;flex:none}
+.spesa-scope .shop-stat.buy .ic{background:#ECFDF5}
+.spesa-scope .shop-stat.pan .ic{background:#FFF7ED}
+.spesa-scope .shop-stat .n{font-family:var(--font-round);font-size:18px}
+.spesa-scope .shop-stat.buy .n{color:var(--grn)}
+.spesa-scope .shop-stat.pan .n{color:#B45309}
+.spesa-scope .shop-stat .t{font-size:13px;font-weight:800;color:#374151}
+.spesa-scope .shop-stat.pan .t{color:#6B7280}
+.spesa-scope .shop-hero-actions{display:flex;align-items:center;gap:9px;margin-top:14px}
+.spesa-scope .shop-hero-actions .gen{flex:1}
+
 /* barra filtri (sticky pulito) */
 .spesa-scope .vsub{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg,#f1faf6);background:color-mix(in srgb, var(--bg,#f1faf6) 95%, transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding-top:6px;margin:0 -2px}
 .spesa-scope .shop-filters{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
