@@ -39,8 +39,11 @@ export const SPESA_CSS = `
 .spesa-scope .shop-tool.icon{width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:16px}
 .spesa-scope .shop-tool:active{transform:scale(.96)}
 
+/* blocco sticky: riepilogo + filtri restano in cima durante lo scroll */
+.spesa-scope .shop-stick{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);margin:0 -16px;padding:0 16px 6px;box-shadow:0 10px 12px -12px rgba(0,0,0,.18)}
+
 /* hero riepilogo (anello presi + statistiche da-comprare/dispensa) */
-.spesa-scope .shop-hero{background:#fff;border-radius:18px;box-shadow:var(--shadow-soft);padding:15px 16px;margin:0 0 12px}
+.spesa-scope .shop-hero{background:#fff;border-radius:18px;box-shadow:var(--shadow-soft);padding:15px 16px;margin:0 0 10px}
 .spesa-scope .shop-hero-top{display:flex;align-items:center;gap:16px}
 .spesa-scope .shop-ring{flex:none}
 .spesa-scope .shop-ring-n{font-family:var(--font-round);font-size:18px;fill:#1F2937}

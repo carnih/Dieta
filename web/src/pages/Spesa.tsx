@@ -562,8 +562,9 @@ export default function Spesa() {
 
       <div className="page-title">Spesa</div>
 
-      {/* riepilogo: anello presi + statistiche da-comprare/dispensa + azioni */}
-      <div className="shop-hero">
+      {/* blocco sticky: riepilogo + filtri restano in cima durante lo scroll */}
+      <div className="shop-stick">
+        <div className="shop-hero">
         <div className="shop-hero-top">
           <svg className="shop-ring" width="76" height="76" viewBox="0 0 76 76" aria-hidden="true">
             <circle cx="38" cy="38" r="30" fill="none" stroke="#E9F3EE" strokeWidth="10" />
@@ -618,8 +619,7 @@ export default function Spesa() {
         </div>
       </div>
 
-      {/* filtro vista (sticky) */}
-      <div className="vsub">
+        {/* filtri */}
         <div className="seg">
           <button className={listView === null ? 'on' : ''} onClick={() => setListView(null)}>
             Tutti
