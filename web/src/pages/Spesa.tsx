@@ -683,9 +683,10 @@ export default function Spesa() {
                           e.currentTarget.blur();
                         }
                       }}
-                    >
-                      {it.t}
-                    </span>
+                      /* testo via innerHTML: React NON ri-tocca il DOM editabile quando il
+                         nome non cambia (es. spunta) → niente caret parassita sul re-render. */
+                      dangerouslySetInnerHTML={{ __html: esc(it.t) }}
+                    />
                     {open ? (
                       <span className="row-actions">
                         <button
