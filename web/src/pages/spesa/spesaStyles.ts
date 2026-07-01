@@ -43,7 +43,15 @@ export const SPESA_CSS = `
 .spesa-scope .shop-stick{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);margin:0 -16px;padding:0 16px 6px;box-shadow:0 10px 12px -12px rgba(0,0,0,.18)}
 
 /* hero riepilogo (anello presi + statistiche da-comprare/dispensa) */
-.spesa-scope .shop-hero{background:#fff;border-radius:18px;box-shadow:var(--shadow-soft);padding:15px 16px;margin:0 0 10px}
+.spesa-scope .shop-hero{background:#fff;border-radius:18px;box-shadow:var(--shadow-soft);padding:15px 16px;margin:0 0 10px;transition:padding .2s ease}
+.spesa-scope .shop-ring{transition:width .2s ease, height .2s ease}
+/* stato compatto (scroll): via i pulsanti, anello + spazi ridotti → occupa poco */
+.spesa-scope .shop-stick.stuck .shop-hero{padding:9px 14px;margin-bottom:8px}
+.spesa-scope .shop-stick.stuck .shop-hero-actions{display:none}
+.spesa-scope .shop-stick.stuck .shop-hero-top{gap:12px}
+.spesa-scope .shop-stick.stuck .shop-ring{width:50px;height:50px}
+.spesa-scope .shop-stick.stuck .shop-stat{gap:8px}
+.spesa-scope .shop-stick.stuck .shop-stat .ic{width:26px;height:26px;font-size:14px}
 .spesa-scope .shop-hero-top{display:flex;align-items:center;gap:16px}
 .spesa-scope .shop-ring{flex:none}
 .spesa-scope .shop-ring-n{font-family:var(--font-round);font-size:18px;fill:#1F2937}

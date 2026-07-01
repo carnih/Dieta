@@ -3,6 +3,13 @@
 Storico delle modifiche significative all'app. Le voci più recenti in alto.
 Formato libero: data — cosa è cambiato e perché.
 
+## 2026-07-01 — Go-live stack React + fix mobile (parità NetWorth) + redesign UI
+- **Migrazione a React**: l'app di produzione è ora `web/` (**React 18 + Vite + TS + Tailwind**), con **data-layer astratto** (Repo pattern) pronto allo swap Supabase (Fase 2). Vercel **Root Directory = `web`**; coach in `web/api/`; `index.html` **no-cache** (stop build vecchia in cache su PWA iOS). Backup dati Firebase in OneDrive prima dello switch. Il monolite `index.html` resta come fallback storico.
+- **Mobile sistemato copiando NetWorth**: scroll normale del documento (`min-h-screen`), **anti-zoom iOS** (viewport re-assert dopo i font, `-webkit-text-size-adjust:100%`, `overflow-x:clip`, input ≥16px). Rimossi i trucchi (`overflow:hidden`/`100dvh`/shell fisso) che rompevano il dimensionamento (app al 70%, poi zoom). Chip account `absolute` (non più bloccato).
+- **Redesign UI** coerente su tutte le pagine (Varela Round, card morbide, gerarchia pulita): **Oggi** (barra confronto + colonne tinte + stato vuoto elegante), **Nicholas** (settimana con "oggi" evidenziato), **Noemi**, titoli uniformati a 32px (era `px-4.5` non valido → titoli attaccati al bordo).
+- **Spesa (opzione B)**: header **hero** con anello "presi" + 🛒 da comprare / 🏠 in dispensa + azioni, in **blocco sticky** che si **compatta allo scroll**; filtri segmented. **Rimossi** i filtri-proprietario e i badge owner per riga (campo `owners` conservato nei dati).
+- **Doc**: `CLAUDE.md` riscritto sullo stack React.
+
 ## 2026-06-21 — Settimana dom→sab, schede fedeli al PDF, editor schede
 - **Oggi**: il calendario settimanale ora va **domenica → sabato** (prima lun→dom). `NOEMI_DAYS` riordinato dom-first, `todayId()`/`weekDates()` ancorati alla domenica; `mondayOf`/`settCorrente` (settimane dei programmi) invariati.
 - **Scheda forza riscritta fedele al PDF** del PT (`file origine/Allenamenti/2026-05-18 Forza.pdf`, 8 settimane): fasi separate e cue del PT riportate (carichi graduali, "2 reps prima del cedimento", progressioni, superset, finisher 28-21-15-9…). Aggiunto `forza.note` (testata) mostrato in `progCard` (📝).

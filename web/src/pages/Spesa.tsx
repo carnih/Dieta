@@ -14,7 +14,7 @@
 // vista lista, apertura category manager) — come le variabili globali del monolite
 // `spesaOwners` / `listView` / `categoryManager` (che lì non erano persistite).
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { repo } from '@/data';
 import { useStore } from '@/hooks/useStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -46,8 +46,6 @@ const SPESA_CATS_DEFAULT: Array<{ key: string; label: string; order: number }> =
   { key: 'casa', label: '🧴 Casa', order: 12 },
 ];
 
-const OWNER_KEYS = ['nicholas', 'noemi', 'gatto', 'coniglio'] as const;
-type OwnerKey = (typeof OWNER_KEYS)[number];
 type ListView = 'dispensa' | 'tocomprare' | null;
 
 // ── helper puri (locali — riusano esc/fmtWhen condivisi) ──
@@ -94,6 +92,14 @@ export default function Spesa() {
   const [categoryManager, setCategoryManager] = useState(false);
   const [openRow, setOpenRow] = useState<string | null>(null); // riga con azioni 🏠/✕ rivelate
   const [showEmpty, setShowEmpty] = useState(false); // mostra categorie vuote
+  // blocco riepilogo sticky: quando la pagina è scrollata si compatta (nasconde le azioni, anello più piccolo)
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 44);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // input "aggiungi…" per categoria (non controllato dallo store)
@@ -356,30 +362,6 @@ export default function Spesa() {
     toast('Rimesso in lista');
   };
 
-  // ── toggle owner su voce (cat === '__pantry' agisce sul pantry) ──
-  const toggleOwner = (cat: string, idx: number, owner: OwnerKey) => {
-    if (cat === '__pantry') {
-      const p = pantry[idx];
-      if (!p) return;
-      const owners = (p.owners || []).slice();
-      const pos = owners.indexOf(owner);
-      if (pos >= 0) owners.splice(pos, 1);
-      else owners.push(owner);
-      const nextPantry = pantry.slice();
-      nextPantry[idx] = { ...p, owners };
-      savePantry(nextPantry);
-      return;
-    }
-    const list = (spesa[cat] || []).slice();
-    if (!list[idx]) return;
-    const owners = (list[idx]!.owners || []).slice();
-    const pos = owners.indexOf(owner);
-    if (pos >= 0) owners.splice(pos, 1);
-    else owners.push(owner);
-    list[idx] = { ...list[idx]!, owners };
-    saveSpesaCat(cat, list);
-  };
-
   // ── filtri ──
   const setListViewToggle = (v: Exclude<ListView, null>) => {
     setListView((prev) => (prev === v ? null : v));
@@ -500,31 +482,6 @@ export default function Spesa() {
     document.addEventListener('pointercancel', catDragEnd);
   };
 
-  // ── owner badges (porting di ownerBadgesHTML) ──
-  const ownerBadges = (owners: string[] | undefined, cat: string, idx: number) => {
-    const has = (o: string) => !!(owners && owners.includes(o));
-    const defs: Array<[OwnerKey, string, string, string]> = [
-      ['nicholas', 'n', 'N', 'Nicholas'],
-      ['noemi', 'e', 'N', 'Noemi'],
-      ['gatto', 'g', '🐈', 'Mia'],
-      ['coniglio', 'c', '🐰', 'Ginger'],
-    ];
-    return (
-      <span className="owner-badges">
-        {defs.map(([o, cls, txt, title]) => (
-          <span
-            key={o}
-            className={`owner-badge ${cls} ${has(o) ? '' : 'off'}`}
-            onClick={() => toggleOwner(cat, idx, o)}
-            title={title}
-          >
-            {txt}
-          </span>
-        ))}
-      </span>
-    );
-  };
-
   const alpha = (a: { t?: string }, b: { t?: string }) =>
     (a.t || '').localeCompare(b.t || '', 'it', { sensitivity: 'base' });
 
@@ -562,8 +519,8 @@ export default function Spesa() {
 
       <div className="page-title">Spesa</div>
 
-      {/* blocco sticky: riepilogo + filtri restano in cima durante lo scroll */}
-      <div className="shop-stick">
+      {/* blocco sticky: riepilogo + filtri restano in cima durante lo scroll (compatto se stuck) */}
+      <div className={'shop-stick' + (stuck ? ' stuck' : '')}>
         <div className="shop-hero">
         <div className="shop-hero-top">
           <svg className="shop-ring" width="76" height="76" viewBox="0 0 76 76" aria-hidden="true">
@@ -729,7 +686,6 @@ export default function Spesa() {
                     >
                       {it.t}
                     </span>
-                    {ownerBadges(it.owners, c.key, it.idx)}
                     {open ? (
                       <span className="row-actions">
                         <button
@@ -776,7 +732,6 @@ export default function Spesa() {
                     🏠
                   </button>
                   <span className="shop-name">{p.t}</span>
-                  {ownerBadges(p.owners, '__pantry', p.pi)}
                 </div>
               ))}
 
