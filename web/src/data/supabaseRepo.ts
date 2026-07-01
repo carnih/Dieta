@@ -148,7 +148,7 @@ export class SupabaseRepo implements Repo {
       case 'spesaHistory': return s[1] ? this.wHistAdd(val as HistW) : this.delAll('spesa_storico');
       case 'spesaCategories': return this.wSpesaCat2(s[1], val as { label?: string; order?: number } | null);
       case 'overrides': return this.wOverride(s[1], s[2], val as { e?: boolean; n?: boolean } | null);
-      case 'schedePdf': console.warn('SupabaseRepo: schedePdf (Storage) non ancora implementato'); return;
+      case 'schedePdf': return this.wSchedePdf(s[1], val as string);
       default: console.warn('SupabaseRepo: set path non gestito', path);
     }
   }
@@ -297,6 +297,15 @@ export class SupabaseRepo implements Repo {
     if (error) throw error;
   }
 
+  private async wSchedePdf(prog: string, dataUrl: string): Promise<void> {
+    const blob = await (await fetch(dataUrl)).blob(); // data-URL base64 → Blob
+    const { error } = await this.sb.storage.from('schede').upload(`${prog}.pdf`, blob, {
+      upsert: true,
+      contentType: 'application/pdf',
+    });
+    if (error) throw error;
+  }
+
   // ── Ricostruzione dei nodi (blob JSON identici a Firebase) ──────────────────
   private async readNode(path: string): Promise<unknown> {
     switch (path) {
@@ -317,9 +326,17 @@ export class SupabaseRepo implements Repo {
       case 'allenamentiSchede': return this.rAllenamentiSchede();
       default:
         if (path.startsWith('training/tracks/')) return this.rTrack(path.split('/')[2]);
+        if (path.startsWith('schedePdf/')) return this.rSchedePdf(path.split('/')[1]);
         console.warn('SupabaseRepo: readNode path non gestito', path);
         return null;
     }
+  }
+
+  // PDF scheda su Storage: ritorno una signed URL (il PdfViewer fa fetch(url).blob()).
+  private async rSchedePdf(prog: string) {
+    const { data, error } = await this.sb.storage.from('schede').createSignedUrl(`${prog}.pdf`, 3600);
+    if (error || !data) return null;
+    return data.signedUrl;
   }
 
   private async rows<T = Record<string, unknown>>(table: string, cols = '*', order?: string): Promise<T[]> {
