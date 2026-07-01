@@ -38,6 +38,9 @@ const WATCH: Record<string, string[]> = {
 export class SupabaseRepo implements Repo {
   // risolto alla costruzione (non all'import) → importare il modulo è sempre sicuro.
   private sb = requireSupabase();
+  // subscriber per nodo (chiave = 1° segmento del path) → per rilettura locale
+  // immediata dopo una scrittura, senza aspettare il round-trip del realtime.
+  private subs = new Map<string, Set<() => void>>();
 
   onAuthChange(cb: (user: AuthUser | null) => void): () => void {
     this.sb.auth.getSession().then(({ data }) => {
@@ -67,7 +70,12 @@ export class SupabaseRepo implements Repo {
     });
     // debounce: un bulk (delete+insert di N righe) genera N eventi realtime → una sola rilettura.
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const bump = () => { if (timer) clearTimeout(timer); timer = setTimeout(() => void refetch(), 120); };
+    const bump = () => { if (timer) clearTimeout(timer); timer = setTimeout(() => void refetch(), 60); };
+    // registro per la rilettura locale immediata dopo una scrittura (vedi echo()).
+    const node = path.split('/')[0];
+    const set = this.subs.get(node) ?? new Set<() => void>();
+    set.add(bump);
+    this.subs.set(node, set);
     void refetch();
     let ch: RealtimeChannel | null = null;
     const tables = WATCH[path];
@@ -78,7 +86,12 @@ export class SupabaseRepo implements Repo {
       }
       ch.subscribe();
     }
-    return () => { alive = false; if (timer) clearTimeout(timer); if (ch) void this.sb.removeChannel(ch); };
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+      this.subs.get(node)?.delete(bump);
+      if (ch) void this.sb.removeChannel(ch);
+    };
   }
 
   async get<T = unknown>(path: string): Promise<T | null> {
@@ -87,6 +100,15 @@ export class SupabaseRepo implements Repo {
 
   // ── Scritture: traduce il path Firebase-style nell'operazione SQL ──────────
   async set(path: string, val: unknown): Promise<void> {
+    await this.apply(path, val);
+    this.echo(path.split('/')[0]); // rilettura locale immediata del nodo toccato (no attesa realtime)
+  }
+
+  private echo(node: string): void {
+    this.subs.get(node)?.forEach((fn) => fn());
+  }
+
+  private async apply(path: string, val: unknown): Promise<void> {
     const s = path.split('/');
     switch (s[0]) {
       case 'nicBase': return this.wNicBase(val as NicDiet);
@@ -216,38 +238,18 @@ export class SupabaseRepo implements Repo {
     await this.up('spesa_meta', { id: true, modificato_da: val?.by || null, modificato_il: val?.at ? new Date(val.at).toISOString() : null }, 'id');
   }
 
-  private async insSpesaItems(cat: string, items: ItemW[]): Promise<void> {
-    const valid = (items || []).filter((it) => it && it.t);
-    if (!valid.length) return;
-    // un solo insert con RETURNING id (ordine preservato), poi un solo insert per gli owner
-    const { data, error } = await this.sb.from('spesa_item')
-      .insert(valid.map((it) => ({ categoria_key: cat, testo: it.t, preso: !!it.d }))).select('id');
-    if (error) throw error;
-    const ids = (data as { id: number }[]) || [];
-    const owners: R[] = [];
-    valid.forEach((it, i) => (it.owners || []).forEach((o) => ids[i] && owners.push({ item_id: ids[i].id, proprietario_key: o })));
-    await this.ins('spesa_item_proprietario', owners);
-  }
   private async wSpesaCat(cat: string, val: ItemW[] | null): Promise<void> {
-    await this.delEq('spesa_item', 'categoria_key', cat);
-    if (Array.isArray(val)) await this.insSpesaItems(cat, val);
+    const { error } = await this.sb.rpc('replace_spesa_categoria', { p_cat: cat, p_items: val });
+    if (error) throw error;
   }
   private async wSpesaAll(val: Record<string, ItemW[]> | null): Promise<void> {
-    await this.delAll('spesa_item');
-    if (val) for (const [cat, items] of Object.entries(val)) await this.insSpesaItems(cat, items);
+    const { error } = await this.sb.rpc('replace_spesa_all', { p_spesa: val });
+    if (error) throw error;
   }
 
   private async wPantry(val: PantryW[] | null): Promise<void> {
-    await this.delAll('dispensa_item');
-    const valid = (val || []).filter((p) => p && p.t);
-    if (!valid.length) return;
-    const { data, error } = await this.sb.from('dispensa_item')
-      .insert(valid.map((p) => ({ categoria_key: p.cat || 'dispensa', testo: p.t, attivo: p.active !== false }))).select('id');
+    const { error } = await this.sb.rpc('replace_pantry', { p_items: val });
     if (error) throw error;
-    const ids = (data as { id: number }[]) || [];
-    const owners: R[] = [];
-    valid.forEach((p, i) => (p.owners || []).forEach((o) => ids[i] && owners.push({ dispensa_id: ids[i].id, proprietario_key: o })));
-    await this.ins('dispensa_item_proprietario', owners);
   }
 
   private async wHistAdd(val: HistW): Promise<void> {
@@ -268,8 +270,8 @@ export class SupabaseRepo implements Repo {
   }
 
   private async wOverride(date: string, meal: string, val: { e?: boolean; n?: boolean } | null): Promise<void> {
-    await this.sb.from('override_pasto').delete().eq('data', date).eq('pasto', meal);
-    if (val) await this.ins('override_pasto', (['e', 'n'] as const).filter((p) => val[p]).map((p) => ({ data: date, pasto: meal, persona: p })));
+    const { error } = await this.sb.rpc('set_override', { p_data: date, p_pasto: meal, p_val: val });
+    if (error) throw error;
   }
 
   // ── Ricostruzione dei nodi (blob JSON identici a Firebase) ──────────────────
