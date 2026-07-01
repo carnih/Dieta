@@ -358,11 +358,11 @@ export class SupabaseRepo implements Repo {
   }
 
   private async rTrack(id: string) {
-    const [tr] = await this.rows('traccia', '*', undefined).then((r) => (r as Record<string, unknown>[]).filter((x) => x.attivita_id === id));
-    if (!tr) return null;
-    const salite = (await this.rows('traccia_salita', '*', 'ordinamento')).filter((x: Record<string, unknown>) => x.attivita_id === id);
-    const laps = (await this.rows('traccia_lap', '*', 'ordinamento')).filter((x: Record<string, unknown>) => x.attivita_id === id);
-    return { v: tr.versione, gain: tr.dislivello_m, track: tr.geo, elev: tr.altimetria, climbs: salite, laps };
+    const { data, error } = await this.sb.from('traccia').select('*').eq('attivita_id', id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const t = data as R;
+    return { v: t.versione, gain: t.dislivello_m, track: t.geo, elev: t.altimetria, climbs: t.climbs ?? [], laps: t.laps ?? [] };
   }
 
   private async rSchedule() {

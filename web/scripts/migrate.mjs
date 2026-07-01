@@ -279,21 +279,17 @@ async function migTraining(db) {
   const actIds = new Set(rows.map((r) => r.id));
 
   const tracks = db.training?.tracks || {};
-  const traccia = [], salite = [], laps = [];
+  const traccia = [];
   let orfane = 0;
   for (const [id, t] of Object.entries(tracks)) {
     if (!actIds.has(id)) { orfane++; continue; } // traccia senza attività → salta (evita FK fallita)
-    traccia.push({ attivita_id: id, versione: int(t.v), dislivello_m: num(t.gain), geo: jsonOrNull(t.track), altimetria: jsonOrNull(t.elev) });
-    (t.climbs || []).forEach((c, i) => salite.push({ attivita_id: id, ordinamento: i,
-      durata_s: num(c.durata_s ?? c.dur), pendenza_media: num(c.pend_media ?? c.grad), pendenza_max: num(c.pend_max),
-      fc_media: num(c.fc), cadenza: num(c.cad), vam: num(c.vam), velocita: num(c.vel) }));
-    (t.laps || []).forEach((l, i) => laps.push({ attivita_id: id, ordinamento: i,
-      distanza_km: num(l.km ?? l.dist), durata_s: num(l.durata_s ?? l.dur), passo: l.passo || null, velocita: num(l.vel) }));
+    // climbs/laps come jsonb: forma originale intervals.icu intatta (lap: d,t,hr,cad,w; climb: km,grad,…)
+    traccia.push({ attivita_id: id, versione: int(t.v), dislivello_m: num(t.gain),
+      geo: jsonOrNull(t.track), altimetria: jsonOrNull(t.elev),
+      climbs: jsonOrNull(t.climbs), laps: jsonOrNull(t.laps) });
   }
   if (orfane) console.log(`  · ${orfane} tracce senza attività: saltate.`);
   await insert('traccia', traccia);
-  await insert('traccia_salita', salite);
-  await insert('traccia_lap', laps);
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
