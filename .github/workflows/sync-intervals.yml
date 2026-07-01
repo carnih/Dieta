@@ -1,6 +1,6 @@
-name: Sync allenamenti (intervals.icu -> Firebase)
+name: Sync allenamenti (intervals.icu -> Supabase)
 
-# Legge le attività da intervals.icu (sincronizzate da Garmin) e le scrive su Firebase.
+# Legge le attività da intervals.icu (sincronizzate da Garmin) e le scrive su Supabase.
 # Gira nel cloud di GitHub ogni mattina; il PC può essere spento.
 on:
   schedule:
@@ -22,11 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Sincronizza intervals.icu -> Firebase
+      - name: Sincronizza intervals.icu -> Supabase
         env:
-          INTERVALS_ATHLETE: ${{ secrets.INTERVALS_ATHLETE }}
-          INTERVALS_KEY:     ${{ secrets.INTERVALS_KEY }}
-          FB_EMAIL:          ${{ secrets.FB_EMAIL }}
-          FB_PASSWORD:       ${{ secrets.FB_PASSWORD }}
-          FORCE_TRACKS:      ${{ inputs.force_tracks }}
+          INTERVALS_ATHLETE:         ${{ secrets.INTERVALS_ATHLETE }}
+          INTERVALS_KEY:             ${{ secrets.INTERVALS_KEY }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FORCE_TRACKS:              ${{ inputs.force_tracks }}
         run: python3 .github/scripts/sync_intervals.py
