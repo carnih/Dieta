@@ -65,17 +65,20 @@ export class SupabaseRepo implements Repo {
       console.error('SupabaseRepo read', path, e);
       if (alive) cb(null);
     });
+    // debounce: un bulk (delete+insert di N righe) genera N eventi realtime → una sola rilettura.
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const bump = () => { if (timer) clearTimeout(timer); timer = setTimeout(() => void refetch(), 120); };
     void refetch();
     let ch: RealtimeChannel | null = null;
     const tables = WATCH[path];
     if (tables) {
       ch = this.sb.channel('rt:' + path);
       for (const t of tables) {
-        ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => void refetch());
+        ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, bump);
       }
       ch.subscribe();
     }
-    return () => { alive = false; if (ch) void this.sb.removeChannel(ch); };
+    return () => { alive = false; if (timer) clearTimeout(timer); if (ch) void this.sb.removeChannel(ch); };
   }
 
   async get<T = unknown>(path: string): Promise<T | null> {
@@ -214,11 +217,16 @@ export class SupabaseRepo implements Repo {
   }
 
   private async insSpesaItems(cat: string, items: ItemW[]): Promise<void> {
-    for (const it of items || []) {
-      if (!it || !it.t) continue;
-      const id = await this.insOne('spesa_item', { categoria_key: cat, testo: it.t, preso: !!it.d });
-      await this.ins('spesa_item_proprietario', (it.owners || []).map((o) => ({ item_id: id, proprietario_key: o })));
-    }
+    const valid = (items || []).filter((it) => it && it.t);
+    if (!valid.length) return;
+    // un solo insert con RETURNING id (ordine preservato), poi un solo insert per gli owner
+    const { data, error } = await this.sb.from('spesa_item')
+      .insert(valid.map((it) => ({ categoria_key: cat, testo: it.t, preso: !!it.d }))).select('id');
+    if (error) throw error;
+    const ids = (data as { id: number }[]) || [];
+    const owners: R[] = [];
+    valid.forEach((it, i) => (it.owners || []).forEach((o) => ids[i] && owners.push({ item_id: ids[i].id, proprietario_key: o })));
+    await this.ins('spesa_item_proprietario', owners);
   }
   private async wSpesaCat(cat: string, val: ItemW[] | null): Promise<void> {
     await this.delEq('spesa_item', 'categoria_key', cat);
@@ -231,11 +239,15 @@ export class SupabaseRepo implements Repo {
 
   private async wPantry(val: PantryW[] | null): Promise<void> {
     await this.delAll('dispensa_item');
-    for (const p of val || []) {
-      if (!p || !p.t) continue;
-      const id = await this.insOne('dispensa_item', { categoria_key: p.cat || 'dispensa', testo: p.t, attivo: p.active !== false });
-      await this.ins('dispensa_item_proprietario', (p.owners || []).map((o) => ({ dispensa_id: id, proprietario_key: o })));
-    }
+    const valid = (val || []).filter((p) => p && p.t);
+    if (!valid.length) return;
+    const { data, error } = await this.sb.from('dispensa_item')
+      .insert(valid.map((p) => ({ categoria_key: p.cat || 'dispensa', testo: p.t, attivo: p.active !== false }))).select('id');
+    if (error) throw error;
+    const ids = (data as { id: number }[]) || [];
+    const owners: R[] = [];
+    valid.forEach((p, i) => (p.owners || []).forEach((o) => ids[i] && owners.push({ dispensa_id: ids[i].id, proprietario_key: o })));
+    await this.ins('dispensa_item_proprietario', owners);
   }
 
   private async wHistAdd(val: HistW): Promise<void> {
