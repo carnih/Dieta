@@ -1,0 +1,318 @@
+// SupabaseRepo — implementazione del Repo su Supabase (Postgres normalizzato 3NF).
+//
+// FASE READS: auth + tutte le LETTURE (ricostruiscono i blob JSON che l'app si
+// aspetta, identici a Firebase) + realtime (best-effort). Le SCRITTURE arrivano
+// nel giro successivo, dopo aver verificato le letture in locale → per ora `set`
+// lancia un errore chiaro (collaudo in sola lettura, dati al sicuro).
+
+import type { RealtimeChannel } from '@supabase/supabase-js';
+import type { AuthUser, Repo } from '@/data/repo';
+import { requireSupabase } from '@/lib/supabase';
+
+// pill di default (per catLabels) — coerenti con lib/dietData CAT.
+const CAT_PILL_DEFAULT: Record<string, string> = {
+  carbo: '🌾 Carboidrati', prot: '🥩 Proteine', frutta: '🍓 Frutta', latte: '🥛 Latticini',
+  grasso: '🥜 Grassi', sfizio: '🍫 Sfizio', verdura: '🥦 Verdura', bevanda: '☕ Bevanda',
+  olio: '🫒 Condimento', integra: '💊 Integratore', scegli: '🍽️ Scegli tra', altro: '• Altro',
+};
+
+// Tabelle da osservare in realtime per ciascun nodo (best-effort).
+const WATCH: Record<string, string[]> = {
+  'training/activities': ['attivita'],
+  schedule: ['schedule_giorno'],
+  coachConfig: ['coach_config'],
+  spesaMeta: ['spesa_meta'],
+  nicBase: ['nic_day', 'nic_pasto', 'nic_item', 'nic_item_alt', 'nic_day_integ'],
+  noemiBase: ['noemi_meal', 'noemi_slot', 'noemi_slot_opt', 'noemi_fixed'],
+  noemiSettimana: ['noemi_settimana'],
+  allenamentiCfg: ['allenamenti_cfg'],
+  catLabels: ['categoria_alimentare'],
+  spesa: ['spesa_item', 'spesa_item_proprietario'],
+  spesaCategories: ['spesa_categoria'],
+  spesaHistory: ['spesa_storico', 'spesa_storico_voce'],
+  pantry: ['dispensa_item', 'dispensa_item_proprietario'],
+  overrides: ['override_pasto'],
+  allenamentiSchede: ['programma', 'programma_week', 'programma_sessione', 'programma_blocco'],
+};
+
+export class SupabaseRepo implements Repo {
+  // risolto alla costruzione (non all'import) → importare il modulo è sempre sicuro.
+  private sb = requireSupabase();
+
+  onAuthChange(cb: (user: AuthUser | null) => void): () => void {
+    this.sb.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
+      cb(u ? { uid: u.id, email: u.email ?? null } : null);
+    });
+    const { data } = this.sb.auth.onAuthStateChange((_e, session) => {
+      const u = session?.user;
+      cb(u ? { uid: u.id, email: u.email ?? null } : null);
+    });
+    return () => data.subscription.unsubscribe();
+  }
+
+  async login(email: string, password: string): Promise<void> {
+    const { error } = await this.sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }
+  async logout(): Promise<void> {
+    await this.sb.auth.signOut();
+  }
+
+  subscribe(path: string, cb: (val: unknown) => void): () => void {
+    let alive = true;
+    const refetch = () => this.get(path).then((v) => alive && cb(v)).catch((e) => {
+      console.error('SupabaseRepo read', path, e);
+      if (alive) cb(null);
+    });
+    void refetch();
+    let ch: RealtimeChannel | null = null;
+    const tables = WATCH[path];
+    if (tables) {
+      ch = this.sb.channel('rt:' + path);
+      for (const t of tables) {
+        ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => void refetch());
+      }
+      ch.subscribe();
+    }
+    return () => { alive = false; if (ch) void this.sb.removeChannel(ch); };
+  }
+
+  async get<T = unknown>(path: string): Promise<T | null> {
+    return (await this.readNode(path)) as T | null;
+  }
+
+  async set(path: string): Promise<void> {
+    throw new Error(`SupabaseRepo: scritture non ancora implementate (fase reads). Path: ${path}`);
+  }
+
+  // ── Ricostruzione dei nodi (blob JSON identici a Firebase) ──────────────────
+  private async readNode(path: string): Promise<unknown> {
+    switch (path) {
+      case 'training/activities': return this.rTrainingActivities();
+      case 'schedule': return this.rSchedule();
+      case 'coachConfig': return this.rCoachConfig();
+      case 'spesaMeta': return this.rSpesaMeta();
+      case 'nicBase': return this.rNicBase();
+      case 'noemiBase': return this.rNoemiBase();
+      case 'noemiSettimana': return this.rNoemiSettimana();
+      case 'allenamentiCfg': return this.rAllenamentiCfg();
+      case 'catLabels': return this.rCatLabels();
+      case 'spesa': return this.rSpesa();
+      case 'spesaCategories': return this.rSpesaCategories();
+      case 'spesaHistory': return this.rSpesaHistory();
+      case 'pantry': return this.rPantry();
+      case 'overrides': return this.rOverrides();
+      case 'allenamentiSchede': return this.rAllenamentiSchede();
+      default:
+        if (path.startsWith('training/tracks/')) return this.rTrack(path.split('/')[2]);
+        console.warn('SupabaseRepo: readNode path non gestito', path);
+        return null;
+    }
+  }
+
+  private async rows<T = Record<string, unknown>>(table: string, cols = '*', order?: string): Promise<T[]> {
+    let q = this.sb.from(table).select(cols);
+    if (order) q = q.order(order);
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data ?? []) as T[];
+  }
+
+  private async rTrainingActivities() {
+    const acts = await this.rows('attivita');
+    const out: Record<string, unknown> = {};
+    for (const a of acts as Record<string, unknown>[]) {
+      const { extra, created_at, updated_at, ...cols } = a;
+      out[String(a.id)] = { ...cols, ...(extra && typeof extra === 'object' ? extra : {}) };
+    }
+    return out;
+  }
+
+  private async rTrack(id: string) {
+    const [tr] = await this.rows('traccia', '*', undefined).then((r) => (r as Record<string, unknown>[]).filter((x) => x.attivita_id === id));
+    if (!tr) return null;
+    const salite = (await this.rows('traccia_salita', '*', 'ordinamento')).filter((x: Record<string, unknown>) => x.attivita_id === id);
+    const laps = (await this.rows('traccia_lap', '*', 'ordinamento')).filter((x: Record<string, unknown>) => x.attivita_id === id);
+    return { v: tr.versione, gain: tr.dislivello_m, track: tr.geo, elev: tr.altimetria, climbs: salite, laps };
+  }
+
+  private async rSchedule() {
+    const rs = await this.rows<{ giorno: string; ordinamento: number; disciplina: string }>('schedule_giorno', 'giorno,ordinamento,disciplina', 'ordinamento');
+    const out: Record<string, string[]> = {};
+    for (const r of rs) (out[r.giorno] ??= []).push(r.disciplina);
+    return out;
+  }
+
+  private async rCoachConfig() {
+    const [c] = await this.rows<{ obiettivo: string | null; note: string | null }>('coach_config');
+    return c ? { obiettivo: c.obiettivo ?? undefined, note: c.note ?? undefined } : {};
+  }
+
+  private async rSpesaMeta() {
+    const [m] = await this.rows<{ modificato_da: string | null; modificato_il: string | null }>('spesa_meta');
+    if (!m) return null;
+    return { by: m.modificato_da ?? undefined, at: m.modificato_il ? Date.parse(m.modificato_il) : undefined };
+  }
+
+  private async rCatLabels() {
+    const rs = await this.rows<{ key: string; pill: string }>('categoria_alimentare', 'key,pill');
+    const out: Record<string, string> = {};
+    for (const r of rs) if (r.pill && r.pill !== CAT_PILL_DEFAULT[r.key]) out[r.key] = r.pill;
+    return out;
+  }
+
+  private async rNicBase() {
+    const days = await this.rows('nic_day', '*', 'ordinamento');
+    const [integ, pasti, items, alts] = await Promise.all([
+      this.rows('nic_day_integ', '*', 'ordinamento'), this.rows('nic_pasto', '*', 'ordinamento'),
+      this.rows('nic_item', '*', 'ordinamento'), this.rows('nic_item_alt', '*', 'ordinamento'),
+    ]);
+    const altBy = groupBy(alts as R[], 'item_id');
+    const itemsBy = groupBy(items as R[], 'pasto_id');
+    const pastiBy = groupBy(pasti as R[], 'day_id');
+    const integBy = groupBy(integ as R[], 'day_id');
+    return {
+      days: (days as R[]).map((d) => ({
+        id: d.id, label: d.label, pastoLibero: d.pasto_libero || undefined,
+        integ: rebuildInteg((integBy[String(d.id)] || [])),
+        pasti: (pastiBy[String(d.id)] || []).map((p) => ({
+          icon: p.icon || '', nome: p.nome, note: p.note || undefined,
+          items: (itemsBy[String(p.id)] || []).map((it) => {
+            const a = (altBy[String(it.id)] || []).map((x) => x.valore);
+            return a.length ? { cat: it.categoria_key, alts: a } : { cat: it.categoria_key, v: it.valore ?? '' };
+          }),
+        })),
+      })),
+    };
+  }
+
+  private async rNoemiBase() {
+    const [meals, slots, opts, fixed] = await Promise.all([
+      this.rows('noemi_meal', '*', 'ordinamento'), this.rows('noemi_slot', '*', 'ordinamento'),
+      this.rows('noemi_slot_opt', '*', 'ordinamento'), this.rows('noemi_fixed', '*', 'ordinamento'),
+    ]);
+    const optBy = groupBy(opts as R[], 'slot_id');
+    const slotBy = groupBy(slots as R[], 'meal_key');
+    const fixBy = groupBy(fixed as R[], 'meal_key');
+    const out: Record<string, unknown> = {};
+    for (const m of meals as R[]) {
+      out[String(m.key)] = {
+        icon: m.icon || '', nome: m.nome,
+        slots: (slotBy[String(m.key)] || []).map((s) => ({
+          key: String(s.id), cat: s.categoria_key, label: s.label,
+          opts: (optBy[String(s.id)] || []).map((o) => o.valore),
+        })),
+        fixed: (fixBy[String(m.key)] || []).map((f) => ({ cat: f.categoria_key, v: f.valore })),
+      };
+    }
+    return out;
+  }
+
+  private async rNoemiSettimana() {
+    const rs = await this.rows<{ giorno: string; chiave: string; testo: string }>('noemi_settimana');
+    const out: Record<string, Record<string, string>> = {};
+    for (const r of rs) (out[r.giorno] ??= {})[r.chiave] = r.testo;
+    return out;
+  }
+
+  private async rAllenamentiCfg() {
+    const rs = await this.rows<{ programma_key: string; start_date: string | null; shift: number }>('allenamenti_cfg');
+    const out: Record<string, unknown> = {};
+    for (const r of rs) out[r.programma_key] = { start: r.start_date || undefined, shift: r.shift };
+    return out;
+  }
+
+  private async rSpesa() {
+    const [items, owners] = await Promise.all([
+      this.rows('spesa_item'), this.rows('spesa_item_proprietario'),
+    ]);
+    const ownBy = groupBy(owners as R[], 'item_id');
+    const out: Record<string, unknown[]> = {};
+    for (const it of items as R[]) {
+      (out[String(it.categoria_key)] ??= []).push({
+        t: it.testo, d: !!it.preso,
+        owners: (ownBy[String(it.id)] || []).map((o) => o.proprietario_key),
+      });
+    }
+    return out;
+  }
+
+  private async rSpesaCategories() {
+    const rs = await this.rows<{ key: string; emoji: string | null; nome: string; ordinamento: number }>('spesa_categoria');
+    const out: Record<string, unknown> = {};
+    for (const r of rs) out[r.key] = { label: [r.emoji, r.nome].filter(Boolean).join(' '), order: r.ordinamento };
+    return out;
+  }
+
+  private async rSpesaHistory() {
+    const [storici, voci] = await Promise.all([this.rows('spesa_storico'), this.rows('spesa_storico_voce')]);
+    const vBy = groupBy(voci as R[], 'storico_id');
+    const out: Record<string, unknown> = {};
+    for (const s of storici as R[]) {
+      const items: Record<string, unknown[]> = {};
+      for (const v of vBy[String(s.id)] || []) (items[String(v.categoria_key || 'altro')] ??= []).push({ t: v.testo });
+      out[String(s.id)] = { date: s.fatta_il, items };
+    }
+    return out;
+  }
+
+  private async rPantry() {
+    const [items, owners] = await Promise.all([this.rows('dispensa_item'), this.rows('dispensa_item_proprietario')]);
+    const ownBy = groupBy(owners as R[], 'dispensa_id');
+    return (items as R[]).map((p) => ({
+      t: p.testo, cat: p.categoria_key, active: !!p.attivo,
+      owners: (ownBy[String(p.id)] || []).map((o) => o.proprietario_key),
+    }));
+  }
+
+  private async rOverrides() {
+    const rs = await this.rows<{ data: string; pasto: string; persona: string }>('override_pasto');
+    const out: Record<string, Record<string, Record<string, boolean>>> = {};
+    for (const r of rs) (((out[r.data] ??= {})[r.pasto] ??= {}))[r.persona] = true;
+    return out;
+  }
+
+  private async rAllenamentiSchede() {
+    const [progs, weeks, sess, blocchi] = await Promise.all([
+      this.rows('programma'), this.rows('programma_week', '*', 'ordinamento'),
+      this.rows('programma_sessione', '*', 'ordinamento'), this.rows('programma_blocco', '*', 'ordinamento'),
+    ]);
+    const blocBy = groupBy(blocchi as R[], 'sessione_id');
+    const sessBy = groupBy(sess as R[], 'week_id');
+    const weekBy = groupBy(weeks as R[], 'programma_key');
+    const out: Record<string, unknown> = {};
+    for (const p of progs as R[]) {
+      out[String(p.key)] = {
+        nome: p.nome, coach: p.coach || '', durata: p.durata ?? 0, note: p.note || undefined, obiettivi: p.obiettivi || undefined,
+        weeks: (weekBy[String(p.key)] || []).map((w) => {
+          const ss = sessBy[String(w.id)] || [];
+          const week: Record<string, unknown> = { titolo: w.titolo, note: w.note || undefined };
+          if (ss.length === 1 && ss[0].disc == null) {
+            week.blocchi = (blocBy[String(ss[0].id)] || []).map((b) => ({ nome: b.nome, righe: b.righe }));
+          } else {
+            week.sessioni = ss.map((s) => ({ disc: s.disc, nome: s.nome || undefined, blocchi: (blocBy[String(s.id)] || []).map((b) => ({ nome: b.nome, righe: b.righe })) }));
+          }
+          return week;
+        }),
+      };
+    }
+    return out;
+  }
+}
+
+// ── util ──
+type R = Record<string, unknown>;
+function groupBy(rows: R[], key: string): Record<string, R[]> {
+  const out: Record<string, R[]> = {};
+  for (const r of rows) (out[String(r[key])] ??= []).push(r);
+  return out;
+}
+function rebuildInteg(rows: R[]): unknown {
+  if (!rows.length) return undefined;
+  const pre = rows.find((r) => r.tag === 'Pre');
+  const post = rows.find((r) => r.tag === 'Post');
+  const multi = rows.filter((r) => r.tag !== 'Pre' && r.tag !== 'Post');
+  if (multi.length) return { multi: rows.map((r) => ({ tag: r.tag, v: r.valore })) };
+  return { pre: pre?.valore, post: post?.valore };
+}
