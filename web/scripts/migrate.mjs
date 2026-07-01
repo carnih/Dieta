@@ -56,6 +56,15 @@ const counts = {};
 const bump = (t, n = 1) => { counts[t] = (counts[t] || 0) + n; };
 const disciplineSet = new Set();
 
+// data storico spesa → ISO. Accetta epoch (chiave ts), 'DD/MM/YYYY' o ISO.
+function histIso(ts, date) {
+  if (/^\d{10,}$/.test(String(ts))) return new Date(Number(ts)).toISOString();
+  const m = String(date || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+}
+
 async function fbLogin() {
   const r = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FB_APIKEY}`,
@@ -227,7 +236,7 @@ async function migSpesa(db) {
     await insert('dispensa_item_proprietario', (p.owners || []).map((o) => ({ dispensa_id: row.id, proprietario_key: o })));
   }
   for (const [ts, snap] of Object.entries(db.spesaHistory || {})) {
-    const fatta = snap.date || new Date(Number(ts) || Date.now()).toISOString();
+    const fatta = histIso(ts, snap.date);
     const storico = await insertOne('spesa_storico', { fatta_il: fatta });
     const voci = [];
     for (const [cat, arr] of Object.entries(snap.items || {})) {
