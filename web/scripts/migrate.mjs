@@ -257,10 +257,13 @@ async function migTraining(db) {
     });
   }
   await insert('attivita', rows); // batch (id naturale)
+  const actIds = new Set(rows.map((r) => r.id));
 
   const tracks = db.training?.tracks || {};
   const traccia = [], salite = [], laps = [];
+  let orfane = 0;
   for (const [id, t] of Object.entries(tracks)) {
+    if (!actIds.has(id)) { orfane++; continue; } // traccia senza attività → salta (evita FK fallita)
     traccia.push({ attivita_id: id, versione: t.v ?? null, dislivello_m: t.gain ?? null, geo: t.track ?? null, altimetria: t.elev ?? null });
     (t.climbs || []).forEach((c, i) => salite.push({ attivita_id: id, ordinamento: i,
       durata_s: c.durata_s ?? c.dur ?? null, pendenza_media: c.pend_media ?? c.grad ?? null, pendenza_max: c.pend_max ?? null,
@@ -268,6 +271,7 @@ async function migTraining(db) {
     (t.laps || []).forEach((l, i) => laps.push({ attivita_id: id, ordinamento: i,
       distanza_km: l.km ?? l.dist ?? null, durata_s: l.durata_s ?? l.dur ?? null, passo: l.passo ?? null, velocita: l.vel ?? null }));
   }
+  if (orfane) console.log(`  · ${orfane} tracce senza attività: saltate.`);
   await insert('traccia', traccia);
   await insert('traccia_salita', salite);
   await insert('traccia_lap', laps);
