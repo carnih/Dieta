@@ -674,6 +674,14 @@ export default function Spesa() {
                       contentEditable
                       suppressContentEditableWarning
                       spellCheck={false}
+                      // contentEditable NON-controllato: scrivo il testo via ref solo se
+                      // diverso e SOLO se non è a fuoco → React/optimistic non toccano mai
+                      // il DOM editabile (niente caret parassita, niente focus rubato).
+                      ref={(el) => {
+                        if (el && el !== document.activeElement && el.textContent !== it.t) {
+                          el.textContent = it.t;
+                        }
+                      }}
                       onBlur={(e) =>
                         renameSpesaItem(c.key, it.idx, e.currentTarget.textContent || '')
                       }
@@ -683,9 +691,6 @@ export default function Spesa() {
                           e.currentTarget.blur();
                         }
                       }}
-                      /* testo via innerHTML: React NON ri-tocca il DOM editabile quando il
-                         nome non cambia (es. spunta) → niente caret parassita sul re-render. */
-                      dangerouslySetInnerHTML={{ __html: esc(it.t) }}
                     />
                     {open ? (
                       <span className="row-actions">
