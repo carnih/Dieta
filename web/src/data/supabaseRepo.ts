@@ -82,8 +82,182 @@ export class SupabaseRepo implements Repo {
     return (await this.readNode(path)) as T | null;
   }
 
-  async set(path: string): Promise<void> {
-    throw new Error(`SupabaseRepo: scritture non ancora implementate (fase reads). Path: ${path}`);
+  // ── Scritture: traduce il path Firebase-style nell'operazione SQL ──────────
+  async set(path: string, val: unknown): Promise<void> {
+    const s = path.split('/');
+    switch (s[0]) {
+      case 'nicBase': return this.wNicBase(val as NicDiet);
+      case 'noemiBase': return this.wNoemiBase(val as Record<string, NoemiMealW>);
+      case 'allenamentiSchede': return this.wSchede(val as Record<string, ProgW>);
+      case 'noemiSettimana': return this.wNoemiSett(s[1], s[2], val);
+      case 'allenamentiCfg': return this.wCfg(s[1], val as { start?: string; shift?: number });
+      case 'schedule': return s[1] ? this.wSchedDay(s[1], val as string[] | null) : this.delAll('schedule_giorno');
+      case 'catLabels': return this.wCatLabel(s[1], val as string | null);
+      case 'coachConfig': return this.wCoach(val as string | null); // .../obiettivo
+      case 'spesaMeta': return this.wSpesaMeta(val as { by?: string; at?: number });
+      case 'spesa': return s[1] ? this.wSpesaCat(s[1], val as ItemW[] | null) : this.wSpesaAll(val as Record<string, ItemW[]> | null);
+      case 'pantry': return this.wPantry(val as PantryW[] | null);
+      case 'spesaHistory': return s[1] ? this.wHistAdd(val as HistW) : this.delAll('spesa_storico');
+      case 'spesaCategories': return this.wSpesaCat2(s[1], val as { label?: string; order?: number } | null);
+      case 'overrides': return this.wOverride(s[1], s[2], val as { e?: boolean; n?: boolean } | null);
+      case 'schedePdf': console.warn('SupabaseRepo: schedePdf (Storage) non ancora implementato'); return;
+      default: console.warn('SupabaseRepo: set path non gestito', path);
+    }
+  }
+
+  // helper scrittura
+  private async ins(table: string, rows: R[]): Promise<void> {
+    if (!rows.length) return;
+    const { error } = await this.sb.from(table).insert(rows);
+    if (error) throw error;
+  }
+  private async insOne(table: string, row: R): Promise<number> {
+    const { data, error } = await this.sb.from(table).insert(row).select('id').single();
+    if (error) throw error;
+    return (data as { id: number }).id;
+  }
+  private async up(table: string, row: R, onConflict?: string): Promise<void> {
+    const { error } = await this.sb.from(table).upsert(row, onConflict ? { onConflict } : undefined);
+    if (error) throw error;
+  }
+  private async delAll(table: string): Promise<void> {
+    const { error } = await this.sb.from(table).delete().gte('created_at', '1900-01-01');
+    if (error) throw error;
+  }
+  private async delEq(table: string, col: string, v: string): Promise<void> {
+    const { error } = await this.sb.from(table).delete().eq(col, v);
+    if (error) throw error;
+  }
+  private async ensureDisc(k: string): Promise<void> {
+    await this.up('disciplina', { key: k, nome: k[0].toUpperCase() + k.slice(1) }, 'key');
+  }
+
+  private async wNicBase(val: NicDiet): Promise<void> {
+    await this.delAll('nic_day'); // cascade: pasto/item/alt/integ
+    for (const [di, day] of (val?.days || []).entries()) {
+      await this.ins('nic_day', [{ id: day.id, label: day.label || day.id, ordinamento: di, pasto_libero: day.pastoLibero || null }]);
+      const ig = day.integ || {}, irows: R[] = [];
+      if (ig.pre) irows.push({ day_id: day.id, tag: 'Pre', valore: ig.pre, ordinamento: 0 });
+      if (ig.post) irows.push({ day_id: day.id, tag: 'Post', valore: ig.post, ordinamento: 1 });
+      (ig.multi || []).forEach((m, i) => { if (m.v && m.tag) irows.push({ day_id: day.id, tag: m.tag, valore: m.v, ordinamento: i }); });
+      await this.ins('nic_day_integ', irows);
+      for (const [pi, p] of (day.pasti || []).entries()) {
+        const pid = await this.insOne('nic_pasto', { day_id: day.id, icon: p.icon || null, nome: p.nome || '—', note: p.note || null, ordinamento: pi });
+        for (const [ii, it] of (p.items || []).entries()) {
+          const iid = await this.insOne('nic_item', { pasto_id: pid, categoria_key: it.cat, valore: it.alts ? null : (it.v ?? ''), ordinamento: ii });
+          if (it.alts) await this.ins('nic_item_alt', it.alts.filter((v) => v && v.trim()).map((v, ai) => ({ item_id: iid, valore: v, ordinamento: ai })));
+        }
+      }
+    }
+  }
+
+  private async wNoemiBase(val: Record<string, NoemiMealW>): Promise<void> {
+    await this.delAll('noemi_meal'); // cascade: slot/opt/fixed
+    let mi = 0;
+    for (const [key, m] of Object.entries(val || {})) {
+      if (!m || !Array.isArray(m.slots)) continue;
+      await this.ins('noemi_meal', [{ key, icon: m.icon || null, nome: m.nome || key, ordinamento: mi++ }]);
+      for (const [si, s] of m.slots.entries()) {
+        const sid = await this.insOne('noemi_slot', { meal_key: key, categoria_key: s.cat, label: s.label || '—', ordinamento: si });
+        await this.ins('noemi_slot_opt', (s.opts || []).filter((v) => v && v.trim()).map((v, oi) => ({ slot_id: sid, valore: v, ordinamento: oi })));
+      }
+      await this.ins('noemi_fixed', (m.fixed || []).filter((f) => f.v && f.v.trim()).map((f, fi) => ({ meal_key: key, categoria_key: f.cat, valore: f.v, ordinamento: fi })));
+    }
+  }
+
+  private async wSchede(val: Record<string, ProgW>): Promise<void> {
+    for (const key of ['forza', 'tri']) {
+      const prog = val?.[key];
+      if (!prog) continue;
+      await this.up('programma', { key, nome: prog.nome || key, coach: prog.coach || null, durata: prog.durata ?? null, note: prog.note || null, obiettivi: prog.obiettivi || null }, 'key');
+      await this.delEq('programma_week', 'programma_key', key); // cascade: sessione/blocco
+      for (const [wi, w] of (prog.weeks || []).entries()) {
+        const wid = await this.insOne('programma_week', { programma_key: key, titolo: w.titolo || `Settimana ${wi + 1}`, note: w.note || null, ordinamento: wi });
+        const sessioni = w.sessioni ? w.sessioni.map((x) => ({ disc: x.disc, nome: x.nome || null, blocchi: x.blocchi || [] })) : [{ disc: null, nome: null, blocchi: w.blocchi || [] }];
+        for (const [xi, x] of sessioni.entries()) {
+          if (x.disc) await this.ensureDisc(x.disc);
+          const sid = await this.insOne('programma_sessione', { week_id: wid, disc: x.disc, nome: x.nome, ordinamento: xi });
+          await this.ins('programma_blocco', (x.blocchi || []).map((b, bi) => ({ sessione_id: sid, nome: b.nome || '—', righe: b.righe || '', ordinamento: bi })));
+        }
+      }
+    }
+  }
+
+  private async wNoemiSett(wd: string, mk: string, val: unknown): Promise<void> {
+    if (val == null || val === '') { await this.sb.from('noemi_settimana').delete().eq('giorno', wd).eq('chiave', mk); return; }
+    await this.up('noemi_settimana', { giorno: wd, chiave: mk, testo: String(val) }, 'giorno,chiave');
+  }
+
+  private async wCfg(prog: string, val: { start?: string; shift?: number }): Promise<void> {
+    await this.up('allenamenti_cfg', { programma_key: prog, start_date: val?.start || null, shift: val?.shift ?? 0 }, 'programma_key');
+  }
+
+  private async wSchedDay(wd: string, val: string[] | null): Promise<void> {
+    await this.delEq('schedule_giorno', 'giorno', wd);
+    if (Array.isArray(val)) {
+      for (const d of val) await this.ensureDisc(d);
+      await this.ins('schedule_giorno', val.map((d, i) => ({ giorno: wd, ordinamento: i, disciplina: d })));
+    }
+  }
+
+  private async wCatLabel(cat: string, val: string | null): Promise<void> {
+    const { error } = await this.sb.from('categoria_alimentare').update({ pill: val || CAT_PILL_DEFAULT[cat] || cat }).eq('key', cat);
+    if (error) throw error;
+  }
+
+  private async wCoach(val: string | null): Promise<void> {
+    await this.up('coach_config', { id: true, obiettivo: val || null }, 'id');
+  }
+
+  private async wSpesaMeta(val: { by?: string; at?: number }): Promise<void> {
+    await this.up('spesa_meta', { id: true, modificato_da: val?.by || null, modificato_il: val?.at ? new Date(val.at).toISOString() : null }, 'id');
+  }
+
+  private async insSpesaItems(cat: string, items: ItemW[]): Promise<void> {
+    for (const it of items || []) {
+      if (!it || !it.t) continue;
+      const id = await this.insOne('spesa_item', { categoria_key: cat, testo: it.t, preso: !!it.d });
+      await this.ins('spesa_item_proprietario', (it.owners || []).map((o) => ({ item_id: id, proprietario_key: o })));
+    }
+  }
+  private async wSpesaCat(cat: string, val: ItemW[] | null): Promise<void> {
+    await this.delEq('spesa_item', 'categoria_key', cat);
+    if (Array.isArray(val)) await this.insSpesaItems(cat, val);
+  }
+  private async wSpesaAll(val: Record<string, ItemW[]> | null): Promise<void> {
+    await this.delAll('spesa_item');
+    if (val) for (const [cat, items] of Object.entries(val)) await this.insSpesaItems(cat, items);
+  }
+
+  private async wPantry(val: PantryW[] | null): Promise<void> {
+    await this.delAll('dispensa_item');
+    for (const p of val || []) {
+      if (!p || !p.t) continue;
+      const id = await this.insOne('dispensa_item', { categoria_key: p.cat || 'dispensa', testo: p.t, attivo: p.active !== false });
+      await this.ins('dispensa_item_proprietario', (p.owners || []).map((o) => ({ dispensa_id: id, proprietario_key: o })));
+    }
+  }
+
+  private async wHistAdd(val: HistW): Promise<void> {
+    const sid = await this.insOne('spesa_storico', { fatta_il: histIso(val?.date) });
+    const voci: R[] = [];
+    for (const [cat, arr] of Object.entries(val?.items || {})) for (const it of arr || []) if (it?.t) voci.push({ storico_id: sid, categoria_key: cat, testo: it.t });
+    await this.ins('spesa_storico_voce', voci);
+  }
+
+  private async wSpesaCat2(key: string, val: { label?: string; order?: number } | null): Promise<void> {
+    if (val == null) {
+      await this.delEq('spesa_item', 'categoria_key', key); // prima gli articoli (FK)
+      await this.delEq('spesa_categoria', 'key', key);
+      return;
+    }
+    const [emoji, ...rest] = String(val.label || key).split(' ');
+    await this.up('spesa_categoria', { key, emoji, nome: rest.join(' ') || key, ordinamento: val.order || 100, custom: true }, 'key');
+  }
+
+  private async wOverride(date: string, meal: string, val: { e?: boolean; n?: boolean } | null): Promise<void> {
+    await this.sb.from('override_pasto').delete().eq('data', date).eq('pasto', meal);
+    if (val) await this.ins('override_pasto', (['e', 'n'] as const).filter((p) => val[p]).map((p) => ({ data: date, pasto: meal, persona: p })));
   }
 
   // ── Ricostruzione dei nodi (blob JSON identici a Firebase) ──────────────────
@@ -303,6 +477,29 @@ export class SupabaseRepo implements Repo {
 
 // ── util ──
 type R = Record<string, unknown>;
+
+// tipi minimi delle scritture (shape lato app)
+type ItemW = { t: string; d?: boolean; owners?: string[] };
+type PantryW = { t: string; cat?: string; active?: boolean; owners?: string[] };
+type HistW = { date?: string; items?: Record<string, ItemW[]> };
+type NoemiMealW = { icon?: string; nome?: string; slots?: { cat: string; label?: string; opts?: string[] }[]; fixed?: { cat: string; v?: string }[] };
+type BloccoW = { nome?: string; righe?: string };
+type SessW = { disc?: string | null; nome?: string; blocchi?: BloccoW[] };
+type WeekW = { titolo?: string; note?: string; blocchi?: BloccoW[]; sessioni?: SessW[] };
+type ProgW = { nome?: string; coach?: string; durata?: number; note?: string; obiettivi?: string; weeks?: WeekW[] };
+type NicItemW = { cat: string; v?: string; alts?: string[] };
+type NicPastoW = { icon?: string; nome?: string; note?: string; items?: NicItemW[] };
+type NicDayW = { id: string; label?: string; pastoLibero?: string; integ?: { pre?: string; post?: string; multi?: { tag: string; v: string }[] }; pasti?: NicPastoW[] };
+type NicDiet = { days?: NicDayW[] };
+
+function histIso(date?: string): string {
+  if (!date) return new Date().toISOString();
+  const m = String(date).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+}
+
 function groupBy(rows: R[], key: string): Record<string, R[]> {
   const out: Record<string, R[]> = {};
   for (const r of rows) (out[String(r[key])] ??= []).push(r);
