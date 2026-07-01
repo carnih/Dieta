@@ -30,6 +30,7 @@ import type {
   Schedule,
   Sessione,
   Week,
+  WeekdayKey,
 } from '@/lib/types';
 import PdfViewer from '@/pages/allenamenti/PdfViewer';
 import SchedeEditor from '@/pages/allenamenti/SchedeEditor';
@@ -58,15 +59,32 @@ function blkView(b: Blocco, key: number) {
 
 function sessView(s: Sessione, key: number) {
   const [em, nm] = DISC[s.disc] || ['•', s.disc];
-  const lab = s.nome || nm;
   return (
     <div key={key} className="al-sess">
       <span className={'al-sess-h d-' + s.disc}>
-        {em} {lab}
+        {em} {nm}
       </span>
+      {s.nome ? <div className="al-sess-sub">{s.nome}</div> : null}
       {(s.blocchi || []).map((b, i) => blkView(b, i))}
     </div>
   );
+}
+
+// Mappa per ORDINE: il k-esimo giorno della settimana (lun→dom) che pianifica una
+// disciplina prende la k-esima sessione di quella disciplina nella scheda.
+// Es: nuoto pianificato lun+mer → lun = sessione nuoto #1, mer = #2.
+const WD_ORDER: WeekdayKey[] = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
+function sessioneDelGiorno(
+  schedule: Schedule, oggiWd: WeekdayKey, prog: Prog, disc: string, sessioni: Sessione[],
+): Sessione {
+  const giorni = WD_ORDER.filter((wd) =>
+    getSchedDays(schedule, wd).some((id) => {
+      const o = schedOpt(id);
+      return !!o.sess && o.sess[0] === prog && o.sess[1] === disc;
+    }),
+  );
+  const pos = giorni.indexOf(oggiWd);
+  return sessioni[pos >= 0 ? Math.min(pos, sessioni.length - 1) : 0];
 }
 
 // forza: supporta piu' sessioni/settimana (sessioni[]) o singola (blocchi)
@@ -166,8 +184,11 @@ export default function Allenamenti({ onOpenDashboard, onToast }: AllenamentiPro
       const ss: Sessione[] = wk.sessioni || [{ disc: 'forza', blocchi: wk.blocchi || [] }];
       oggi.push({ prog, cap: schede.forza.nome.split(' · ')[0] + ' · ' + wk.titolo, sessioni: ss });
     } else {
-      const s = (wk.sessioni || []).find((x) => x.disc === disc);
-      if (s) oggi.push({ prog, cap: schede.tri.nome.split(' · ')[0] + ' · ' + wk.titolo, sessioni: [s] });
+      const ofDisc = (wk.sessioni || []).filter((x) => x.disc === disc);
+      if (ofDisc.length) {
+        const s = sessioneDelGiorno(schedule, t, prog, disc as string, ofDisc);
+        oggi.push({ prog, cap: schede.tri.nome.split(' · ')[0] + ' · ' + wk.titolo, sessioni: [s] });
+      }
     }
   });
 

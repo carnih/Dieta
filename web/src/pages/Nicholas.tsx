@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { repo } from '@/data';
 import { useStore } from '@/hooks/useStore';
 import { NICHOLAS as NICHOLAS_DEF } from '@/lib/dietData';
-import { NOEMI_DAYS, NOEMI_LABELS, todayId } from '@/lib/date';
+import { NOEMI_LABELS, todayId } from '@/lib/date';
 import { SCHED_OPTS, schedOpt, getSchedDays } from '@/lib/trainingData';
 import type {
   CategoriaKey,
@@ -115,11 +115,13 @@ export default function Nicholas() {
 // ──────────────────────────────────────────────────────────────────────────
 function Schedule({ schedule }: { schedule: Schedule }) {
   const [sched2Open, setSched2Open] = useState<Partial<Record<WeekdayKey, boolean>>>({});
+  // il pianificatore va SEMPRE da lunedì a domenica (NOEMI_DAYS è dom→sab, per la dieta).
+  const PLAN_DAYS: WeekdayKey[] = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
   const t = todayId();
 
   return (
     <div className="overflow-hidden rounded-card bg-card shadow-soft">
-      {NOEMI_DAYS.map((wd) => {
+      {PLAN_DAYS.map((wd) => {
         const days = getSchedDays(schedule, wd);
         const p = days[0] || 'riposo';
         const s2 = days[1] || '';

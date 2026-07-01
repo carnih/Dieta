@@ -71,6 +71,7 @@ const CSS = `
 .al-scope .al-sess-h.d-corsa{background:#FFF7E6;color:#B45309}
 .al-scope .al-sess-h.d-forza{background:#F4EEFB;color:#7C5CD6}
 .al-scope .al-sess-h.d-brick{background:#FEF2F4;color:#BE2E54}
+.al-scope .al-sess-sub{font-size:12.5px;font-weight:700;color:#6B7280;margin:5px 0 2px 2px}
 .al-scope .al-blk{margin-bottom:10px}
 .al-scope .al-blk-n{font-size:10.5px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
 .al-scope .al-blk-r{font-size:14px;color:var(--text);line-height:1.5;padding-left:12px;border-left:2px solid var(--border);white-space:pre-wrap}
