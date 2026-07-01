@@ -3,6 +3,18 @@
 Storico delle modifiche significative all'app. Le voci più recenti in alto.
 Formato libero: data — cosa è cambiato e perché.
 
+## 2026-07-01 — Fase 2: migrazione backend a Supabase + triathlon multi-sessione
+- **Backend Firebase → Supabase (completata, in produzione)**. Il data-layer astratto (Repo pattern) ha reso lo switch pulito: `SupabaseRepo` (`web/src/data/supabaseRepo.ts`) affianca `FirebaseRepo`, selezione via flag **`VITE_USE_SUPABASE`** in `web/src/data/index.ts`. Firebase è **sganciato** (app, sync, coach leggono/scrivono Supabase) e può essere dismesso.
+  - **Schema 3NF** (`supabase/schema.sql`): tabelle normalizzate (attivita, traccia, spesa_*, nic_*, noemi_*, programma/week/sessione/blocco, schedule_giorno, override_pasto, coach_config, membro, disciplina…), audit-cols + trigger, CHECK/ENUM, indici FK, **RLS force** con `is_membro()` (security-definer). Migrazioni: `0004` override, `0005` realtime publication, `0006` RPC di scrittura "hot" (SECURITY INVOKER), `0007` Storage bucket `schede` (privato), `0008` traccia.climbs/laps come **jsonb** (colonne inventate rompevano lap/salite → ora jsonb fedele a intervals.icu).
+  - `SupabaseRepo`: legge ricostruendo il JSON stile-Firebase dalle tabelle; scrive **ottimistico** (echo immediato ai subscriber) + apply (RPC per le scritture calde); realtime via `postgres_changes` con refetch debounced. PDF schede via Storage (signed URL).
+  - **Sync intervals.icu** (`.github/scripts/sync_intervals.py` + workflow): scrive su Supabase via REST (`Prefer: resolution=merge-duplicates`), attivita + traccia (climbs/laps jsonb). Rimossa la scrittura su Firebase.
+  - **Coach** (`web/api/coach-data.js`): legge Supabase via REST con **service_role** (bypassa RLS), payload arricchito con `schede` complete (settimana `corrente:true`) e `settimana_in_corso`.
+  - **Env**: app/Vercel `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_USE_SUPABASE`; funzione coach `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `COACH_API_KEY`; Action `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`. `FB_EMAIL`/`FB_PASSWORD` non più usate. **service_role è SEGRETO** (solo Vercel env + GitHub Secrets, mai nel repo/chat); anon key è pubblica.
+- **Triathlon multi-sessione** (più sedute per disciplina nella stessa settimana, es. 2 nuoto + 2 bici). Programma di luglio (Mesociclo 9) caricato via `web/scripts/seed_tri.mjs` (4 settimane × 6 sedute).
+  - `sessView` (Allenamenti): header = **disciplina**, `nome` come **sottotitolo** (`.al-sess-sub`).
+  - **Mappatura per ordine** (`sessioneDelGiorno`): l'N-esimo giorno pianificato di una disciplina prende l'N-esima seduta di quella disciplina nella scheda (es. Nuoto lun+mer → lun=seduta #1, mer=#2).
+  - Planner Nicholas ora **Lun→Dom** (`PLAN_DAYS`), non più dom-sab.
+
 ## 2026-07-01 — Go-live stack React + fix mobile (parità NetWorth) + redesign UI
 - **Migrazione a React**: l'app di produzione è ora `web/` (**React 18 + Vite + TS + Tailwind**), con **data-layer astratto** (Repo pattern) pronto allo swap Supabase (Fase 2). Vercel **Root Directory = `web`**; coach in `web/api/`; `index.html` **no-cache** (stop build vecchia in cache su PWA iOS). Backup dati Firebase in OneDrive prima dello switch. Il monolite `index.html` resta come fallback storico.
 - **Mobile sistemato copiando NetWorth**: scroll normale del documento (`min-h-screen`), **anti-zoom iOS** (viewport re-assert dopo i font, `-webkit-text-size-adjust:100%`, `overflow-x:clip`, input ≥16px). Rimossi i trucchi (`overflow:hidden`/`100dvh`/shell fisso) che rompevano il dimensionamento (app al 70%, poi zoom). Chip account `absolute` (non più bloccato).

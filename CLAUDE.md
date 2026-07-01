@@ -11,8 +11,10 @@ Web-app privata mobile-first per: **dieta** (Nicholas & Noemi), **allenamenti** 
 
 ## Architettura (stack moderno — dal go-live giugno 2026)
 - **App**: `web/` — **React 18 + Vite + TypeScript (strict) + Tailwind**. Titoli Varela Round, corpo Nunito Sans; token storici come CSS var in `web/src/styles/index.css` (`--n` blu Nicholas, `--e` rosa Noemi, `--grn` verde spesa, `--bg`, `--shadow-soft`, `--r`) mirrorati in `tailwind.config.js`. Alias `@` → `web/src`.
-- **Data-layer astratto (Repo pattern)** in `web/src/data/`: `repo.ts` (interfaccia), `firebaseRepo.ts` (impl. attuale), `index.ts` (`export const repo = new FirebaseRepo()` = **unico punto di swap** per la Fase 2 Supabase). Hook `useAuth`/`useStore`; `SUBS`-like realtime.
-- **Dati (oggi)**: Firebase Realtime Database (progetto `dieta-b7804`, europe-west1). `apiKey` in chiaro = OK (pubblica per design).
+- **Data-layer astratto (Repo pattern)** in `web/src/data/`: `repo.ts` (interfaccia path/JSON stile-Firebase), `firebaseRepo.ts` (legacy), `supabaseRepo.ts` (**impl. attuale**), `index.ts` = punto di swap: `const useSupabase = hasSupabase() && VITE_USE_SUPABASE==='true'; export const repo = useSupabase ? new SupabaseRepo() : new FirebaseRepo()`. Hook `useAuth`/`useStore` non toccano il backend, usano `repo`.
+- **Dati (oggi) = Supabase** (Postgres, progetto `fzukrewjcquzxgrpfzaa`). Schema **3NF** in `supabase/schema.sql` (+ migrazioni `0004`–`0008`): tabelle normalizzate, audit-cols+trigger, CHECK/ENUM, **RLS force** con `is_membro()` (security-definer), **Realtime** (`postgres_changes`), **Storage** (bucket privato `schede` per i PDF). `traccia.climbs`/`laps` = **jsonb** (fedeli a intervals.icu; NON normalizzare in colonne). Scritture "calde" via **RPC** (`replace_spesa_*`, `replace_pantry`, `set_override`). `SupabaseRepo` ricostruisce il JSON stile-Firebase in lettura e fa scrittura **ottimistica** (echo ai subscriber) + apply, con refetch realtime debounced.
+- **Anon key** pubblica (safe, protetta da RLS). **service_role SEGRETA**: mai nel repo né in chat, solo Vercel env + GitHub Secrets.
+- **Firebase**: sganciato (Realtime DB `dieta-b7804`). Resta `firebaseRepo.ts` come fallback dietro il flag; il progetto Firebase è dismissibile. Dati storici backuppati in `Backup-Dieta/` (OneDrive) prima della migrazione.
 - **Hosting/deploy**: **Vercel**, deploy automatico ad ogni push su `main`. **Root Directory = `web`** (preset Vite, output `dist`). Funzioni serverless in **`web/api/`** (`coach-data.js`). `web/vercel.json`: rewrite SPA + **`index.html` no-cache** (l'HTML si rivalida sempre → niente build vecchia in cache su PWA iOS; gli asset sono content-hashed/immutabili).
 - **Build (per il path OneDrive con `&`)**: NON usare `npm run`/Vite dev (la `&` rompe la shell). Usare da `web/`:
   `node "node_modules/typescript/bin/tsc" -p tsconfig.json --noEmit` (+ `tsconfig.node.json`) e `node "node_modules/vite/bin/vite.js" build`.
@@ -27,9 +29,9 @@ NetWorth è ottimizzato su mobile; Dieta ne copia l'approccio. **MAI** `overflow
 - Il rubber-band elastico a fine pagina è normale iOS (anche NetWorth) → si tiene.
 - **Verificare il layout in locale prima di deployare**: `preview_start` config `dieta-dist` (serve `web/dist`) + misura DOM via `preview_eval` (l'anteprima headless non renderizza React/Firebase, ma le misure di altezza/scroll sullo shell/DOM sintetico bastano).
 
-## Login & sicurezza Firebase
-- Login email/password (Firebase Auth), 2 account: Nicholas e Noemi. Persistente per dispositivo. Gate in `App.tsx` (`useAuth`); chip account in alto a destra.
-- Regole RTDB chiuse all'**allowlist email** (NON `".read":true`; `auth != null` non basta perché chiunque può registrarsi con la apiKey pubblica).
+## Login & sicurezza
+- Login email/password, 2 account (Nicholas e Noemi). Persistente per dispositivo. Gate in `App.tsx` (`useAuth`); chip account in alto a destra.
+- **Accesso dati chiuso da RLS force** (Postgres): la fn `is_membro()` (security-definer) autorizza solo gli account in tabella `membro`; l'anon key da sola non legge nulla. La funzione coach usa `service_role` (bypassa RLS) lato server.
 - Identità utente (`personOf(email)` in `web/src/lib/`) chiavettata su **hash** dell'email, non email in chiaro → nessuna email personale nel sorgente (repo pubblico).
 
 ## Tab e viste (componenti React in `web/src/pages/`)
@@ -38,26 +40,27 @@ NetWorth è ottimizzato su mobile; Dieta ne copia l'approccio. **MAI** `overflow
 3. 🍓 **Noemi** (`Noemi.tsx`) — settimana a scrittura libera (`noemiSettimana`) + dieta base nutrizionista (`noemiBase`).
 4. 🛒 **Spesa** (`Spesa.tsx`, stili in `pages/spesa/spesaStyles.ts`) — categorie/storico/dispensa. **Header hero sticky** (anello "presi" + 🛒 da comprare / 🏠 in dispensa + azioni) che si **compatta allo scroll**; filtri segmented Tutti/Da comprare/Dispensa. **Rimossi** i filtri-proprietario e i badge owner per riga (il campo `owners` resta nei dati, solo UI tolta). "Ultima modifica" (`spesaMeta`).
 5. 🏋️ **Allenamenti** (`Allenamenti.tsx`) + **Dashboard** (`Dashboard.tsx`) — schede forza/tri editabili + 🎯 Obiettivo (`coachConfig/obiettivo`); dashboard con sezioni Triathlon/Altri, dettaglio disciplina → attività (mappa Leaflet + altimetria + salite + lap, on-demand da `training/tracks/{id}`), card Fitness=CTL.
+   - **Multi-sessione per disciplina**: una settimana tri può avere più sedute della stessa disciplina (es. 2 nuoto + 2 bici). In `sessView` l'header è la **disciplina**, `nome` è il **sottotitolo**. "Scheda di oggi" usa `sessioneDelGiorno` (mappatura **per ordine**: l'N-esimo giorno pianificato di una disciplina → N-esima seduta di quella disciplina). Planner Nicholas = **Lun→Dom** (`PLAN_DAYS`). Programma corrente caricato via `web/scripts/seed_tri.mjs`.
 - Componenti dieta condivisi in `web/src/pages/dieta/diet.tsx` (`MealCard`, `ChipRow`, `CatEditor`, pill categorie…).
 
 ## Pipeline dati allenamenti (automatica, fonte = intervals.icu)
-**Garmin → intervals.icu (sync auto) → GitHub Action → Firebase → app.** *(Strava NON usato; export Garmin solo archiviato.)*
+**Garmin → intervals.icu (sync auto) → GitHub Action → Supabase → app.** *(Strava NON usato; export Garmin solo archiviato.)*
 - `.github/scripts/sync_intervals.py` + `.github/workflows/sync-intervals.yml` (cron giornaliero ~06:00 + run manuale).
-  - Scrive `training/activities` (replace idempotente; guard "se 0 attività non sovrascrivo").
-  - Attività con **GPS**/lap: scarica stream/intervals (CSV, **decode utf-8-sig** per il BOM) → `training/tracks/{id}` = `{v, track, elev, climbs, laps, gain}`.
-  - **Auto-heal per versione** (`TRACK_V`): rigenera le tracce vecchie (max ~30/run); input `force_tracks` per rigenerare tutto.
-- Env (GitHub Secrets): `INTERVALS_ATHLETE`, `INTERVALS_KEY`, `FB_EMAIL`, `FB_PASSWORD`. L'`id` attività = **chiave** Firebase.
+  - Upsert su Supabase via REST (`Prefer: resolution=merge-duplicates`): tabella `attivita` + `traccia` (con `climbs`/`laps` come **jsonb**). Guard "se 0 attività non sovrascrivo".
+  - Attività con **GPS**/lap: scarica stream/intervals (CSV, **decode utf-8-sig** per il BOM). L'`id` intervals = chiave attività.
+  - **Auto-heal per versione** (`TRACK_V`): rigenera le tracce vecchie; input `force_tracks` per rigenerare tutto.
+- Env (GitHub Secrets): `INTERVALS_ATHLETE`, `INTERVALS_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Coach AI ("chiedi ai tuoi dati" da ChatGPT)
-- **`web/api/coach-data.js`** (Vercel): si logga su Firebase (env `FB_EMAIL`/`FB_PASSWORD`), legge `training/activities` + `schedule` + `allenamentiCfg` + `coachConfig`, restituisce un **riassunto** (totali, carico settimanale, zone FC, CTL/ATL/forma, piano, `settimana_in_corso`, ultime 30 attività, obiettivo). Protetto da `Authorization: Bearer <COACH_API_KEY>`.
-- Env Vercel: `COACH_API_KEY`, `FB_EMAIL`, `FB_PASSWORD`. Consumato da un **GPT personalizzato** (Action → OpenAPI verso `/api/coach-data`). Nessun costo API.
+- **`web/api/coach-data.js`** (Vercel): legge Supabase via **REST con service_role** (bypassa RLS), restituisce un **riassunto** (totali, carico settimanale, zone FC, CTL/ATL/forma, piano, `settimana_in_corso`, **`schede` complete** con settimana `corrente:true`, ultime 30 attività, obiettivo). Protetto da `Authorization: Bearer <COACH_API_KEY>`.
+- Env Vercel: `COACH_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. Consumato da un **GPT personalizzato** (Action → OpenAPI verso `/api/coach-data`). Nessun costo API.
 
-## Nodi Firebase (attuali)
-`nicBase`, `noemiBase`, `noemiSettimana`, `allenamentiCfg`, `allenamentiSchede`, `catLabels`, `spesa`, `spesaCategories`, `spesaHistory`, `pantry`, `schedule`, `spesaMeta`, `overrides`, `coachConfig`, `schedePdf`, `training/activities`, `training/tracks`.
-Default hardcoded (`NICHOLAS`, `NOEMI_BASE`, `ALLENAMENTI`) scritti al primo avvio se vuoti.
+## Dati (path logici via Repo → tabelle Supabase)
+Il `Repo` espone ancora path stile-Firebase (compatibilità): `nicBase`, `noemiBase`, `noemiSettimana`, `allenamentiCfg`, `allenamentiSchede`, `catLabels`, `spesa`, `spesaCategories`, `spesaHistory`, `pantry`, `schedule`, `spesaMeta`, `overrides`, `coachConfig`, `schedePdf`, `training/activities`, `training/tracks`. `SupabaseRepo` li mappa sulle tabelle 3NF (`schema.sql`). Default hardcoded (`NICHOLAS`, `NOEMI_BASE`, `ALLENAMENTI`) usati come fallback se il nodo è vuoto.
 
-## Fase 2 (pianificata) — Supabase
-Dopo il go-live del frontend: migrazione backend a **Supabase** (Postgres + Storage per **PDF/video** schede + Auth). Swap `FirebaseRepo → SupabaseRepo` (il data-layer è già astratto). Poi **backup periodico Supabase → OneDrive**. I dati Firebase sono già stati backuppati in `Backup-Dieta/` (OneDrive) prima del go-live.
+## Fase 2 — Supabase ✅ COMPLETATA (2026-07-01)
+Backend migrato a **Supabase** (Postgres 3NF + RLS + Realtime + Storage per i PDF schede). Swap `FirebaseRepo → SupabaseRepo` via flag `VITE_USE_SUPABASE`. Schema in `supabase/schema.sql` (+ `0004`–`0008`); migrazione dati con `web/scripts/migrate.mjs`; RPC in `0006`. App, sync intervals e coach leggono/scrivono Supabase; Firebase è dismissibile.
+- **Rimasto**: backup periodico Supabase → OneDrive (schedulato/script) — vedi memoria `supabase-backup-onedrive`.
 
 ## Convenzioni / workflow
 - **TypeScript strict**; Tailwind + CSS var storiche. Componenti piccoli e coerenti; riusare i componenti condivisi (`diet.tsx`).

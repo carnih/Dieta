@@ -14,11 +14,18 @@
 - Due stack diversi (Dieta vs NetWorth) = doppio costo di manutenzione.
 
 ## Fasi
-- **Fase 1 — Frontend (in corso)**: React+Vite+TS+Tailwind in `web/`, **tenendo
-  Firebase** come backend ma **dietro un'astrazione `Repo`** (così la Fase 2 è
-  uno swap pulito). Si migra vista per vista; build verde a ogni passo.
-- **Fase 2 — Backend**: `FirebaseRepo` → `SupabaseRepo` (Postgres + Storage +
-  Auth). Migrazione dati + account. Si progetta lo schema 3NF (come NetWorth).
+- **Fase 1 — Frontend ✅**: React+Vite+TS+Tailwind in `web/`, dietro l'astrazione
+  `Repo`. Go-live giugno 2026.
+- **Fase 2 — Backend ✅ (2026-07-01)**: `FirebaseRepo` → `SupabaseRepo` (Postgres
+  3NF + RLS + Realtime + Storage + Auth). Schema `supabase/schema.sql` (+ migrazioni
+  `0004`–`0008`), migrazione dati `web/scripts/migrate.mjs`, RPC scritture calde
+  `0006`. Sync intervals e coach ora leggono/scrivono Supabase. Switch via flag
+  `VITE_USE_SUPABASE`. **Dettagli aggiornati e canonici in `CLAUDE.md`.**
+  - Rimasto: backup periodico Supabase → OneDrive.
+
+> **NB**: da qui in poi la fonte di verità sull'architettura è **`CLAUDE.md`**.
+> Le sezioni sotto sono lo storico del piano di migrazione (Fase 1) e non
+> riflettono più lo stato attuale del backend.
 
 ## Stato Fase 1
 - ✅ Scaffold Vite+React+TS+Tailwind (`web/`), build verde.
