@@ -1,11 +1,12 @@
 // Vercel Serverless Function: riassunto AGGIORNATO allenamenti per il GPT personalizzato.
-// Storico + settimana + piano programmato + obiettivo (modificabile da app). Nessun costo AI.
-// Env su Vercel: COACH_API_KEY, FB_EMAIL, FB_PASSWORD (FB_APIKEY/FB_DB hanno default pubblici).
-const FB_APIKEY = process.env.FB_APIKEY || 'AIzaSyAIhOcx7IPpTIRjnbbmjhKZ2bWRAjt2JT4';
-const FB_DB     = process.env.FB_DB     || 'https://dieta-b7804-default-rtdb.europe-west1.firebasedatabase.app';
+// Legge da SUPABASE (REST con service_role → bypassa RLS, lettura diretta e veloce).
+// Storico + settimana in corso + piano + SCHEDE COMPLETE (settimana corrente marcata) + obiettivo.
+// Env su Vercel: COACH_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+const SB_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const num = v => { const x = parseFloat(v); return isNaN(x) ? 0 : x; };
 
-const SCHED_LBL = { corsa:'Corsa', bici:'Bici', nuoto:'Nuoto', palestra:'Palestra', padel:'Padel', brick:'Brick', riposo:'Riposo' };
+const SCHED_LBL = { corsa:'Corsa', bici:'Bici', nuoto:'Nuoto', palestra:'Palestra', padel:'Padel', brick:'Brick', forza:'Forza', riposo:'Riposo' };
 const WD = { lun:'Lun', mar:'Mar', mer:'Mer', gio:'Gio', ven:'Ven', sab:'Sab', dom:'Dom' };
 function mondayOf(d){ const x = new Date(d); const dow = (x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-dow); return x; }
 function progWeek(prog, cfg, durata){
@@ -17,21 +18,32 @@ function progWeek(prog, cfg, durata){
   return Math.max(0, Math.min(durata-1, wk)) + 1;
 }
 
+async function sbGet(q){
+  const r = await fetch(`${SB_URL}/rest/v1/${q}`, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY } });
+  if (!r.ok) throw new Error(`supabase ${q.split('?')[0]}: HTTP ${r.status}`);
+  return r.json();
+}
+
 export default async function handler(req, res) {
   const key = process.env.COACH_API_KEY;
   if (!key || (req.headers.authorization || '') !== 'Bearer ' + key) { res.status(401).json({ error: 'unauthorized' }); return; }
+  if (!SB_URL || !SB_KEY) { res.status(500).json({ error: 'supabase env missing' }); return; }
   try {
-    const si = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FB_APIKEY}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: process.env.FB_EMAIL, password: process.env.FB_PASSWORD, returnSecureToken: true })
-    }).then(r => r.json());
-    if (!si.idToken) { res.status(500).json({ error: 'firebase auth failed' }); return; }
-    const t = si.idToken;
-    const get = p => fetch(`${FB_DB}/${p}.json?auth=${t}`).then(r => r.json());
-    const [obj, schedule, allenCfg, coachConfig] = await Promise.all([
-      get('training/activities'), get('schedule'), get('allenamentiCfg'), get('coachConfig')
+    const [attiv, schedRows, cfgRows, coachRows, progs, weeks, sess, blocchi] = await Promise.all([
+      sbGet('attivita?select=*'),
+      sbGet('schedule_giorno?select=giorno,ordinamento,disciplina&order=ordinamento'),
+      sbGet('allenamenti_cfg?select=*'),
+      sbGet('coach_config?select=*'),
+      sbGet('programma?select=*'),
+      sbGet('programma_week?select=*&order=ordinamento'),
+      sbGet('programma_sessione?select=*&order=ordinamento'),
+      sbGet('programma_blocco?select=*&order=ordinamento'),
     ]);
-    const A = obj ? Object.values(obj) : [];
+    // attivita: colonne + campi jsonb `extra` (zone FC, ecc.) appiattiti
+    const A = (attiv || []).map(r => ({ ...r, ...(r.extra || {}) }));
+    const schedule = {}; (schedRows || []).forEach(r => { (schedule[r.giorno] = schedule[r.giorno] || []).push(r.disciplina); });
+    const allenCfg = {}; (cfgRows || []).forEach(r => { allenCfg[r.programma_key] = { start: r.start_date, shift: r.shift }; });
+    const coachConfig = (coachRows && coachRows[0]) || {};
 
     const tot = {};
     A.forEach(a => { const d = a.disciplina; (tot[d] = tot[d] || { n: 0, ore: 0, km: 0 }); tot[d].n++; tot[d].ore += num(a.durata_min)/60; tot[d].km += num(a.distanza_km); });
@@ -57,16 +69,29 @@ export default async function handler(req, res) {
     // piano settimanale programmato (dallo schedule impostato in app)
     const piano_settimana = {};
     for (const wd of ['lun','mar','mer','gio','ven','sab','dom']) {
-      let v = schedule && schedule[wd]; if (typeof v === 'string') v = [v];
-      v = (v || []).filter(x => x && x !== 'riposo');
+      const v = (schedule[wd] || []).filter(x => x && x !== 'riposo');
       piano_settimana[WD[wd]] = v.length ? v.map(id => SCHED_LBL[id] || id).join(' + ') : 'Riposo';
     }
-    const programmi = {
-      forza: { settimana_corrente: progWeek('forza', allenCfg, 8), totale_settimane: 8 },
-      triathlon: { settimana_corrente: progWeek('tri', allenCfg, 4), totale_settimane: 4 }
-    };
 
-    // settimana in corso: dove siamo adesso, cosa era già dovuto vs cosa resta, cosa è stato fatto finora
+    // SCHEDE COMPLETE: tutte le settimane di forza/tri, con quella corrente marcata
+    const durataOf = k => { const p = (progs || []).find(x => x.key === k); return (p && p.durata) || (k === 'forza' ? 8 : 4); };
+    function buildSchede(key){
+      const tot = durataOf(key);
+      const wkNow = progWeek(key, allenCfg, tot);
+      const ws = (weeks || []).filter(w => w.programma_key === key);
+      const mkBlocchi = sid => (blocchi || []).filter(b => b.sessione_id === sid).map(b => ({ nome: b.nome, righe: b.righe }));
+      const settimane = ws.map(w => {
+        const ss = (sess || []).filter(x => x.week_id === w.id);
+        const n = w.ordinamento + 1;
+        const base = { settimana: n, titolo: w.titolo, note: w.note || undefined, corrente: n === wkNow };
+        if (ss.length === 1 && ss[0].disc == null) return { ...base, blocchi: mkBlocchi(ss[0].id) };
+        return { ...base, sessioni: ss.map(s => ({ disc: s.disc, nome: s.nome || undefined, blocchi: mkBlocchi(s.id) })) };
+      });
+      return { settimana_corrente: wkNow, totale_settimane: tot, settimane };
+    }
+    const schede = { forza: buildSchede('forza'), triathlon: buildSchede('tri') };
+
+    // settimana in corso: dove siamo adesso, cosa era già dovuto vs cosa resta, cosa è stato fatto
     const ORD = ['lun','mar','mer','gio','ven','sab','dom'];
     const now = new Date();
     const dow = (now.getDay()+6)%7;               // 0 = lunedì
@@ -78,6 +103,8 @@ export default async function handler(req, res) {
       giorno_n_su_7: dow + 1,
       giorni_ancora_da_giocare: 6 - dow,
       settimana_completata: dow === 6,
+      settimana_forza: schede.forza.settimana_corrente,
+      settimana_triathlon: schede.triathlon.settimana_corrente,
       piano_gia_dovuto,
       piano_ancora_da_fare,
       attivita_di_questa_settimana: byDate.filter(a => a.data >= mondayStr).reverse().map(a => ({
@@ -97,11 +124,11 @@ export default async function handler(req, res) {
       fitness_ctl: ctl, fatica_atl: atl, forma_tsb: (ctl != null && atl != null) ? ctl - atl : null,
       piano_settimana_programmato: piano_settimana,
       settimana_in_corso,
-      programmi_in_corso: programmi,
+      schede,
       ultime_attivita,
-      note: 'Distanze in km, durate in minuti. CTL=fitness, ATL=fatica, TSB=forma. piano_settimana_programmato = cosa l\'atleta ha pianificato; ultime_attivita = cosa ha realmente svolto. IMPORTANTE: se settimana_in_corso.settimana_completata = false, la settimana NON è finita: NON dare voti/giudizi finali e NON segnare come "mancati" gli allenamenti in piano_ancora_da_fare (sono ancora in programma). Confronta solo piano_gia_dovuto con attivita_di_questa_settimana. I dati arrivano da intervals.icu: se l\'atleta cita un allenamento che non vedi, è possibile che non sia ancora stato sincronizzato — diglielo invece di assumere che non l\'abbia fatto.'
+      note: 'Distanze in km, durate in minuti. CTL=fitness, ATL=fatica, TSB=forma. `schede` = i programmi completi (forza + triathlon): la settimana in cui si trova l\'atleta ORA ha `corrente: true` (usala per sapere cosa deve allenare questa settimana). `piano_settimana_programmato` = i giorni pianificati; `ultime_attivita` = ciò che ha davvero svolto. IMPORTANTE: se settimana_in_corso.settimana_completata = false la settimana NON è finita: NON dare giudizi finali e NON segnare come "mancati" gli allenamenti in piano_ancora_da_fare. Confronta solo piano_gia_dovuto con attivita_di_questa_settimana. I dati arrivano da intervals.icu: se l\'atleta cita un allenamento che non vedi, potrebbe non essere ancora sincronizzato — diglielo invece di assumere che non l\'abbia fatto.'
     });
   } catch (e) {
-    res.status(500).json({ error: String(e) });
+    res.status(500).json({ error: String(e && e.message || e) });
   }
 }
