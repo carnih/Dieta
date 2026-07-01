@@ -56,6 +56,16 @@ const counts = {};
 const bump = (t, n = 1) => { counts[t] = (counts[t] || 0) + n; };
 const disciplineSet = new Set();
 
+// Coercitori robusti: i dati veri hanno numeri come '' o stringhe → null/numero.
+const num = (v) => {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+const int = (v) => { const n = num(v); return n === null ? null : Math.round(n); };
+const jsonOrNull = (v) => (v === '' || v === undefined ? null : v ?? null);
+const nonEmpty = (v) => typeof v === 'string' && v.trim().length > 0;
+
 // data storico spesa → ISO. Accetta epoch (chiave ts), 'DD/MM/YYYY' o ISO.
 function histIso(ts, date) {
   if (/^\d{10,}$/.test(String(ts))) return new Date(Number(ts)).toISOString();
@@ -141,18 +151,18 @@ async function migNicBase(db) {
   const nb = db.nicBase;
   if (!nb || !Array.isArray(nb.days)) return;
   for (const [di, day] of nb.days.entries()) {
-    await insert('nic_day', { id: day.id, label: day.label, ordinamento: di, pasto_libero: day.pastoLibero || null });
+    await insert('nic_day', { id: day.id, label: day.label || day.id, ordinamento: di, pasto_libero: day.pastoLibero || null });
     const integ = day.integ || {};
     const irows = [];
     if (integ.pre) irows.push({ day_id: day.id, tag: 'Pre', valore: integ.pre, ordinamento: 0 });
     if (integ.post) irows.push({ day_id: day.id, tag: 'Post', valore: integ.post, ordinamento: 1 });
-    (integ.multi || []).forEach((m, i) => irows.push({ day_id: day.id, tag: m.tag, valore: m.v, ordinamento: i }));
+    (integ.multi || []).forEach((m, i) => { if (nonEmpty(m.v) && nonEmpty(m.tag)) irows.push({ day_id: day.id, tag: m.tag, valore: m.v, ordinamento: i }); });
     await insert('nic_day_integ', irows);
     for (const [pi, p] of (day.pasti || []).entries()) {
-      const pasto = await insertOne('nic_pasto', { day_id: day.id, icon: p.icon || null, nome: p.nome, note: p.note || null, ordinamento: pi });
+      const pasto = await insertOne('nic_pasto', { day_id: day.id, icon: p.icon || null, nome: p.nome || '—', note: p.note || null, ordinamento: pi });
       for (const [ii, it] of (p.items || []).entries()) {
         const item = await insertOne('nic_item', { pasto_id: pasto.id, categoria_key: it.cat, valore: it.alts ? null : (it.v ?? ''), ordinamento: ii });
-        if (it.alts) await insert('nic_item_alt', it.alts.map((v, ai) => ({ item_id: item.id, valore: v, ordinamento: ai })));
+        if (it.alts) await insert('nic_item_alt', it.alts.filter(nonEmpty).map((v, ai) => ({ item_id: item.id, valore: v, ordinamento: ai })));
       }
     }
   }
@@ -164,12 +174,12 @@ async function migNoemiBase(db) {
   let mi = 0;
   for (const [key, m] of Object.entries(nb)) {
     if (!m || !Array.isArray(m.slots)) continue;
-    await insert('noemi_meal', { key, icon: m.icon || null, nome: m.nome, ordinamento: mi++ });
+    await insert('noemi_meal', { key, icon: m.icon || null, nome: m.nome || key, ordinamento: mi++ });
     for (const [si, s] of m.slots.entries()) {
-      const slot = await insertOne('noemi_slot', { meal_key: key, categoria_key: s.cat, label: s.label, ordinamento: si });
-      await insert('noemi_slot_opt', (s.opts || []).map((v, oi) => ({ slot_id: slot.id, valore: v, ordinamento: oi })));
+      const slot = await insertOne('noemi_slot', { meal_key: key, categoria_key: s.cat, label: s.label || '—', ordinamento: si });
+      await insert('noemi_slot_opt', (s.opts || []).filter(nonEmpty).map((v, oi) => ({ slot_id: slot.id, valore: v, ordinamento: oi })));
     }
-    await insert('noemi_fixed', (m.fixed || []).map((f, fi) => ({ meal_key: key, categoria_key: f.cat, valore: f.v, ordinamento: fi })));
+    await insert('noemi_fixed', (m.fixed || []).filter((f) => nonEmpty(f.v)).map((f, fi) => ({ meal_key: key, categoria_key: f.cat, valore: f.v, ordinamento: fi })));
   }
 }
 
@@ -190,21 +200,21 @@ async function migAllenamenti(db) {
   for (const key of ['forza', 'tri']) {
     const prog = sch[key];
     if (!prog) continue;
-    await insert('programma', { key, nome: prog.nome, coach: prog.coach || null, durata: prog.durata ?? null, note: prog.note || null, obiettivi: prog.obiettivi || null });
+    await insert('programma', { key, nome: prog.nome || key, coach: prog.coach || null, durata: int(prog.durata), note: prog.note || null, obiettivi: prog.obiettivi || null });
     for (const [wi, w] of (prog.weeks || []).entries()) {
-      const week = await insertOne('programma_week', { programma_key: key, titolo: w.titolo, note: w.note || null, ordinamento: wi });
+      const week = await insertOne('programma_week', { programma_key: key, titolo: w.titolo || `Settimana ${wi + 1}`, note: w.note || null, ordinamento: wi });
       const sessioni = w.sessioni
         ? w.sessioni.map((s) => ({ disc: s.disc, nome: s.nome || null, blocchi: s.blocchi || [] }))
         : [{ disc: null, nome: null, blocchi: w.blocchi || [] }]; // forza: blocchi diretti
       for (const [xi, s] of sessioni.entries()) {
         if (s.disc) disciplineSet.add(s.disc);
         const sess = await insertOne('programma_sessione', { week_id: week.id, disc: s.disc, nome: s.nome, ordinamento: xi });
-        await insert('programma_blocco', (s.blocchi || []).map((b, bi) => ({ sessione_id: sess.id, nome: b.nome, righe: b.righe || '', ordinamento: bi })));
+        await insert('programma_blocco', (s.blocchi || []).map((b, bi) => ({ sessione_id: sess.id, nome: b.nome || '—', righe: b.righe || '', ordinamento: bi })));
       }
     }
   }
   const cfg = db.allenamentiCfg || {};
-  await insert('allenamenti_cfg', ['forza', 'tri'].filter((k) => cfg[k]).map((k) => ({ programma_key: k, start_date: cfg[k].start || null, shift: cfg[k].shift ?? 0 })));
+  await insert('allenamenti_cfg', ['forza', 'tri'].filter((k) => cfg[k]).map((k) => ({ programma_key: k, start_date: cfg[k].start || null, shift: int(cfg[k].shift) ?? 0 })));
 }
 
 async function migSchedule(db) {
@@ -259,9 +269,9 @@ async function migTraining(db) {
     for (const [k, v] of Object.entries(a)) if (!KNOWN.has(k)) extra[k] = v;
     rows.push({
       id: a.id || id, data: a.data || null, disciplina: a.disciplina || null, tipo_garmin: a.tipo_garmin || null,
-      nome: a.nome || null, durata_min: a.durata_min ?? null, distanza_km: a.distanza_km ?? null,
-      fc_media: a.fc_media ?? null, carico: a.carico ?? null, ctl: a.ctl ?? null, atl: a.atl ?? null,
-      velocita_bici_kmh: a.velocita_bici_kmh ?? null, passo_corsa_min_km: a.passo_corsa_min_km || null,
+      nome: a.nome || null, durata_min: num(a.durata_min), distanza_km: num(a.distanza_km),
+      fc_media: num(a.fc_media), carico: num(a.carico), ctl: num(a.ctl), atl: num(a.atl),
+      velocita_bici_kmh: num(a.velocita_bici_kmh), passo_corsa_min_km: a.passo_corsa_min_km || null,
       passo_nuoto_min_100m: a.passo_nuoto_min_100m || null, extra: Object.keys(extra).length ? extra : null,
     });
   }
@@ -273,12 +283,12 @@ async function migTraining(db) {
   let orfane = 0;
   for (const [id, t] of Object.entries(tracks)) {
     if (!actIds.has(id)) { orfane++; continue; } // traccia senza attività → salta (evita FK fallita)
-    traccia.push({ attivita_id: id, versione: t.v ?? null, dislivello_m: t.gain ?? null, geo: t.track ?? null, altimetria: t.elev ?? null });
+    traccia.push({ attivita_id: id, versione: int(t.v), dislivello_m: num(t.gain), geo: jsonOrNull(t.track), altimetria: jsonOrNull(t.elev) });
     (t.climbs || []).forEach((c, i) => salite.push({ attivita_id: id, ordinamento: i,
-      durata_s: c.durata_s ?? c.dur ?? null, pendenza_media: c.pend_media ?? c.grad ?? null, pendenza_max: c.pend_max ?? null,
-      fc_media: c.fc ?? null, cadenza: c.cad ?? null, vam: c.vam ?? null, velocita: c.vel ?? null }));
+      durata_s: num(c.durata_s ?? c.dur), pendenza_media: num(c.pend_media ?? c.grad), pendenza_max: num(c.pend_max),
+      fc_media: num(c.fc), cadenza: num(c.cad), vam: num(c.vam), velocita: num(c.vel) }));
     (t.laps || []).forEach((l, i) => laps.push({ attivita_id: id, ordinamento: i,
-      distanza_km: l.km ?? l.dist ?? null, durata_s: l.durata_s ?? l.dur ?? null, passo: l.passo ?? null, velocita: l.vel ?? null }));
+      distanza_km: num(l.km ?? l.dist), durata_s: num(l.durata_s ?? l.dur), passo: l.passo || null, velocita: num(l.vel) }));
   }
   if (orfane) console.log(`  · ${orfane} tracce senza attività: saltate.`);
   await insert('traccia', traccia);
