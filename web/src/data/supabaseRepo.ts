@@ -38,9 +38,11 @@ const WATCH: Record<string, string[]> = {
 export class SupabaseRepo implements Repo {
   // risolto alla costruzione (non all'import) → importare il modulo è sempre sicuro.
   private sb = requireSupabase();
-  // subscriber per nodo (chiave = 1° segmento del path) → per rilettura locale
-  // immediata dopo una scrittura, senza aspettare il round-trip del realtime.
-  private subs = new Map<string, Set<() => void>>();
+  // stato per nodo (chiave = 1° segmento del path) per l'optimistic UI: callback
+  // dei subscriber, ultimo valore noto, e refetch (debounced) per riconciliare.
+  private nodeCbs = new Map<string, Set<(v: unknown) => void>>();
+  private nodeVal = new Map<string, unknown>();
+  private nodeRefetch = new Map<string, () => void>();
 
   onAuthChange(cb: (user: AuthUser | null) => void): () => void {
     this.sb.auth.getSession().then(({ data }) => {
@@ -63,19 +65,20 @@ export class SupabaseRepo implements Repo {
   }
 
   subscribe(path: string, cb: (val: unknown) => void): () => void {
+    const node = path.split('/')[0];
+    let cbs = this.nodeCbs.get(node);
+    if (!cbs) { cbs = new Set(); this.nodeCbs.set(node, cbs); }
+    cbs.add(cb);
     let alive = true;
-    const refetch = () => this.get(path).then((v) => alive && cb(v)).catch((e) => {
+    const emit = (v: unknown) => { this.nodeVal.set(node, v); this.nodeCbs.get(node)?.forEach((f) => f(v)); };
+    const refetch = () => this.get(path).then((v) => { if (alive) emit(v); }).catch((e) => {
       console.error('SupabaseRepo read', path, e);
-      if (alive) cb(null);
+      if (alive) emit(null);
     });
     // debounce: un bulk (delete+insert di N righe) genera N eventi realtime → una sola rilettura.
     let timer: ReturnType<typeof setTimeout> | null = null;
     const bump = () => { if (timer) clearTimeout(timer); timer = setTimeout(() => void refetch(), 60); };
-    // registro per la rilettura locale immediata dopo una scrittura (vedi echo()).
-    const node = path.split('/')[0];
-    const set = this.subs.get(node) ?? new Set<() => void>();
-    set.add(bump);
-    this.subs.set(node, set);
+    this.nodeRefetch.set(node, bump);
     void refetch();
     let ch: RealtimeChannel | null = null;
     const tables = WATCH[path];
@@ -89,7 +92,7 @@ export class SupabaseRepo implements Repo {
     return () => {
       alive = false;
       if (timer) clearTimeout(timer);
-      this.subs.get(node)?.delete(bump);
+      cbs.delete(cb);
       if (ch) void this.sb.removeChannel(ch);
     };
   }
@@ -100,12 +103,32 @@ export class SupabaseRepo implements Repo {
 
   // ── Scritture: traduce il path Firebase-style nell'operazione SQL ──────────
   async set(path: string, val: unknown): Promise<void> {
-    await this.apply(path, val);
-    this.echo(path.split('/')[0]); // rilettura locale immediata del nodo toccato (no attesa realtime)
+    this.optimistic(path, val); // UI aggiornata SUBITO (istantaneo), poi persiste in background
+    try {
+      await this.apply(path, val);
+    } catch (e) {
+      console.error('SupabaseRepo set', path, e);
+      this.nodeRefetch.get(path.split('/')[0])?.(); // errore → riallinea alla verità dal DB
+      throw e;
+    }
   }
 
-  private echo(node: string): void {
-    this.subs.get(node)?.forEach((fn) => fn());
+  // emette ottimisticamente il nuovo valore del nodo ai subscriber (merge nel path).
+  private optimistic(path: string, val: unknown): void {
+    const seg = path.split('/');
+    const node = seg[0];
+    const cbs = this.nodeCbs.get(node);
+    if (!cbs || !cbs.size) return;
+    let nv: unknown;
+    if (seg.length === 1) {
+      nv = val;
+    } else {
+      const base = clone(this.nodeVal.get(node));
+      nv = base && typeof base === 'object' ? base : {};
+      setPath(nv as Record<string, unknown>, seg.slice(1), val);
+    }
+    this.nodeVal.set(node, nv);
+    cbs.forEach((f) => f(nv));
   }
 
   private async apply(path: string, val: unknown): Promise<void> {
@@ -505,6 +528,22 @@ type NicItemW = { cat: string; v?: string; alts?: string[] };
 type NicPastoW = { icon?: string; nome?: string; note?: string; items?: NicItemW[] };
 type NicDayW = { id: string; label?: string; pastoLibero?: string; integ?: { pre?: string; post?: string; multi?: { tag: string; v: string }[] }; pasti?: NicPastoW[] };
 type NicDiet = { days?: NicDayW[] };
+
+function clone<T>(x: T): T {
+  return x == null ? x : (JSON.parse(JSON.stringify(x)) as T);
+}
+// imposta (o cancella se val==null) il valore alla path annidata dentro obj.
+function setPath(obj: Record<string, unknown>, segs: string[], val: unknown): void {
+  let o = obj;
+  for (let i = 0; i < segs.length - 1; i++) {
+    const k = segs[i];
+    if (o[k] == null || typeof o[k] !== 'object') o[k] = {};
+    o = o[k] as Record<string, unknown>;
+  }
+  const last = segs[segs.length - 1];
+  if (val == null) delete o[last];
+  else o[last] = val;
+}
 
 function histIso(date?: string): string {
   if (!date) return new Date().toISOString();
